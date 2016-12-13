@@ -1,0 +1,153 @@
+Stats
+------------
+    
+physical stats: 
+    - strength
+        - bonus to weapon damage
+    - agility
+        - bonus to chance to dodge 
+        - bonus to attack speed
+    - endurance
+        - increases max energy
+        - decreases energy costs
+        - increases damage soak 
+     
+misc stats:
+    - health
+        - increases max health
+        - increases rate of health regeneration        
+        
+    - luck
+        - increases damage sometimes
+        - increases chance to hit sometimes
+        - increases chance to dodge sometimes
+        - increases damage soaked sometimes
+        - increases chance of finding more and better items
+        
+        - active skills:
+            - pray
+                - further increases one of the influenced categories
+                - decreases luck rating gradually while active
+            - miracle
+                - guarantees next hit happens with an increase in one of the influenced categories applied
+                - expends luck rating with every use
+        
+magical stats:
+    - potency
+        - bonus to spell intensity
+    - wits
+        - bonus to chance to dodge
+        - increases cast rate
+    - willpower
+        - increases max energy
+        - decreases energy costs
+        - increases damage soak
+        
+Skills
+------
+
+weapon skills: 
+    - melee
+        - sword, axe, dagger, etc
+    - ranged
+        - bow, crossbow, throwing objects, etc
+    - magic
+        - wand, sceptre, orb, etc
+    
+    - increases chance to hit
+    - increases damage with associated weapon type
+    
+armor skills:    
+    - unarmored
+        - increases dodge
+    - light armor
+        - increases soak
+    - heavy armor    
+        - large increase to soak, decreases agility and decreases cast rate (higher levels decrease the penalty)
+        
+crafting skills:    
+    - weapon and armor crafting
+        - assemble from different types of pieces
+            - i.e. a knife is built from a handle and blade
+            - different designs call for different pieces
+            - pieces can be made of different materials of varying quality
+            - some pieces may be extensible and allow more pieces to be attached
+        - material types include various woods and metals
+            - can have different stats and associated properties
+        - higher level influences item quality
+        - equipment can have slots for decorations/runes/jewels/etc
+        - "makers mark" ingredient attaches character name to item description
+        
+    - magic spell crafting
+        - assemble new spells from different types of motions and incantations
+            - i.e. a hand wave and some magic words
+            - different spells require different steps and materials
+            - additional ritual objects may be required as well
+                - ritual objects may be of different materials and varying quality
+                - materials may include gems, spell books, potion ingredients, etc
+        - higher skill level increases spell quality
+            
+    - potions
+        - assemble potions from different types of recipes and ingredients
+            - recipes and ingredients may be of different materials and varying quality
+                - materials include spiderwebs, bones, plant matter, etc
+                    - different materials provide different effects
+        - higher skill level increases quality and quantity
+        
+    - enchanting
+        - enchant equipment with effects using recipes and ingredients
+        - higher skill level increases quality
+        
+attack modes:
+    - prioritize accuracy and chance to hit    
+    - prioritize min and max damage
+    - prioritize defence 
+    
+defence modes:
+    - prioritize dodge
+    - prioritize soak
+    - parry (less dodge/soak but counter attacks are possible)    
+        
+magic:
+    - Various types of elements, in pairs that are opposites:
+        - fire
+        - cold
+        
+        - electric
+        - earth
+        
+        - light
+        - void
+        
+        - poison
+        - life
+        
+        - air
+        - telekinesis
+        
+    - projectile spells have a % chance to home in on their target/guarantee to hit that increases with level
+    - spell cost decreases with level
+        - lower level spells may become free at higher levels
+    - requires item to be able to unlock new elements?
+     
+    - different targeting modes
+        - cast on self
+        - cast on area surrounding self
+        - cast on remote area
+    - each effect has an element type
+    - casting time, cooldown, and cost of spell increases based on # and power of effects
+    - two casting types
+        - cast once - the cast button is pressed once and the spell begins
+        - maintained cast - the cast button is held down for the duration of the spell
+    - durations
+        - instant/once
+        - lingering effect (i.e. on fire)
+        - permanent
+        
+passive skills:
+    - increases certain stats or skills while active; may increase costs or decrease other stats or skills
+    
+active skills:
+    - weapon based skills
+    
+    
