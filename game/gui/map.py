@@ -17,6 +17,8 @@ class Tile_Attribute(pride.components.base.Base):
     def _set_value(self, value):
         if value < 0:
             value = 0
+        elif value > 255:
+            value = 255
         self._value = value
     value = property(_get_value, _set_value)
     
@@ -139,7 +141,9 @@ class Game_Tile(pride.gui.gui.Button):
         elif self.overlay is not None:
             self.overlay.delete()
             self.overlay = None
-            
+         
+        self.background_color = (self.elevation.value * 2, ) + EARTH_COLOR[1:]
+        
         
 class Tile_Overlay(pride.gui.gui.Button):   
 
@@ -150,7 +154,7 @@ class Tile_Overlay(pride.gui.gui.Button):
 class Water_Tile(Tile_Overlay): pass
         
         
-class Map(pride.gui.grid.Grid):
+class Environment(pride.gui.grid.Grid):
     
     defaults = {"square_colors" : (EARTH_COLOR, ),
                 "square_outline_colors" : ((155, 155, 155, 255), ),
@@ -158,7 +162,7 @@ class Map(pride.gui.grid.Grid):
                 "grid_size" : (8, 8)}
         
     def __init__(self, **kwargs):
-        super(Map, self).__init__(**kwargs)
+        super(Environment, self).__init__(**kwargs)
         pride.objects["/Python/Background_Refresh"].callbacks.append((self, "process_grid"))
         
     def process_grid(self):
@@ -187,3 +191,53 @@ class Map(pride.gui.grid.Grid):
                 for attribute in tile.process_attributes:
                     getattr(tile, attribute).add_noise(-5, 5)
                 
+    def delete(self):
+        pride.objects["/Python/Background_Refresh"].callbacks.remove((self, "process_grid"))
+        
+        
+class Region(pride.gui.gui.Container):
+                    
+    defaults = {"recursions" : 3, "minimum_region_size" : 100, "grid_size" : (3, 3),
+                "pack_mode" : "left"}
+            
+    def subdivide(self):
+        self.pack()
+        recursions = self.recursions
+        self.alert(self.area, level=0)
+        if recursions:           
+            recursions -= 1
+            minimum_size = self.minimum_region_size   
+            region1 = None        
+            pack_mode = self.pack_mode
+            if pack_mode == "top":
+                if self.w - minimum_size >= minimum_size:
+                    width = game.mechanics.random.random_from_range(minimum_size, self.w - minimum_size)                    
+                    pack_mode = "left"                    
+                    region1 = self.create(Region, w_range=(width, width), recursions=recursions, pack_mode=pack_mode)                      
+            else:
+                if self.h - minimum_size >= minimum_size:
+                    height = game.mechanics.random.random_from_range(minimum_size, self.h - minimum_size)
+                    orientation = "width"
+                    pack_mode = "top"                    
+                    region1 = self.create(Region, h_range=(height, height), recursions=recursions, pack_mode=pack_mode)
+            
+            if region1 is not None:                      
+                region2 = self.create(Region, recursions=recursions, pack_mode=pack_mode)
+                region1.subdivide()
+                region2.subdivide()
+            else:
+                assert not self.children, (self, self.children)
+                environment = self.create(Environment, grid_size=self.grid_size)
+        else:
+            assert not self.children, (self, self.children)
+            environment = self.create(Environment, grid_size=self.grid_size)
+                    
+        
+class Map(pride.gui.gui.Window):
+            
+    def __init__(self, **kwargs):
+        super(Map, self).__init__(**kwargs)
+        region = self.region = self.create(Region)        
+        region.subdivide()
+        
+    

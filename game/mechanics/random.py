@@ -7,7 +7,8 @@ def prng(amount):
     return output    
 
 def random_from_range(minimum, maximum, prng=prng):
-    values = range(minimum, maximum)
+    assert minimum < maximum, (minimum, maximum)
+    values = range(minimum, maximum)    
     return values[prng(16) % len(values)]
     
 def test_random_from_range():
