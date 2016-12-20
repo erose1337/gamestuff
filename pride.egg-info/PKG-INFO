@@ -1,0 +1,32 @@
+Metadata-Version: 1.1
+Name: pride
+Version: 7.0.0a0
+Summary: Python runtime and integrated development environment
+Home-page: https://github.com/erose1337/pride
+Author: Ella Rose
+Author-email: erose1337@hotmail.com
+License: UNKNOWN
+Download-URL: https://github.com/erose1337/pride/archive/master.zip
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Topic :: Desktop Environment
+Classifier: Topic :: Documentation
+Classifier: Topic :: Games/Entertainment
+Classifier: Topic :: Multimedia :: Sound/Audio
+Classifier: Topic :: Software Development :: Compilers
+Classifier: Topic :: Software Development :: Code Generators
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Pre-processors
+Classifier: Topic :: Software Development :: User Interfaces
+Classifier: Topic :: Software Development :: Widget Sets
+Classifier: Topic :: System :: Distributed Computing
+Classifier: Topic :: System :: Shells
+Classifier: Topic :: Text Editors :: Integrated Development Environments (IDE)
