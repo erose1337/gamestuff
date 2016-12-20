@@ -47,5 +47,6 @@ Temporary Items
 .apdisk
 
 *.pyc
-build/
-dist/
+/build/
+/dist/
+/game.egg-info/
