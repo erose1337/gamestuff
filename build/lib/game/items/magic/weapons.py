@@ -1,1 +1,0 @@
-WEAPON_TYPES = ("Wand", "Orb", "Sceptre")
