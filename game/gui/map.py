@@ -86,10 +86,18 @@ class Pressure(Tile_Attribute): pass
 class Light(Tile_Attribute): 
 
     defaults = {"source_magnitude" : 0, "is_source" : True, "value" : 0, "adjustment" : 0,
-                "horizontal_direction" : 0, "vertical_direction" : 0}    
+                "horizontal_direction" : 0, "vertical_direction" : 0, "_amount" : 0}    
     
     def process_attribute(self, neighbor_attribute):     
-        amount = self.value / 4
+        amount = self._amount
+        
+        self_elevation = self.parent.elevation.value
+        neighbor_elevation = neighbor_attribute.parent.elevation.value
+        elevation_adjustment = int(log(abs(self_elevation - neighbor_elevation) or 1))
+        if self_elevation < neighbor_elevation:
+            elevation_adjustment = -elevation_adjustment
+        amount += elevation_adjustment
+        
         if (not neighbor_attribute.is_source) or neighbor_attribute.source_magnitude == 0:
             neighbor_attribute.adjustment += amount
         self.adjustment -= amount        
@@ -101,49 +109,33 @@ class Light(Tile_Attribute):
         
         if self.is_source:
             self.value += self.source_magnitude   
-                    
+        self._amount = self.value / 4           
     
 class Water_Level(Tile_Attribute): 
 
-    def process_attribute(self, neighbor_attribute):
+    defaults = {"adjustment" : 0, "_amount" : 0}
+    
+    def process_attribute(self, neighbor_attribute):     
+        amount = self._amount
+
         self_elevation = self.parent.elevation.value
         neighbor_elevation = neighbor_attribute.parent.elevation.value
-        water_level = self.value
-        neighbor_water_level = neighbor_attribute.value
+        elevation_adjustment = int(log(abs(self_elevation - neighbor_elevation) or 1))
+        if self_elevation < neighbor_elevation:
+            elevation_adjustment = -elevation_adjustment
+        amount += elevation_adjustment
         
-        adjustment = int(log(abs(water_level - neighbor_water_level) or 1, 2))
-        elevation_difference = abs(self_elevation - neighbor_elevation)
-        elevation_adjustment = 0
-        if elevation_difference:
-            elevation_adjustment = int(log(elevation_difference, 3.14))
-            adjustment += elevation_adjustment
-        #self_adjustment = neighbor_adjustment = 0
-        #if self_elevation > neighbor_elevation:
-        #    if water_level >= neighbor_water_level:
-        #        self_adjustment = -1
-        #        neighbor_adjustment = 1
-        #elif self_elevation < neighbor_elevation:
-        #    if water_level <= neighbor_water_level:
-        #        self_adjustment = 1
-        #        neighbor_adjustment = -1
-        #else:
-        if water_level > neighbor_water_level:
-            self_adjustment = -adjustment
-            neighbor_adjustment = adjustment
-        elif water_level < neighbor_water_level:
-            self_adjustment = adjustment
-            neighbor_adjustment = -adjustment
-        else:
-            if self_elevation > neighbor_elevation:
-                self_adjustment = -elevation_adjustment
-                neighbor_adjustment = elevation_adjustment
-            elif self_elevation < neighbor_elevation:
-                self_adjustment = elevation_adjustment
-                neighbor_adjustment = -elevation_adjustment
-            else:
-                self_adjustment = neighbor_adjustment = 0        
-        self.value += self_adjustment
-        neighbor_attribute.value += neighbor_adjustment
+        if (not neighbor_attribute.is_source) or neighbor_attribute.source_magnitude == 0:
+            neighbor_attribute.adjustment += amount               
+        self.adjustment -= amount        
+
+    def post_process(self):                          
+        self.value += self.adjustment
+        self.adjustment = 0
+        
+        if self.is_source:
+            self.value += self.source_magnitude  
+        self._amount = self.value / len(self.parent.neighbors)
         
     
 class Game_Tile(pride.gui.gui.Button):
@@ -172,14 +164,14 @@ class Game_Tile(pride.gui.gui.Button):
             if self.overlay is None:
                 self.overlay = self.create(Tile_Overlay)
                 self.overlay.pack()
-            self.overlay.background_color = (0, 0, moisture, moisture / 2)
+            self.overlay.background_color = (0, 0, moisture, moisture)
         elif self.overlay is not None:
             self.overlay.delete()
             self.overlay = None
 
-        BRIGHTNESS = [.1, .25, .5, .75, 1.0, 1.25, 1.5, 1.75]
-        brightness = BRIGHTNESS[int(log(self.light.value or 1, 4))] 
-        #brightness = self.light.value / 76.0
+        #BRIGHTNESS = [.1, .25, .5, .75, 1.0, 1.25, 1.5, 1.75]
+        #brightness = BRIGHTNESS[int(log(self.light.value or 1, 4))] 
+        brightness = self.light.value / 76.0
         self.background_color = tuple(min(int(color * brightness), 255) for color in EARTH_COLOR)
                 
     def post_process(self):
@@ -228,13 +220,13 @@ class Environment(pride.gui.grid.Grid):
                         except IndexError:
                             pass
                         else:
-                            cell.neighbors.append((neighbor, (_row, _column)))        
+                            cell.neighbors.append(neighbor)        
                 cells.append(cell)
         self.cells = cells        
         
     def process_grid(self):
         for cell in self.cells:
-            for neighbor, coordinates in cell.neighbors:
+            for neighbor in cell.neighbors:
                 cell.process_neighbor(neighbor)
         for cell in self.cells:
             cell.post_process()                
@@ -256,9 +248,9 @@ class Environment(pride.gui.grid.Grid):
 class Region(pride.gui.gui.Container):
                     
     defaults = {"recursions" : 3, "minimum_region_size" : 100, "grid_size" : (3, 3),
-                "pack_mode" : "left", "region1" : None, "region2" : None,
+                "pack_mode" : "left", "region1" : None, "region2" : None, "parent_map" : None,
                 "environment" : None, "randomize_environment" : True}
-                
+
     def subdivide(self):
         self.pack()
         recursions = self.recursions        
@@ -277,7 +269,8 @@ class Region(pride.gui.gui.Container):
                         width = game.mechanics.random.random_from_range(minimum_size, max_width)
                     pack_mode = "left"                    
                     region1 = self.create(Region, w_range=(width, width), recursions=recursions, pack_mode=pack_mode,
-                                                  randomize_environment=randomize_environment)                      
+                                                  randomize_environment=randomize_environment, region_number=1,
+                                                  parent_map=self.parent_map)                      
             else:
                 if self.h - minimum_size >= minimum_size:
                     max_height = self.h - minimum_size
@@ -287,35 +280,38 @@ class Region(pride.gui.gui.Container):
                         height = game.mechanics.random.random_from_range(minimum_size, max_height)
                     pack_mode = "top"                    
                     region1 = self.create(Region, h_range=(height, height), recursions=recursions, pack_mode=pack_mode,
-                                                  randomize_environment=randomize_environment)            
+                                                  randomize_environment=randomize_environment, region_number=1,
+                                                  parent_map=self.parent_map)            
             if region1 is not None:                      
                 region2 = self.create(Region, recursions=recursions, pack_mode=pack_mode, 
-                                              randomize_environment=randomize_environment)
+                                              randomize_environment=randomize_environment, 
+                                              region_number=2, parent_map=self.parent_map)
                 region1.subdivide()
                 region2.subdivide()
                 self.region1 = region1
                 self.region2 = region2
                 
-                if region1.environment is not None:
-                    if region1.pack_mode == "top":
-                        region1.southern_border.neighbors.append((region2.northern_border, ("northern", "border")))
-                        region2.northern_border.neighbors.append((region1.southern_border, ("southern", "border")))                        
-                                                        
-                    else:
-                        region1.eastern_border.neighbors.append((region2.western_border, ("western", "border")))
-                        region2.western_border.neighbors.append((region1.eastern_border, ("eastern", "border")))                        
+      #          if region1.environment is not None:
+      #              if region1.pack_mode == "top":
+      #                  region1.southern_border.neighbors.append((region2.northern_border, ("northern", "border")))
+      #                  region2.northern_border.neighbors.append((region1.southern_border, ("southern", "border")))                        
+      #              else:
+      #                  next_pack_mode = "top"
+      #                  region1.eastern_border.neighbors.append((region2.western_border, ("western", "border")))
+      #                  region2.western_border.neighbors.append((region1.eastern_border, ("eastern", "border")))                                                                
             else:                   
                 self.setup_environment()     
         else:   
-            self.setup_environment()
-
+            self.setup_environment()                
+        
     def setup_environment(self):
         grid_size = self.grid_size
         self.environment = self.create(Environment, grid_size=grid_size)
         if self.randomize_environment:                    
             self.environment.randomize()
         self.setup_border_regions() 
-        
+        self.parent_map.region_list.append(self)
+                
     def setup_border_regions(self): 
         button_type = self.environment.column_button_type
         self.northern_border = self.create(button_type, pack_mode="top", h_range=(10, 10))
@@ -330,30 +326,31 @@ class Region(pride.gui.gui.Container):
         southern_border = self.southern_border
         for column in range(columns):
             neighbor = map[column][0]
-            northern_border.neighbors.append((neighbor, (column, 0)))
-            neighbor.neighbors.append((northern_border, ("northern", "border")))
+            northern_border.neighbors.append(neighbor)
+            neighbor.neighbors.append(northern_border)
             
             neighbor = map[column][rows - 1]
-            southern_border.neighbors.append((neighbor, (column, rows - 1)))
-            neighbor.neighbors.append((southern_border, ("southern", "border")))
+            southern_border.neighbors.append(neighbor)
+            neighbor.neighbors.append(southern_border)
                 
         eastern_border = self.eastern_border
         western_border = self.western_border
         for row in range(0, rows):
             neighbor = map[0][row]
-            western_border.neighbors.append((neighbor, (0, row)))
-            neighbor.neighbors.append((western_border, ("western", "border")))
+            western_border.neighbors.append(neighbor)
+            neighbor.neighbors.append(western_border)
             
             neighbor = map[columns - 1][row]
-            eastern_border.neighbors.append((neighbor, (columns - 1, row)))
-            neighbor.neighbors.append((eastern_border, ("eastern", "border")))            
+            eastern_border.neighbors.append(neighbor)
+            neighbor.neighbors.append(eastern_border)
         
         self.environment.cells.extend((northern_border, southern_border, eastern_border, western_border)) 
-        
+          
         
 class Map(pride.gui.gui.Window):
             
     defaults = {"region" : None, "randomize_environment" : True}
+    mutable_defaults = {"region_list" : list}
     
     def __init__(self, **kwargs):
         super(Map, self).__init__(**kwargs)
@@ -362,7 +359,36 @@ class Map(pride.gui.gui.Window):
     def randomize(self):
         if self.region is not None:
             self.region.delete()        
-        region = self.region = self.create(Region, randomize_environment=self.randomize_environment)
+        region = self.region = self.create(Region, randomize_environment=self.randomize_environment,
+                                                   parent_map=self)
         region.subdivide()        
         region.pack() # pack all the environments at the end
         
+        region_list = self.region_list
+        for region in region_list:            
+            for other_region in region_list:
+                if region is other_region:
+                    continue   
+                    
+                region_x, region_y = region.position
+                region_width = region_x + region.w
+                region_height = region_y + region.h
+                
+                other_x, other_y = other_region.position
+                other_width = other_x + other_region.w
+                other_height = other_y + other_region.h
+                if other_y >= region_y and other_y <= region_height:
+                    if region_width == other_x:                        
+                        region.eastern_border.neighbors.append(other_region.western_border)
+                        other_region.western_border.neighbors.append(region.eastern_border) 
+                    elif other_width == region_x:
+                        other_region.eastern_border.neighbors.append(region.western_border)
+                        region.western_border.neighbors.append(other_region.eastern_border)
+                if (other_x >= region_x and other_x <= region_width):
+                    if region_height == other_y:                        
+                        region.southern_border.neighbors.append(other_region.northern_border)
+                        other_region.northern_border.neighbors.append(region.southern_border)
+                    elif other_height == region_y:
+                        other_region.southern_border.neighbors.append(region.northern_border)
+                        region.northern_border.neighbors.append(other_region.southern_border)
+                        
