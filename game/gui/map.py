@@ -82,6 +82,9 @@ class Elevation(Tile_Attribute):
         
 class Pressure(Tile_Attribute): pass
 
+# log(value, 2) should indicate how far the light should reach
+# i.e. 1, 2, 3, 4, 5, 6, 7 tiles away
+# < 2 = 
 
 class Light(Tile_Attribute): 
 
@@ -91,25 +94,27 @@ class Light(Tile_Attribute):
     def process_attribute(self, neighbor_attribute):     
         amount = self._amount
         
-        self_elevation = self.parent.elevation.value
-        neighbor_elevation = neighbor_attribute.parent.elevation.value
-        elevation_adjustment = int(log(abs(self_elevation - neighbor_elevation) or 1))
-        if self_elevation < neighbor_elevation:
-            elevation_adjustment = -elevation_adjustment
-        amount += elevation_adjustment
+        #self_elevation = self.parent.elevation.value
+        #neighbor_elevation = neighbor_attribute.parent.elevation.value
+        #elevation_adjustment = int(log(abs(self_elevation - neighbor_elevation) or 1))
+        #if self_elevation < neighbor_elevation:
+        #    elevation_adjustment = -elevation_adjustment
+        #amount += elevation_adjustment
         
-        if (not neighbor_attribute.is_source) or neighbor_attribute.source_magnitude == 0:
-            neighbor_attribute.adjustment += amount
+        #if (not neighbor_attribute.is_source) or neighbor_attribute.source_magnitude == 0:
+        neighbor_attribute.adjustment += amount
         self.adjustment -= amount        
 
-    def post_process(self):                  
-        neighbors = len(self.parent.neighbors)
-        self.value += self.adjustment - neighbors
-        self.adjustment /= neighbors + 1
+    def post_process(self):                          
+        self.value += self.adjustment        
+        #self.adjustment /= neighbors + 1
+        self.adjustment = 0
         
         if self.is_source:
             self.value += self.source_magnitude   
-        self._amount = self.value / 4           
+        self._amount, excess = divmod(self.value, len(self.parent.neighbors))
+        self.value -= excess
+        
     
 class Water_Level(Tile_Attribute): 
 
@@ -205,18 +210,18 @@ class Environment(pride.gui.grid.Grid):
         
     def setup_cells(self):
         cells = []
-        map = self
-        for row in range(map.rows):
-            for column in range(map.columns):
-                cell = map[row][column]
+        map = self        
+        for column in range(map.columns):                
+            for row in range(map.rows):            
+                cell = map[column][row]
                 
                 for _index in range(-1, 2):
                     for _index2 in range(-1, 2):
-                        _row, _column = row + _index, column + _index2
-                        if _row < 0 or _column < 0 or (_row, _column) == (row, column):
+                        _column, _row = column + _index, row + _index2
+                        if _row < 0 or _column < 0 or (_column, _row) == (column, row):
                             continue
                         try:
-                            neighbor = map[_row][_column]
+                            neighbor = map[_column][_row]
                         except IndexError:
                             pass
                         else:
@@ -289,24 +294,15 @@ class Region(pride.gui.gui.Container):
                 region1.subdivide()
                 region2.subdivide()
                 self.region1 = region1
-                self.region2 = region2
-                
-      #          if region1.environment is not None:
-      #              if region1.pack_mode == "top":
-      #                  region1.southern_border.neighbors.append((region2.northern_border, ("northern", "border")))
-      #                  region2.northern_border.neighbors.append((region1.southern_border, ("southern", "border")))                        
-      #              else:
-      #                  next_pack_mode = "top"
-      #                  region1.eastern_border.neighbors.append((region2.western_border, ("western", "border")))
-      #                  region2.western_border.neighbors.append((region1.eastern_border, ("eastern", "border")))                                                                
+                self.region2 = region2                                                             
             else:                   
                 self.setup_environment()     
         else:   
             self.setup_environment()                
         
     def setup_environment(self):
-        grid_size = self.grid_size
-        self.environment = self.create(Environment, grid_size=grid_size)
+        grid_size = game.mechanics.random.random_from_range(1, 4), game.mechanics.random.random_from_range(1, 4)        
+        self.environment = self.create(Environment, grid_size=self.grid_size)
         if self.randomize_environment:                    
             self.environment.randomize()
         self.setup_border_regions() 
@@ -363,7 +359,9 @@ class Map(pride.gui.gui.Window):
                                                    parent_map=self)
         region.subdivide()        
         region.pack() # pack all the environments at the end
+        self.link_border_regions()
         
+    def link_border_regions(self):
         region_list = self.region_list
         for region in region_list:            
             for other_region in region_list:
@@ -392,3 +390,15 @@ class Map(pride.gui.gui.Window):
                         other_region.southern_border.neighbors.append(region.northern_border)
                         region.northern_border.neighbors.append(other_region.southern_border)
                         
+            region.northern_border.neighbors.append(region.western_border)
+            region.northern_border.neighbors.append(region.eastern_border)
+            region.southern_border.neighbors.append(region.western_border)
+            region.southern_border.neighbors.append(region.eastern_border)
+            
+            region.western_border.neighbors.append(region.northern_border)
+            region.western_border.neighbors.append(region.southern_border)
+            region.eastern_border.neighbors.append(region.northern_border)
+            region.eastern_border.neighbors.append(region.southern_border)
+            
+            
+            
