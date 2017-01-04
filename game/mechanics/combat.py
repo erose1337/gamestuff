@@ -2,7 +2,7 @@ DEFAULT_HIT_CHANCE = 1
 HIT_THRESHOLD = 1
 
 def calculate_attack_rating(character):    
-    weapon_type, skill_tree = character.body.hand.weapon_type    
+    skill_tree, weapon_type = character.body.hand.weapon_type    
     skill_level = getattr(getattr(character.skills, skill_tree), weapon_type)    
     return skill_level + character.attributes.attack_rating.value
     

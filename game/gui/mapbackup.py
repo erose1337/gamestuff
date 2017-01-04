@@ -88,9 +88,8 @@ class Pressure(Tile_Attribute): pass
 
 class Light(Tile_Attribute): 
 
-    defaults = {"source_magnitude" : 76, "is_source" : True, "x_value" : 0, "y_value" : 0,
-                "x_adjustment" : 0, "y_adjustment" : 0, "horizontal_direction" : 0, 
-                "vertical_direction" : 0, "_amount" : 0}    
+    defaults = {"source_magnitude" : 76, "is_source" : True, "value" : 0, "adjustment" : 0,
+                "horizontal_direction" : 0, "vertical_direction" : 0, "_amount" : 0}    
     
     def process_attribute(self, neighbor_attribute):     
         amount = neighbor_attribute._amount                        
@@ -106,11 +105,7 @@ class Light(Tile_Attribute):
         self._amount, excess = divmod(self.value, len(self.parent.neighbors))           
         self.value -= excess
         
- 
-   # def process_attribute(self, neighbor_attribute):
-        
-               
-        
+    
 class Water_Level(Tile_Attribute): 
 
     defaults = {"adjustment" : 0, "_amount" : 0}
