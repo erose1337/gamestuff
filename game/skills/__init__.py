@@ -47,11 +47,11 @@ class Potions(Skill): pass
     
 class Skills(pride.components.base.Base):
     
-    defaults = {"all_skills" : ("melee", "range", "magic", "defence",
-                                "crafting", "spellcraft", "potions")}
+    defaults = {"all_skills" : ("Melee", "Range", "Magic", "Defence",
+                                "Crafting", "Spellcraft", "Potions")}
                 
     def __init__(self, **kwargs):
         super(Skills, self).__init__(**kwargs)
         for skill in self.all_skills:
-            setattr(self, skill, self.create("game.skills." + skill[0].upper() + skill[1:]))
+            setattr(self, skill, self.create("game.skills." + skill))
             

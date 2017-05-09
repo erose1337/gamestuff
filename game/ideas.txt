@@ -1,5 +1,65 @@
+#from math import log
+#
+#DEFAULT_CHUNK_SIZES = [32, 64, 128, 256, 512, 1024]
+#CHUNK_CACHE = {}
+#
+#def memoized(cache):
+#    def decorate(function):
+#        @wraps(function)
+#        def new_call(length, chunk_sizes):
+#            try:
+#                return cache[(length, chunk_sizes)]
+#            except KeyError:
+#                return function(length, chunk_sizes)                            
+#        return new_call
+#    return decorate
+#    
+#@memoized(CHUNK_CACHE)
+#def get_chunk_position(length, chunk_sizes=DEFAULT_CHUNK_SIZES):
+#    chunk = chunk_sizes[(max(log(item.h, 2), 4) - 4)]
+    
+
+       
+       
+# set texture dirty flag -> redraw object on new frame
+#                               - extend instruction list with drawing instructions
+#                               - if necessary, allocate a new position in the texture
+#                               - create a new copy instruction (object_area, object_area + screen_offset + object_offsets)
+# self.draw(self.copy_instructions)
+# for  object in window_objects:
+#     renderer.copy(texture, object_area, object_area + screen_offset + object_offsets)
+
+# | - - - - - |
+# |           |
+# |           |
+# |           |
+# | - - - - - |       
+
+
 Stats
 ------------
+    
+- increased via points and assignment
+- stat points gained from: combat experience
+- combat experience factors:
+    - min(1, (target_base + target_level - self_level)) * min(1.0, (damage_dealt_to_target / target_health))
+    - difficulty * participation 
+    - being at a much higher level against a low value target = less experience
+    - dealing insignificant amounts of damage to a target = less experience
+- combat experience levels:
+    - advance every 10n*log(n) points, where n = level
+    - 1: 10
+    - 2: 20
+    - 3: 30 * 1 = 30
+    - 4: 40 * 2 = 80
+    - 5: 50 * 2 = 100
+    - 6: 60 * 2 = 120
+    - 7: 70 * 2 = 140
+    - 8: 80 * 3 = 240
+    - 9: 90 * 3 = 270
+    ...
+    - 32: 320 * 4 = 1280
+    - must defeat >= 10 * log(n) opponents of equal level to advance one level    
     
 physical stats: 
     - strength
@@ -18,8 +78,7 @@ misc stats:
         - increases rate of health regeneration        
         
     - luck
-        - increases damage sometimes
-        - increases chance to hit sometimes
+        - increases damage sometimes        
         - increases chance to dodge sometimes
         - increases damage soaked sometimes
         - increases chance of finding more and better items
@@ -46,7 +105,18 @@ magical stats:
 Skills
 ------
 
+- increased by use
+
+
 weapon skills: 
+    - experience points gained on successful attack with the relevant weapon
+        - amount equal to damage dealt?
+    - level curve: 10n * log(n)
+        - 1: 10
+        - 2: 20
+        - 3: 30
+        - 4: 80        
+        - must deal 10 * level * log(level) damage to advance one level        
     - melee
         - sword, axe, dagger, etc
     - ranged
@@ -54,10 +124,14 @@ weapon skills:
     - magic
         - wand, sceptre, orb, etc
     
-    - increases chance to hit
     - increases damage with associated weapon type
+    - increases speed with associated weapon type
     
-armor skills:    
+armor skills:
+    - experience points gained when struck while wearing the appropriate armor    
+        - experience points = damage received
+    - level curve: 10n * log(n)
+        - must receive 10 * level * log(level) damage to advance
     - unarmored
         - increases dodge
     - light armor
@@ -65,18 +139,28 @@ armor skills:
     - heavy armor    
         - large increase to soak, decreases agility and decreases cast rate (higher levels decrease the penalty)
         
-crafting skills:    
+    - increases bonuses
+    - decreases penalties
+    
+crafting skills: 
+    - experience gained when crafting a new item
+    - level curve: 10n * log(n)
+        - experience points = item level
+        - must create 10 * log(level) items of equal level to advance one level in skill        
     - weapon and armor crafting
         - assemble from different types of pieces
             - i.e. a knife is built from a handle and blade
             - different designs call for different pieces
             - pieces can be made of different materials of varying quality
             - some pieces may be extensible and allow more pieces to be attached
+                - Can turn a X slot item into a Y slot item
+                    - i.e. a knife is composed of 2 parts, but if those 2 parts each are composed of two parts, the knife is composed of 4 parts
+                        - This matters because of the stat bonuses associated with each part
         - material types include various woods and metals
             - can have different stats and associated properties
-        - higher level influences item quality
+        - higher level influences item adds bonuses to stats
         - equipment can have slots for decorations/runes/jewels/etc
-        - "makers mark" ingredient attaches character name to item description
+        - makers mark ingredient attaches character name to item description
         
     - magic spell crafting
         - assemble new spells from different types of motions and incantations
@@ -85,7 +169,7 @@ crafting skills:
             - additional ritual objects may be required as well
                 - ritual objects may be of different materials and varying quality
                 - materials may include gems, spell books, potion ingredients, etc
-        - higher skill level increases spell quality
+        - higher skill level increases spell stats
             
     - potions
         - assemble potions from different types of recipes and ingredients
@@ -96,18 +180,141 @@ crafting skills:
         
     - enchanting
         - enchant equipment with effects using recipes and ingredients
-        - higher skill level increases quality
+        - higher skill level increases stat bonuses
+        
+crafting materials:        
+    - woods
+    - metals
+
+        
+weapon types:
+    - melee
+        - unarmed and gloves
+            - shortest reach, smallest damage, fastest attack speed
+                - low damage output stems from low armor penetration
+            - unarmed is the default off hand and main hand weapon                   
+        - knife
+            - short reach, small damage, fast attack speed
+            - components: handle, blade
+        - sword
+            - medium reach, medium damage, medium attack speed
+            - components: handle, blade
+        - blunt
+            - medium reach, medium damage, medium attack speed
+            - components: handle, shaft
+        - axe
+            - short reach, high damage, slow attack speed
+                - higher damage comes from armor penetrating chopping power
+            - components: handle, blade
+        - great sword
+            - high reach, medium damage, slow attack speed
+            - components: handle, blade
+        - polearm
+            - high reach, high damage, slowest attack speed
+                - deals slicing damage from far away
+                - deals blunt damage from medium range or closer
+            - components: handle, shaft, blade
+        - shield
+            - enhances block skill
+            - is armor, despite being in a weapon slot
+            - components: handle, body            
+               
+        
+        - handle components influence:
+            - attack speed
+            - durability
+        - blade components influence:
+            - min/max damage
+            - sharpness
+        - shaft components influence:
+            - min/max damage
+            - impact
+            
+        - shield handle influences:
+            - chance to dodge 
+            - movement speed
+            - clasp handle component can enable attaching a shield to the off hand even when a 2 handed weapon is wielded
+        - shield body influences:
+            - damage reduction %
+            - damage soak
+            
+    - ranged
+         (reach is relative to ranged weapons, not melee weapons)
+        - throwing
+            - short reach, smallest damage, fastest attack speed        
+            - the ammunition is the weapon
+            - components: weapon specific
+        - bow
+            - medium reach, medium damage, medium attack speed
+            - two handed
+            - weapon requires appropriate ammunition
+            - components: frame, string
+        - crossbow
+            - high reach, high damage, slow attack speed
+            - two handed
+            - weapon requires appropriate ammunition
+            - components: frame, string
+        - ammunition:
+            - damage rating
+            - components: flights, shaft, tip
+                       
+        - frame influences:
+            - damage min/max
+            - attack rate
+        - string influences:
+            - durability
+            - projectile speed
+            
+        - ammunition flights:
+            - influence projectile speed
+        - ammunition shaft:
+            - influences projectile speed
+        - ammunition tip:
+            - influences min/max damage
+            
+    - magic
+        - wand
+            - small projectile speed/homing/critical increase, small potency increase, large cast rate increase
+            - components: core, body
+        - staff
+            - small projectile speed/homing/critical increase, large potency increase, small cast rate increase
+            - components: body, crystal
+        - charm
+            - large projectile speed/homing/critical increase, small potency increase, small cast rate increase
+            - components: item specific
+        - spell book
+            - off hand/can only equip one
+            - various stat modifications
+            - components: item specific
+        
+        - wand core influences:
+            - cast rate
+            - projectile speed
+        - wand body influences:
+            - potency
+            
+        - staff crystal influences:
+            - cast rate
+            - projectile speed            
+        - staff body influences:
+            - potency
+                            
         
 attack modes:
-    - prioritize accuracy and chance to hit    
+    - prioritize speed
     - prioritize min and max damage
     - prioritize defence 
     
 defence modes:
     - prioritize dodge
     - prioritize soak
-    - parry (less dodge/soak but counter attacks are possible)    
+    - parry (no dodge/soak boost but counter attacks are possible)    
         
+casting modes:
+    - prioritize casting speed
+    - prioritize potency
+    - prioritize projectile speed, homing, and criticals
+    
 magic:
     - Various types of elements, in pairs that are opposites:
         - fire
@@ -150,4 +357,83 @@ passive skills:
 active skills:
     - weapon based skills
     
+    
+# stats
+weapon stats:
+    - damage min/max
+    - attack speed
+        - does not apply to spell casting
+        - opposing stat: dodge cooldown 
+        - it is easier to dodge slower weapons            
+    - durability rating
+        - cannot equip at 0 durability
+        - components can become damaged/destroyed if item is worn at 0 durability
+    - bladed weapons have a sharpness rating
+        - increases damage relative to targets damage soak ability
+            - effectively decreases targets damage soak ability        
+        - applies to bladed munitions
+        - can cause bleeding (lost health over time) (possibility to become infected (+ poison damage over time))
+    - blunt weapons have an impact rating
+        - increases damage relative to targets damage soak ability
+            - effectively decreases targets damage soak ability
+        - can cause bruising (reduced benefits/extra penalties to associated area)
+            - i.e. bruised leg reduces movement speed        
+            
+    - projectile speed modifier
+        - does not apply to melee weapons
+        - does apply to spells
+    
+    - cast rate modifier
+        - only applies to spells
+    
+    
+armor stats:
+    - damage % reduction       
+        - protects against all attacks
+            - may have higher/lower values depending on material and oncoming damage type            
+    - damage soak min/max     
+        - soak works the best against many weak attackers simultaneously dealing small amounts of damage
+    - chance to dodge modifier        
+        - cooldown timer means that dodge works the best against a slowly attacking, high damage opponent        
+    - movement speed modifier
+        - increased inertia (resistance to speeding up and slowing down)
+        - decreased max speed                 
+    - application order: dodge -> soak -> damage % reduction
+        - attempt to dodge first
+        - reduce damage by soak amount
+        - reduce damage by % amount      
+        
+spell stats:
+    - potency min/max
+        - potency determines damage for spells that are damaging
+        - determines magnitude of other effects accordingly (i.e. amount of health restored for a healing spell)
+        - magic analogue to the physical damage min/max
+    - cast rate and cooldown timer
+        - magic analogue to the physical attack speed
+    - chance to home onto target
+        - magic analogue to chance to hit modifier
+    
+    - projectile speed modifier
+        
+    
+  
+  
+gameplay/combat options
+    - diablo style hack and slash
+        - capturing enemies is not so fun
+            - having a companion in diablo 2 was a boring necessity
+    - turn based strategy (a la dragon warrior)
+        - capturing enemies is fun
+        - combat itself may be less then exciting 
+    - monster hunter in 2d top down view 
+        - capturing enemies could be fun 
+        - combat is fun
+        
+        
+        
+graphics stuff
+    - each character has a sprite
+    - pack mode: layer
+        - does not modify x, y coordinates
+    - hotkeys for movement
     

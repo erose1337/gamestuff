@@ -1,3 +1,5 @@
+import game.mechanics.randomgeneration
+
 DEFAULT_HIT_CHANCE = 1
 HIT_THRESHOLD = 1
 
@@ -18,16 +20,23 @@ def calculate_chance_to_hit(character, other_character):
     
 def calculate_soak(character):
     stats = character.stats
-    return stats.endurance + stats.willpower + character.attributes.soak
+    return stats.endurance.level + stats.willpower.level + character.attributes.soak.value
         
 def calculate_damage_output(character, other_character):
     # factors in damage: weapon damage, strength bonus, soak amount, luck    
-    weapon_damage = character.body.hand.damage
-    return (random_selection(*weapon_damage) + character.stats.strength.level) - calculate_soak(other_character)
+    weapon_damage = character.weapon.damage
+    return (game.mechanics.randomgeneration.random_from_range(*weapon_damage) + 
+            character.stats.strength.level) #- calculate_soak(other_character)
             
 def process_attack(character, other_character):
-    chance_to_hit = calculate_chance_to_hit(character, other_character)    
-    if chance_to_hit >= HIT_THRESHOLD:
-        other_character.stats.health -= calculate_damage_output(character, other_character)
+    #chance_to_hit = calculate_chance_to_hit(character, other_character)    
+    #print("Chance to hit: {} / {}".format(chance_to_hit, HIT_THRESHOLD))
+    #if chance_to_hit >= HIT_THRESHOLD:
+    other_character.stats.health.current_health -= calculate_damage_output(character, other_character)
     
-        
+def process_flee(fleeing_character, other_character):
+    if game.mechanics.randomgeneration.random_from_range(25, 100) <= 25:
+        return False
+    else:
+        return True
+            

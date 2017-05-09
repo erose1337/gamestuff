@@ -3,7 +3,7 @@ from math import log
 import pride.gui.gui
 import pride.gui.grid
 
-import game.mechanics.random
+import game.mechanics.randomgeneration
 
 EARTH_COLOR = (155, 125, 55, 255)
 WATER_OVERLAY_THRESHOLD = 80
@@ -48,7 +48,7 @@ class Tile_Attribute(pride.components.base.Base):
         _neighbor_attribute.value += neighbor_adjustment
             
     def add_noise(self, minimum, maximum):
-        self.value += game.mechanics.random.random_from_range(minimum, maximum)
+        self.value += game.mechanics.randomgeneration.random_from_range(minimum, maximum)
         
     def post_process(self):
         pass
@@ -88,9 +88,7 @@ class Pressure(Tile_Attribute): pass
 
 class Light(Tile_Attribute): 
 
-    defaults = {"source_magnitude" : 76, "is_source" : True, "x_value" : 0, "y_value" : 0,
-                "x_adjustment" : 0, "y_adjustment" : 0, "horizontal_direction" : 0, 
-                "vertical_direction" : 0, "_amount" : 0}    
+    defaults = {"source_magnitude" : 76, "is_source" : True, "adjustment" : 0, "_amount" : 0, "value" : 0}    
     
     def process_attribute(self, neighbor_attribute):     
         amount = neighbor_attribute._amount                        
@@ -98,11 +96,15 @@ class Light(Tile_Attribute):
         self.adjustment += amount        
 
     def post_process(self):                          
-        self.value += self.adjustment                
-        self.adjustment = 0
+        _adjustment = -self.value
+        self.value += self.adjustment 
+        self.adjustment = 0        
         
-        if self.is_source:
+        if self.is_source and self.source_magnitude:
             self.value += self.source_magnitude            
+            self.value -= int(log(abs(self.value - self.adjustment) or 1, 2))
+            self.adjustment = _adjustment
+            
         self._amount, excess = divmod(self.value, len(self.parent.neighbors))           
         self.value -= excess
         
@@ -137,7 +139,11 @@ class Water_Level(Tile_Attribute):
             self.value += self.source_magnitude  
         self._amount = self.value / len(self.parent.neighbors)
         
-    
+BRIGHTNESS_LEVELS = 64
+BRIGHTNESS_SCALAR = 3.0 / BRIGHTNESS_LEVELS
+BRIGHTNESS = [BRIGHTNESS_SCALAR * count for count in range(BRIGHTNESS_LEVELS)]#.25, .5, .75, 1.0, 1.25, 1.5, 1.75, 2.0]
+BRIGHTNESS_DIVISOR = 256 / BRIGHTNESS_LEVELS
+       
 class Game_Tile(pride.gui.gui.Button):
     
     defaults = {"background_color" : EARTH_COLOR,
@@ -153,7 +159,9 @@ class Game_Tile(pride.gui.gui.Button):
             setattr(self, name, value)            
             self.children.remove(value)
             self.process_attributes.append(value)
-            
+        self.light_overlay = self.create(Tile_Overlay)
+        self.light_overlay.background_color = (0, 0, 0, 0)
+        
     def process_neighbor(self, neighbor):        
         neighbor_processes = neighbor.process_attributes
         for index, attribute_object in enumerate(self.process_attributes):               
@@ -168,16 +176,23 @@ class Game_Tile(pride.gui.gui.Button):
         elif self.overlay is not None:
             self.overlay.delete()
             self.overlay = None
-
-        #BRIGHTNESS = [.1, .25, .5, .75, 1.0, 1.25, 1.5, 1.75]
-        #brightness = BRIGHTNESS[int(log(self.light.value or 1, 4))] 
-        brightness = self.light.value / 76.0
-        self.background_color = tuple(min(int(color * brightness), 255) for color in EARTH_COLOR)
+        
+        brightness = self.light.value#BRIGHTNESS[self.light.value / BRIGHTNESS_DIVISOR]
+        
+        self.light_overlay.background_color = (brightness, brightness, brightness, max(255 - max(128, brightness), 0))
+        
+        #brightness = self.light.value / 76.0
+        #self.background_color = tuple(min(int(color * brightness), 255) for color in EARTH_COLOR)
                 
     def post_process(self):
         for attribute in self.process_attributes:
             attribute.post_process()
             
+    def delete(self):
+        for name, _ in self.attribute_listing:
+            getattr(self, name).delete()
+        super(Game_Tile, self).delete()
+        
         
 class Tile_Overlay(pride.gui.gui.Button):   
 
@@ -232,6 +247,7 @@ class Environment(pride.gui.grid.Grid):
             cell.post_process()                
     
     def randomize(self): 
+        return
         map = self
         for row in range(map.rows):
             for column in range(map.columns):
@@ -266,7 +282,7 @@ class Region(pride.gui.gui.Container):
                     if max_width == minimum_size:
                         width = minimum_size
                     else:
-                        width = game.mechanics.random.random_from_range(minimum_size, max_width)
+                        width = game.mechanics.randomgeneration.random_from_range(minimum_size, max_width)
                     pack_mode = "left"                    
                     region1 = self.create(Region, w_range=(width, width), recursions=recursions, pack_mode=pack_mode,
                                                   randomize_environment=randomize_environment, region_number=1,
@@ -277,7 +293,7 @@ class Region(pride.gui.gui.Container):
                     if max_height == minimum_size:
                         height = minimum_size
                     else:
-                        height = game.mechanics.random.random_from_range(minimum_size, max_height)
+                        height = game.mechanics.randomgeneration.random_from_range(minimum_size, max_height)
                     pack_mode = "top"                    
                     region1 = self.create(Region, h_range=(height, height), recursions=recursions, pack_mode=pack_mode,
                                                   randomize_environment=randomize_environment, region_number=1,
@@ -296,7 +312,7 @@ class Region(pride.gui.gui.Container):
             self.setup_environment()                
         
     def setup_environment(self):
-        grid_size = game.mechanics.random.random_from_range(1, 4), game.mechanics.random.random_from_range(1, 4)        
+        grid_size = game.mechanics.randomgeneration.random_from_range(1, 4), game.mechanics.randomgeneration.random_from_range(1, 4)        
         self.environment = self.create(Environment, grid_size=self.grid_size)
         if self.randomize_environment:                    
             self.environment.randomize()

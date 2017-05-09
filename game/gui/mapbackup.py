@@ -3,7 +3,7 @@ from math import log
 import pride.gui.gui
 import pride.gui.grid
 
-import game.mechanics.random
+import game.mechanics.randomgeneration
 
 EARTH_COLOR = (155, 125, 55, 255)
 WATER_OVERLAY_THRESHOLD = 80
@@ -48,7 +48,7 @@ class Tile_Attribute(pride.components.base.Base):
         _neighbor_attribute.value += neighbor_adjustment
             
     def add_noise(self, minimum, maximum):
-        self.value += game.mechanics.random.random_from_range(minimum, maximum)
+        self.value += game.mechanics.randomgeneration.random_from_range(minimum, maximum)
         
     def post_process(self):
         pass
@@ -261,7 +261,7 @@ class Region(pride.gui.gui.Container):
                     if max_width == minimum_size:
                         width = minimum_size
                     else:
-                        width = game.mechanics.random.random_from_range(minimum_size, max_width)
+                        width = game.mechanics.randomgeneration.random_from_range(minimum_size, max_width)
                     pack_mode = "left"                    
                     region1 = self.create(Region, w_range=(width, width), recursions=recursions, pack_mode=pack_mode,
                                                   randomize_environment=randomize_environment, region_number=1,
@@ -272,7 +272,7 @@ class Region(pride.gui.gui.Container):
                     if max_height == minimum_size:
                         height = minimum_size
                     else:
-                        height = game.mechanics.random.random_from_range(minimum_size, max_height)
+                        height = game.mechanics.randomgeneration.random_from_range(minimum_size, max_height)
                     pack_mode = "top"                    
                     region1 = self.create(Region, h_range=(height, height), recursions=recursions, pack_mode=pack_mode,
                                                   randomize_environment=randomize_environment, region_number=1,
@@ -291,7 +291,7 @@ class Region(pride.gui.gui.Container):
             self.setup_environment()                
         
     def setup_environment(self):
-        grid_size = game.mechanics.random.random_from_range(1, 4), game.mechanics.random.random_from_range(1, 4)        
+        grid_size = game.mechanics.randomgeneration.random_from_range(1, 4), game.mechanics.randomgeneration.random_from_range(1, 4)        
         self.environment = self.create(Environment, grid_size=self.grid_size)
         if self.randomize_environment:                    
             self.environment.randomize()
