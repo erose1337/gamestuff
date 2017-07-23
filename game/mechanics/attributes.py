@@ -4,11 +4,11 @@ class Attribute(pride.components.base.Base):
 
     defaults = {"value" : 1}
     
-    def __get__(self, instance, owner):        
-        return self.value
-        
-    def __set__(self, instance, value):
-        self.value = value          
+  #def __get__(self, instance, owner):        
+  #    return self.value
+  #    
+  #def __set__(self, instance, value):
+  #    self.value = value          
 
     
 class Attack_Rating(Attribute): pass

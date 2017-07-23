@@ -43,15 +43,15 @@ class Component(Item):
     
 class Equipment(Item):  
     
-#    mutable_defaults = {"stat_modifiers" : list}    
+    mutable_defaults = {"effect_modifiers" : list}    
     
-    defaults = {"durability" : 100}
+    defaults = {"durability" : 100, "equips_to" : tuple()}
     
                         
 class Weapon(Equipment):
         
     defaults = {"weapon_type" : ("Skill_Tree", "Weapon_Type"), 
-                "damage" : (0, 0), "speed" : 1}
+                "damage" : (0, 0), "speed" : 1, "equips_to" : ("hand", )}
     
     
 class Weapon_Part(Component): 

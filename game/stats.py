@@ -10,12 +10,12 @@ DEFAULT_STATS = dict((item, 1) for item in STATS)
          
 class Stat(pride.components.base.Base):
     
-    defaults = {"_initial_level" : 1, "level" : 1}
+    defaults = {"progress" : 0}
     
     def __init__(self, **kwargs):
         super(Stat, self).__init__(**kwargs)
-        if self.level is None:
-            self.level = self.create(game.level.Level, value=self._initial_level)
+        assert not hasattr(self, "level")
+        self.level = self.create(game.level.Level, progress=self.progress)
         
         
 class Strength(Stat): pass
@@ -63,19 +63,18 @@ class Health(Stat):
     current_health = property(_get_current_health, _set_current_health)
     
     def _get_display_values(self):
-        return self._current_health, self.level
+        return self._current_health, self.level.value
     display_values = property(_get_display_values)
         
     def __init__(self, **kwargs):
         super(Health, self).__init__(**kwargs)        
-        self.current_health = self.level
+        self.current_health = self.level.value
         
    
 class Luck(Stat):
     
     defaults = {"current_luck" : 0, "bonus_luck" : 0, "dodge_bonus" : 1}
-    mutable_defaults = {"level" : lambda: game.level.Level(value=1)}    
-        
+            
     def __init__(self, **kwargs):
         super(Luck, self).__init__(**kwargs)
         self.current_luck = self.level.value

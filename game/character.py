@@ -13,15 +13,8 @@ BODY_PARTS = ("head", "face", "neck", "shoulder", "chest", "back",
                                 
 class Body_Part(pride.components.base.Base):
         
-    defaults = {"value" : None}
-    
-    def __get__(self, instance, owner):                
-        return self.value
+    defaults = {"equipment" : None}
         
-    def __set__(self, instance, value):
-        self.value = value
-        
-
 class Head(Body_Part): pass
 class Face(Body_Part): pass
 class Neck(Body_Part): pass
@@ -30,7 +23,11 @@ class Chest(Body_Part): pass
 class Back(Body_Part): pass
 class Arm(Body_Part): pass
 class Wrist(Body_Part): pass
-class Hand(Body_Part): pass
+class Hand(Body_Part): 
+    
+    mutable_defaults = {"equipment" : game.items.melee.weapons.Unarmed}
+    
+    
 class Waist(Body_Part): pass
 class Thigh(Body_Part): pass
 class Leg(Body_Part): pass
@@ -43,7 +40,7 @@ class Body(pride.components.base.Base):
     
     defaults = {"body_parts" : ("head", "face", "neck", "shoulder", "chest", "back",
                                 "arm", "wrist", "hand", "waist", "thigh", "leg", "foot",                                 
-                                "finger", "tattoo", "hand"),
+                                "finger", "tattoo"),
                 "backpack_type" : "game.items.backpack.No_Backpack",
                 "_character" : ''}    
     
@@ -65,7 +62,7 @@ class Character(pride.components.base.Base):
     def _get_weapon(self):
         value = self._weapon             
         if value is None:
-            strength = self.stats.strength.level
+            strength = self.stats.strength.level.value
             value = game.items.melee.weapons.Unarmed(damage=(strength / 4, strength))        
         return value
     def _set_weapon(self, value):
@@ -92,16 +89,29 @@ class Character(pride.components.base.Base):
         assert self.is_dead == True
         
     def equip(self, equipment):
-        for attribute, modifier, value in equipment.stat_modifiers:
+        body = self.body
+        for slot_name in equipment.equips_to:
+            slot = getattr(body, slot_name)
+            current_equipment = slot.equipment
+            if current_equipment is not equipment:
+                self.unequip(current_equipment)
+            else:
+                break
+            slot.equipment = equipment
+            
+        for attribute, modifier, value in equipment.effect_modifiers:
             getattr(self, attribute).__dict__[modifier] += value
             
-    def unequip(self, equipment):
-        for attribute, modifier, value in equipment.stat_modifiers:
+    def unequip(self, equipment):            
+        body = self.body
+        for slot_name in equipment.equips_to:
+            getattr(body, slot_name).equipment = None    
+        for attribute, modifier, value in equipment.effect_modifiers:
             getattr(self, attribute).__dict__[modifier] -= value
             
 def test_Character():
     character = Character(name="Character unit test")    
-    character.stats.strength.level += 1
+    character.stats.strength.level.progress += 10
     
     character2 = Character(name="unit test2")
     

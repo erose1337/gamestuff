@@ -149,7 +149,7 @@ class Game_Tile(pride.gui.gui.Button):
     defaults = {"background_color" : EARTH_COLOR,
                 "attribute_listing" : (("elevation", Elevation), ("water_level", Water_Level), ("light", Light))}#, ("temperature", Temperature), 
                                    #    ("pressure", Pressure), ("biology", Biology), ("light", Light))}
-    mutable_defaults = {"process_attributes" : list, "neighbors" : list}
+    mutable_defaults = {"process_attributes" : list, "neighbors" : list, "_child_attributes" : list}
     flags = {"overlay" : None}
     
     def __init__(self, **kwargs):        
@@ -158,10 +158,20 @@ class Game_Tile(pride.gui.gui.Button):
             value = self.create(_type)            
             setattr(self, name, value)            
             self.children.remove(value)
+            self._child_attributes.append(value)
             self.process_attributes.append(value)
         self.light_overlay = self.create(Tile_Overlay)
         self.light_overlay.background_color = (0, 0, 0, 0)
         
+    def remove(self, item):        
+        try:
+            super(Game_Tile, self).remove(item)
+        except ValueError:
+            if item in self._child_attributes:
+                self._child_attributes.remove(item)
+            else:
+                raise                                       
+                
     def process_neighbor(self, neighbor):        
         neighbor_processes = neighbor.process_attributes
         for index, attribute_object in enumerate(self.process_attributes):               
@@ -209,18 +219,18 @@ class Environment(pride.gui.grid.Grid):
                 "square_outline_colors" : ((155, 155, 155, 255), ),
                 "column_button_type" : Game_Tile, "grid_type" : "pride.gui.grid.Grid",
                 "grid_size" : (3, 3), "pack_mode" : "main"}
-        
+    
+    verbosity = {"setup_cells" : "vvv"}
+    
     def __init__(self, **kwargs):
-        super(Environment, self).__init__(**kwargs)
+        super(Environment, self).__init__(**kwargs)        
         pride.objects["/Python/Background_Refresh"].callbacks.append((self, "process_grid"))  
-       # self.map = self.create(self.grid_type, grid_size=self.grid_size, column_button_type=self.column_button_type,
-       #                                        square_colors=self.square_colors, square_outline_colors=self.square_outline_colors,
-       #                                        pack_mode="main")
         self.setup_cells()
         
     def setup_cells(self):
+        self.alert("Setting up {} by {} grid".format(*self.grid_size), level=self.verbosity["setup_cells"])
         cells = []
-        map = self        
+        map = self                       
         for column in range(map.columns):                
             for row in range(map.rows):            
                 cell = map[column][row]
@@ -239,7 +249,7 @@ class Environment(pride.gui.grid.Grid):
                 cells.append(cell)
         self.cells = cells        
         
-    def process_grid(self):
+    def process_grid(self):        
         for cell in self.cells:
             for neighbor in cell.neighbors:
                 cell.process_neighbor(neighbor)
@@ -370,7 +380,7 @@ class Map(pride.gui.gui.Window):
                                                    parent_map=self)
         region.subdivide()        
         region.pack() # pack all the environments at the end
-        self.link_border_regions()
+        self.link_border_regions()        
         
     def link_border_regions(self):
         region_list = self.region_list

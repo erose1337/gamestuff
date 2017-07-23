@@ -41,17 +41,65 @@ class Battle_Result_Handler(object):
         capturer.alert("Now you are my prisoner.", level=0, display_name=capturer.name)
                        
     
+class Combat_Handler(object):
+               
+    def handle_attack(self, active_party, other_party):
+        raise NotImplementedError()
+                
+    def handle_defend(self, active_party, other_party):
+        raise NotImplementedError()
+            
+    def handle_ability(self, active_party, other_party):
+        raise NotImplementedError()
+                
+    def handle_item(self, active_party, other_party):
+        raise NotImplementedError()
+             
+    def handle_run(self, active_party, other_party):
+        raise NotImplementedError()
+         
+    def handle_surrender(self, active_party, other_party):        
+        raise NotImplementedError()
+
+        
+class Synchronous_Combat_Handler(object):
+        
+    verbosity = {"surrender" : 0}
+    
+    def handle_attack(self, active_party, other_party):
+        game.mechanics.combat.process_attack(active_party, other_party)            
+        
+    def handle_defend(self, active_party, other_party):
+        active_party.alert("*Defends*", level=0, display_name=active_party.name)
+    
+    def handle_ability(self, active_party, other_party):
+        active_party.alert("ability: ", level=0, display_name=active_party.name)
+        
+    def handle_item(self, active_party, other_party):
+        active_party.alert("items: ", level=0, display_name=active_party.name)
+        
+    def handle_run(self, active_party, other_party):
+        game.mechanics.combat.process_flee(active_party, other_party)
+    
+    def handle_surrender(self, active_party, other_party):        
+        active_party.alert("surrender!", level=self.verbosity["surrender"],
+                           display_name=active_party.name)
+
+                           
 class Synchronous_Combat_Engine(object):
     
-    menu_selections = ["attack", "defend", "skill", "item", "run", "surrender"]
+    menu_selections = ["attack", "defend", "ability", "item", "run", "surrender"]
     selection_prompt = " ".join("{}" for count in range(len(menu_selections)))        
     selection_prompt = selection_prompt.format(*menu_selections) + "\nChoice: "    
     invalid_selection_prompt = "Invalid selection"
-    
-    verbosity = {"surrender" : 0}
-    
+            
     result_handler = Battle_Result_Handler()
+    combat_handler = Synchronous_Combat_Handler()
     
+    def __init__(self, *args, **kwargs):
+        super(Synchronous_Combat_Engine, self).__init__(*args, **kwargs)
+        
+        
     def begin_battle(self, party1, party2):
         battle_engaged = True        
         active_party = party2
@@ -87,7 +135,7 @@ class Synchronous_Combat_Engine(object):
         return outcome
         
     def end_battle(self, party1, party2, last_selection):
-        outcome = self.determine_battle_outcome(party1, party2, last_selection)
+        outcome = self.determine_battle_outcome(party1, party2, last_selection)        
         getattr(self.result_handler, "handle_{}".format(outcome))(party1, party2)
                         
     def present_menu(self, active_party, other_party):
@@ -96,28 +144,8 @@ class Synchronous_Combat_Engine(object):
         print('*' * 79)
         selection = get_selection(self.selection_prompt, self.invalid_selection_prompt, self.menu_selections)
         assert selection in self.menu_selections
-        getattr(self, "handle_{}".format(selection))(active_party, other_party)
-        return selection
-        
-    def handle_attack(self, active_party, other_party):
-        game.mechanics.combat.process_attack(active_party, other_party)            
-        
-    def handle_defend(self, active_party, other_party):
-        active_party.alert("*Defends*", level=0, display_name=active_party.name)
-    
-    def handle_skill(self, active_party, other_party):
-        active_party.alert("skills: ", level=0, display_name=active_party.name)
-        
-    def handle_item(self, active_party, other_party):
-        active_party.alert("items: ", level=0, display_name=active_party.name)
-        
-    def handle_run(self, active_party, other_party):
-        game.mechanics.combat.process_flee(active_party, other_party)
-    
-    def handle_surrender(self, active_party, other_party):        
-        active_party.alert("surrender!", level=self.verbosity["surrender"],
-                           display_name=active_party.name)
-        
+        getattr(self.combat_handler, "handle_{}".format(selection))(active_party, other_party)
+        return selection                
     
     def combat_ai_handle(self, active_party, other_party):
         game.mechanics.combat.process_attack(active_party, other_party)
