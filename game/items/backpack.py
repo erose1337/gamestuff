@@ -1,8 +1,11 @@
 import pride.components.base
 
+class CapacityError(BaseException): pass
+
+
 class Backpack(pride.components.base.Base):
     
-    defaults = {"capacity" : 1}
+    defaults = {"capacity" : 0}
     
     def __init__(self, **kwargs):
         super(Backpack, self).__init__(**kwargs)
@@ -11,12 +14,24 @@ class Backpack(pride.components.base.Base):
     def __contains__(self, item):
         return item in self._storage
             
-    def store_item(self, item):
+    def add(self, item):
         if item.size + sum(_item.size for _item in self._storage) < self.capacity:
             self._storage.append(item)
+            super(Backpack, self).add(item)
+        else:
+            raise CapacityError("Cannot fit item into backpack")
             
-    def remove_item(self, item):        
+    def remove(self, item):        
         self._storage.remove(item)
-        
+        super(Backpack, self).remove(item)
 
-class No_Backpack(Backpack): pass
+        
+class No_Backpack(Backpack): 
+    
+    defaults = {"capacity" : 0}
+
+
+class Purse(Backpack):
+    
+    defaults = {"capacity" : 1}
+    

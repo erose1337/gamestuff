@@ -217,13 +217,13 @@ class Environment(pride.gui.grid.Grid):
     
     defaults = {"square_colors" : (EARTH_COLOR, ),
                 "square_outline_colors" : ((155, 155, 155, 255), ),
-                "column_button_type" : Game_Tile, "grid_type" : "pride.gui.grid.Grid",
+                "column_button_type" : Game_Tile,
                 "grid_size" : (3, 3), "pack_mode" : "main"}
     
     verbosity = {"setup_cells" : "vvv"}
     
     def __init__(self, **kwargs):
-        super(Environment, self).__init__(**kwargs)        
+        super(Environment, self).__init__(**kwargs)                
         pride.objects["/Python/Background_Refresh"].callbacks.append((self, "process_grid"))  
         self.setup_cells()
         
@@ -249,7 +249,7 @@ class Environment(pride.gui.grid.Grid):
                 cells.append(cell)
         self.cells = cells        
         
-    def process_grid(self):        
+    def process_grid(self):             
         for cell in self.cells:
             for neighbor in cell.neighbors:
                 cell.process_neighbor(neighbor)
@@ -371,7 +371,7 @@ class Map(pride.gui.gui.Window):
     
     def __init__(self, **kwargs):
         super(Map, self).__init__(**kwargs)
-        self.randomize()
+        self.randomize()               
         
     def randomize(self):
         if self.region is not None:

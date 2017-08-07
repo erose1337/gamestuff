@@ -14,7 +14,7 @@ class Major_Skill(pride.components.base.Base):
     def __init__(self, **kwargs):
         super(Major_Skill, self).__init__(**kwargs)
         assert self.level is None
-        self.level = game.level.Level(progress=self._initial_progress)
+       # self.level = game.level.Level(progress=self._initial_progress)
         for skill_type in self.minor_skills:                       
             setattr(self, skill_type.__name__, self.create(skill_type))
             

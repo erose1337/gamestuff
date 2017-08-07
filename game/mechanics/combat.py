@@ -40,8 +40,8 @@ def process_attack(character, other_character):
     skill_tree, weapon_type = character.body.hand.equipment.weapon_type    
     melee = getattr(character.skills, skill_tree)        
     skill = getattr(melee, weapon_type)        
-    character.alert("Got xp in: {} and {}".format(melee.level, skill.level))
-    print character.skills, character.skills.level
+    character.alert("Got xp in: {} and {}".format(melee, skill.level))
+    #print character.skills, character.skills.level
     melee.level.progress += damage_output    
     skill.level.progress += damage_output
     

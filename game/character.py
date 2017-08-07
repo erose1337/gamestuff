@@ -55,7 +55,8 @@ class Body(pride.components.base.Base):
     
 class Character(pride.components.base.Base):
     
-    defaults = {"name" : '', "npc" : True}  
+    
+    defaults = {"name" : '', "npc" : True, "default_backpack" : "game.items.backpack.Purse"}  
     flags = {"_attack_bonus" : 0, "_weapon" : None}
     verbosity = {"die" : 0}
                
@@ -81,9 +82,12 @@ class Character(pride.components.base.Base):
         super(Character, self).__init__(**kwargs)
         self.stats = self.create(game.stats.Stats)
         self.skills = self.create(game.skills.Skills)        
-        self.attributes = self.create(game.mechanics.attributes.Attributes)
-        self.body = self.create(Body, _character=self.reference)
-        
+        self.attributes = self.create(game.mechanics.attributes.Attributes) 
+        _kwargs = {"_character" : self.reference}
+        if self.is_human_player:
+            _kwargs["backpack_type"] = self.default_backpack        
+        self.body = self.create(Body, **_kwargs)                    
+            
     def die(self):        
         self.alert("Died", level=self.verbosity["die"], display_name=self.name)
         assert self.is_dead == True
@@ -108,7 +112,11 @@ class Character(pride.components.base.Base):
             getattr(body, slot_name).equipment = None    
         for attribute, modifier, value in equipment.effect_modifiers:
             getattr(self, attribute).__dict__[modifier] -= value
-            
+    
+    def alert(self, message, level=0, display_name=None):
+        super(Character, self).alert(message, level, display_name or self.name)
+        
+        
 def test_Character():
     character = Character(name="Character unit test")    
     character.stats.strength.level.progress += 10

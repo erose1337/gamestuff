@@ -5,8 +5,9 @@ def random_from_range(_min, _max):
     return random.randrange(_min, _max)
         
 def random_selection(container, size=None):
-    size = len(container) if size is None else size
-    return container[random_from_range(0, size)]
+    return random.choice(container)
+    #size = len(container) if size is None else size
+    #return container[random_from_range(0, size)]
             
 def test_random_from_range():
     outputs = []    
