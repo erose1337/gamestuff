@@ -1,3 +1,5 @@
+import pprint
+
 import pride.components.base
 
 class CapacityError(BaseException): pass
@@ -25,6 +27,10 @@ class Backpack(pride.components.base.Base):
         self._storage.remove(item)
         super(Backpack, self).remove(item)
 
+    def display_contents(self):
+        contents = [item.item_name for item in self._storage]
+        self.alert("Contents: \n{}\n".format(pprint.pformat(contents)), level=0)         
+        
         
 class No_Backpack(Backpack): 
     

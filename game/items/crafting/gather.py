@@ -27,27 +27,41 @@ class Tool_Part(game.items.Component):
         tool.durability -= self.durability
         
         
-class Short_Stick(Tool_Part):
+class Short_Handle(Tool_Part):
+            
+    defaults = {"material_type" : "driftwood"}
+    occupied_slots = ("handle", )
+    component_pieces = ("resource", )
+    
+    
+class Hammer_Head(Tool_Part):
+        
+    defaults = {"material_type" : "stone"}
+    occupied_slots = ("head", )
+    component_pieces = ("resource", )
+
+    
+class Short_Stick(game.items.Resource):
            
     defaults = {"material_type" : "driftwood"}
     
     
-class Long_Stick(Tool_Part):    
+class Long_Stick(game.items.Resource):    
 
     defaults = {"material_type" : "driftwood"}
     
     
-class Sharpstone(Tool_Part):
+class Sharpstone(game.items.Resource):
         
     defaults = {"material_type" : "stone"}
     
     
-class Bluntstone(Tool_Part):
+class Bluntstone(game.items.Resource):
         
     defaults = {"material_type" : "stone"}
     
     
-class Spearstone(Tool_Part):
+class Spearstone(game.items.Resource):
         
     defaults = {"material_type" : "stone"}
     
@@ -57,16 +71,5 @@ class Hammer(Tool):
     component_pieces = ("handle", "head")
     defaults = {"handle" : None, "head" : None, "weapon_type" : ("Crafting", "Hammer")}
     required_attributes = ("handle", "head")
-    
-    class Hammer_Handle(Tool_Part):
-                
-        defaults = {"material_type" : "driftwood"}
-        occupied_slots = ("handle", )
-        
-        
-    class Hammer_Head(Tool_Part):
             
-        defaults = {"material_type" : "stone"}
-        occupied_slots = ("head", )
-        
         

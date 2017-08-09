@@ -4,6 +4,7 @@
 # cooldowns/timers      (asynchronous)
 #   - a la diablo
 import itertools
+import pprint
 
 import pride.components.base
 
@@ -28,6 +29,12 @@ class Handler(object):
         super(Handler, self).__init__()
         self.selection_text = selection_text or self.__class__.__name__.split('_')[-2].lower() #  "otherInfo_X_Handler"
 
+        
+class Return_Handler(Handler):
+            
+    def run(self, *args):
+        self.parent.running = False
+        
         
 class Battle_Result_Handler(Handler):
           
@@ -99,18 +106,21 @@ class Synchronous_Combat_Handler(Handler):
 class Engine(pride.base.Base):
     
     defaults = {"invalid_selection_prompt" : "Invalid selection",
-                "handler_types" : tuple(), "selection_text" : ''}    
+                "handler_types" : tuple(), "selection_text" : ''}   
+                
     mutable_defaults = {"menu_selection" : list}
     
     def __init__(self, *args, **kwargs):
         super(Engine, self).__init__(*args, **kwargs)
         menu_selection = self.menu_selection
-        for handler_type_name in self.handler_types:
-            print self, "creating ", handler_type_name
+        for handler_type_name in self.handler_types:            
             handler = self.create(handler_type_name)  
             selection_text = handler.selection_text
             setattr(self, selection_text, handler)
             menu_selection.append(selection_text)
+               
+        menu_selection.append("return")
+        
         selection_prompt = " ".join("{}" for count in range(len(menu_selection)))                        
         self.selection_prompt = selection_prompt.format(*menu_selection) + "\nChoice: "    
     
@@ -118,9 +128,11 @@ class Engine(pride.base.Base):
             self.selection_text = self.__class__.__name__.split('_')[-2].lower() #  "otherInfo_X_Handler"
 
     def run(self, party1):
-        running = True                               
-        while running:
-            selection = self.present_menu(party1)            
+        self.running = True                               
+        while self.running:
+            selection = self.present_menu(party1)   
+            if selection == "return":
+                break
             self.process_selection(selection, party1)                   
         
     def process_selection(self, selection, party):
@@ -136,7 +148,10 @@ class Engine(pride.base.Base):
     
     def process_selection(self, selection, party):
         getattr(self, selection).run(party)
-                    
+                   
+    def return_handler(self, party):
+        self.running = False
+        
     @classmethod
     def unit_test(cls):
         import game.character
@@ -153,7 +168,7 @@ class Hunt_Handler(Engine):
         #raise NotImplementedError()
         party = args[0]
         party.alert("*Hunt*(NotImplemented)", level=0)
-        
+                   
     
 class Gather_Handler(Handler):
         
@@ -171,8 +186,9 @@ class Gather_Handler(Handler):
         # drop an item
         item_name = self.drop_table.drop_item(1)[0]
         party.alert("Found {}".format(item_name.rsplit('.', 1)[-1]), level=0)
+        item = resolve_string(item_name)()
         try:
-            party.body.backpack.create(item_name)
+            party.body.backpack.add(item)
         except game.items.backpack.CapacityError:
             party.alert("Item does not fit in storage", level=0)        
         
@@ -218,9 +234,26 @@ class Wander_Handler(Engine):
                 
 class Basic_Game(Engine):
                         
-    defaults = {"handler_types" : ("game.mechanics.enginetest.Wander_Handler", )}
+    defaults = {"handler_types" : ("game.mechanics.enginetest.Wander_Handler", 
+                                   "game.mechanics.enginetest.Crafting_Handler")}
     
     
+class Crafting_Handler(Engine):
+        
+    defaults = {"handler_types" : ("game.mechanics.enginetest.Tools_Handler", )}
+    
+    
+class Tools_Handler(Handler):   
+
+    recipes = {"game.items.crafting.gather.Hammer.Hammer_Handle" : ("game.items.crafting.gather.Short_Stick", )}
+    recipe_info = dict((key.rsplit('.', 1)[-1], tuple(_value.rsplit('.', 1)[-1] for _value in value)) for key, value in recipes.items())
+    
+    def run(self, *args):
+        party = args[0]        
+        party.body.backpack.display_contents()        
+        print("Available recipes:\n{}".format(pprint.pformat(self.recipe_info)))        
+        
+        
 class Synchronous_Combat_Engine(Engine):
     
     menu_selection = ["attack", "defend", "ability", "item", "run", "surrender"]

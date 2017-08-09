@@ -20,12 +20,14 @@ class Knife(Melee_Weapon):
     
     class Knife_Handle(game.items.Weapon_Part):
         
+        component_pieces = ("resource", )
         defaults = {"material_type" : "driftwood"}
         occupied_slots = ("handle", )
         
         
     class Knife_Blade(game.items.Weapon_Part):
             
+        component_pieces = ("resource", )
         defaults = {"material_type" : "iron"}
         occupied_slots = ("blade", )
         
