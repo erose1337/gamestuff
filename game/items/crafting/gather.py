@@ -32,6 +32,7 @@ class Short_Handle(Tool_Part):
     defaults = {"material_type" : "driftwood"}
     occupied_slots = ("handle", )
     component_pieces = ("resource", )
+    required_tools_to_assemble = ("sharpstone", )
     
     
 class Hammer_Head(Tool_Part):
@@ -39,10 +40,16 @@ class Hammer_Head(Tool_Part):
     defaults = {"material_type" : "stone"}
     occupied_slots = ("head", )
     component_pieces = ("resource", )
-
+    required_tools_to_assemble = ("bluntstone", )
+    
     
 class Short_Stick(game.items.Resource):
            
+    defaults = {"material_type" : "driftwood"}
+    
+    
+class Medium_Stick(game.items.Resource):
+        
     defaults = {"material_type" : "driftwood"}
     
     
@@ -50,7 +57,7 @@ class Long_Stick(game.items.Resource):
 
     defaults = {"material_type" : "driftwood"}
     
-    
+        
 class Sharpstone(game.items.Resource):
         
     defaults = {"material_type" : "stone"}
@@ -58,18 +65,18 @@ class Sharpstone(game.items.Resource):
     
 class Bluntstone(game.items.Resource):
         
-    defaults = {"material_type" : "stone"}
+    defaults = {"material_type" : "stone", "tool_type" : "bluntstone"}
     
     
 class Spearstone(game.items.Resource):
         
-    defaults = {"material_type" : "stone"}
-    
+    defaults = {"material_type" : "stone", "tool_type" : "sharpstone"}
+        
     
 class Hammer(Tool):
     
     component_pieces = ("handle", "head")
-    defaults = {"handle" : None, "head" : None, "weapon_type" : ("Crafting", "Hammer")}
+    defaults = {"handle" : None, "head" : None, "tool_type" : "hammer"}
     required_attributes = ("handle", "head")
             
         

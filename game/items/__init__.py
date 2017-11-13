@@ -5,10 +5,15 @@ class GenericGameActionFailure(Exception): pass
     
 class Resource(pride.components.base.Base):
         
-    defaults = {"material_type" : None}
+    defaults = {"material_type" : None, "size" : 0, "item_name" : ''}
     occupied_slots = ("resource", )    
     #inherited_attributes = {"occupied_slots" : tuple}
     
+    def __init__(self, *args, **kwargs):
+        super(Resource, self).__init__(*args, **kwargs)
+        if not self.item_name:
+            self.item_name = self.__class__.__name__        
+        
     def attach_to(self, equipment):
         pass
         #raise NotImplementedError()            
@@ -19,29 +24,38 @@ class Resource(pride.components.base.Base):
 
         
 class Item(Resource):
+            
+    required_tools_to_assemble = tuple()
     
-    defaults = {"size" : 0, "item_name" : ''}
-    
-    component_pieces = tuple()              
+    component_pieces = tuple()                  
     inherited_attributes = {"component_pieces" : tuple}
         
     def __init__(self, *args, **kwargs):
         super(Item, self).__init__(*args, **kwargs)
-        if not self.item_name:
-            self.item_name = self.__class__.__name__        
-        
         for component_name in self.component_pieces:
             self.add(getattr(self, component_name))
             
     @classmethod
     def assemble(cls, **components):
-        spaces = list(cls.component_pieces)        
-        for component in components.values():            
-            for slot in component.occupied_slots:                
+        # make sure all required tools are present
+        for tool_type in cls.required_tools_to_assemble:
+            try:
+                tool = components[tool_type]
+            except KeyError:            
+                raise GenericGameActionFailure("Failed to assemble {}. Missing required tool {}".format(cls.__name__, tool_type))
+            else:
+                if tool.tool_type != tool_type:
+                    format_args = (cls.__name__, tool.tool_type, tool_type)
+                    raise GenericGameActionFailure("Failed to assemble {}. Incompatible tool {} supplied for required {}".format(*format_args))
+                    
+        # make sure that all the required components were passed as kwargs        
+        spaces = list(cls.component_pieces)      # handle, blade                        
+        for component in components.values():           
+            for slot in component.occupied_slots:  # handle occupies the handle slot              
                 try:
-                    spaces.remove(slot)
+                    spaces.remove(slot)          # if the class does not use a handle, then raise
                 except ValueError:
-                    raise GenericGameActionFailure()
+                    raise GenericGameActionFailure("Failed to assemble {} using {}".format(cls.__name__, components))
         else:
             return cls(**components)
             

@@ -144,9 +144,11 @@ armor skills:
     
 item system:
     - building blocks are called "Resources", i.e. wood, ores, raw food
-    - all Items are built from resources and/or other items
+    - all Items are assembled from resources, other items, and possibly catalysts
         - parts should interchangeable rather then 1:1 typed
             - i.e. only use "short handle" rather then "knife handle", "hammer handle", "hatchet handle", etc
+        - catalysts are consumables such as coal and water
+        - some items may require certain tools to be crafted (i.e. you require a hammer to assemble a knife from a handle and blade)
     - all items can be disassembled into component items and resources
     
         
@@ -444,4 +446,186 @@ graphics stuff
     - pack mode: layer
         - does not modify x, y coordinates
     - hotkeys for movement
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+level system
+--------
+total xp: 10    level 1
+total xp: 100   level 2
+total xp: 1000  level 3
+...                
+total xp: 10**x -> level x
+
+generalized: xp_base ** n -> required xp to be level n
+
+
+    
+stats 
+=======
+
+health
+------
+level structure: 
+    + 1 xp per damage taken
+    max health: 10 ** x    
+    
+    sub-skills
+    ----------
+    toughness:
+        reduces damage taken (100% chance to soak small amount of damage)
+        damage reduced via toughness still counts towards health experience
+        level structure:
+            damage soaked per hit: 2 ** x
+            + 1 toughness xp per damage soaked
+        
+    avoidance: (dodge? aversion?)
+        percent chance to reduce damage from a projectile/ranged source by a percent amount
+        damage avoided does not count towards health experience
+        level structure:
+            2 * x % chance to reduce ranged damage by 2 * x %
+            + 1 avoidance xp per damage successfully avoided
+    
+    notes
+    --------
+    melee combatants will tend to develop higher health and toughness levels then ranged combatants
+     
+          
+strength
+-------    
+level structure:
+    + 1 xp per damage dealt
+    weapon damage bonus: 10 ** (x - 1)      # level 1: + 1, level 2: + 10, level 3: +100
+    
+    
+    
+combat
+======
+during combat, characters have a pool of available action points
+turn based game: action points determine how many actions you can take during your turn
+real time game : action points determine how many actions per section you can perform
+
+two methods to attack a character: weapon attack and skills
+
+weapon attack
+-------
+All attacks deal damage randomly in the range (0 + proficiency_bonus, weapon_damage + strength_damage)
+weapon_damage and strength_damage are therefore single numbers which added together represent the max damage
+
+weapon proficiency
+-------
+Attacks with a weapon provide xp in the weapons proficiency 
+
+level structure:
+    + 1 xp per damage dealt with associated weapon
+    minimum damage bonus: 5 ** (x - 1)
+    
+
+    
+    
+    
+   
+
+
+how to solve trading
+----
+make items less of a focus then skills/personal character development
+- items can have history and level up with the user
+    - bonus is attached to one particular instance of the item in question
+    - though the item is tradeable, the history is not.
+        - make the history more valuable then the item, and the item becomes unlikely to be traded 
+    - use basic level up system, i.e.: 
+        - x damage dealt with weapon: history level  = log10(x)
+        - x damage saved because of armor: history level = log10(x)
+        - etc
+
+    
+    
+    
+3 attack types, 3 defence types
+
+attack
+----
+critical hit: % chance to deal % extra damage    (+ maximum damage)
+wounding/persistence/aggression?: deals x damage per time            (+ damage per second)
+strength: + x extra damage                   (+ minimum damage)
+
+
+defence
+----
+dodge: % chance to avoid % of damage      (+ defence against high maximum damage and slow big attacks)
+regeneration: restores x health per time      (+ defence against high damage per second)
+soak: -x damage taken per hit          (+ defence against high minimum damage and lots of small attacks)
+
+
+gain attack and defence xp as you fight
+    - choose one attack skill to advance
+    - choose one defence skill to advance
+    - level up increases increases each selected skill by 1
+    - level up increases hit points by 10
+        
+level 1: 10 hp
+          1 dpt
+          doesn't work because of flat damage bonus == 100% chance to do 100% extra damage
+                                   
+        100 hp
+        10 dpt
+        damage per 100 ticks:
+            1 strength: 100 * (10 + 1) == 1100    100 * 10 + (1 * 100 * .1 * d * L)
+            2 strength: 100 * (10 + 2) = 1200
+            1 critical: 100 * 10 + (.15 * 100 * .66 * 10) == 1100    
+            2 critical: 100 * 10 + (.15 * 100 * 2 * .66 * 10) == 1198  
+            1 DOT: 100 * 10 + (.33 * 100 * .3 * 10 * 1) == 1100
+            2 DOT: 100 * 10 + (.33 * 100 * .3 * 10 * 2) == 1200
+            
+        damage avoided per 100 ticks, assuming 10 damage per tick:
+            1 soak: 100 * (10 - 1) == 900
+            2 soak: 100 * (10 - 2) == 800
+            1 regen: 100 * 10 - (.33 * 100 * .03 * 100)                                    
+            2 regen: 100 * 10 - (.33 * 100 * .03 * 100 * 2)
+                                
+            1 dodge: 100 * 10 - (.15 * 100 * .66 * 10) = 900     
+                                 
+                                 
+                                 10% chance to deal 100% more damage
+                 critical hit--> 15% chance to deal/reduce 66% more damage  <------ dodge
+                                 20% chance to deal/reduce 50% more damage
+                 DOT ----------> 33% chance to deal/reduce 30% more damage  <------ regen
+                                 50% chance to deal/reduce 20% more damage
+                 strength ----->100% chance to deal/reduce 10% more damage  <------ soak
+        
+                 core formula: time * damage + (chance * time * bonus * damage * Level)   
+                                      damage + (chance * bonus * damage * Level)
+                 
+combat style options:    
+    alternating turns:
+        1 move per player
+        action points pool
+    simultaneous turns:
+        1 move per time
+        action points pool
+    number of participants in combat:
+        1v1
+        NvK
+    1v1, 1 move per participant: pokemon
+    1v1, action points pool: MtG
+    NvK, 1 move per participant: dragon warrior
+    NvK, action points pool: fallout
+    
     

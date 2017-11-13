@@ -8,7 +8,7 @@ import pprint
 
 import pride.components.base
 
-import game.mechanics.combat
+import game.mechanics.combat2
 import game.mechanics.droptable
 
 def get_selection(prompt, prompt2, answers):
@@ -84,7 +84,7 @@ class Synchronous_Combat_Handler(Handler):
     verbosity = {"surrender" : 0}
     
     def handle_attack(self, active_party, other_party):
-        game.mechanics.combat.process_attack(active_party, other_party)            
+        game.mechanics.combat2.process_attack(active_party, other_party)            
         
     def handle_defend(self, active_party, other_party):
         active_party.alert("*Defends*", level=0, display_name=active_party.name)
@@ -96,7 +96,7 @@ class Synchronous_Combat_Handler(Handler):
         active_party.alert("items: ", level=0, display_name=active_party.name)
         
     def handle_run(self, active_party, other_party):
-        game.mechanics.combat.process_flee(active_party, other_party)
+        game.mechanics.combat2.process_flee(active_party, other_party)
     
     def handle_surrender(self, active_party, other_party):        
         active_party.alert("surrender!", level=self.verbosity["surrender"],
@@ -117,8 +117,7 @@ class Engine(pride.base.Base):
             handler = self.create(handler_type_name)  
             selection_text = handler.selection_text
             setattr(self, selection_text, handler)
-            menu_selection.append(selection_text)
-               
+            menu_selection.append(selection_text)            
         menu_selection.append("return")
         
         selection_prompt = " ".join("{}" for count in range(len(menu_selection)))                        
@@ -154,10 +153,10 @@ class Engine(pride.base.Base):
         
     @classmethod
     def unit_test(cls):
-        import game.character
+        import game.character2
         print "Unit testing: ", cls
         engine = cls()        
-        party1 = game.character.Character(name="Ella!", npc=False)
+        party1 = game.character2.Character(name="Ella!", npc=False)
         while True:            
             engine.run(party1)  
 
@@ -245,19 +244,68 @@ class Crafting_Handler(Engine):
     
 class Tools_Handler(Handler):   
 
-    recipes = {"game.items.crafting.gather.Hammer.Hammer_Handle" : ("game.items.crafting.gather.Short_Stick", )}
-    recipe_info = dict((key.rsplit('.', 1)[-1], tuple(_value.rsplit('.', 1)[-1] for _value in value)) for key, value in recipes.items())
-    
+    recipes = ("game.items.crafting.gather.Hammer_Handle",
+               "game.items.crafting.gather.Hammer_Head")
+    recipe_info = dict((name.rsplit('.', 1)[-1], name) for name in recipes)   
+    recipe_names = recipe_info.keys()
+        
     def run(self, *args):
         party = args[0]        
         party.body.backpack.display_contents()        
-        print("Available recipes:\n{}".format(pprint.pformat(self.recipe_info)))        
+        selection = get_selection("Available recipes:\n{}\nChoice: ".format(pprint.pformat(self.recipe_names)), "invalid selection", self.recipe_names)       
+        party.alert("Crafting {}...".format(selection), level=0)
+        # resolve selection to item_type
+        item_type = self.recipe_info[selection]                
+        # resolve item_type to item
+        item_class = resolve_string(item_type)
+        
+        # find required components for item in backpack
+        backpack_storage = party.body.backpack._storage
+        components = dict()
+        for slot in item_class.component_pieces:
+            for item in backpack_storage:
+                if slot in item.occupied_slots:
+                    components[slot] = item
+                    backpack_storage.remove(item)
+                    print "Found required component: ", slot, item
+                    break
+        
+        # find required tools for item in backpack        
+        for tool_type in item_class.required_tools_to_assemble:
+            print tool_type
+            for item in backpack_storage:                
+                try:
+                    if item.tool_type == tool_type:                
+                        components[tool_type] = item                        
+                        break
+                except AttributeError:
+                    continue                    
+            else:
+                party.alert("Missing required tool: {}".format(tool_type), level=0)
+                
+        # assemble item and insert into backpack
+        print "Building with components: ", components
+        try:
+            item = item_class.assemble(**components)
+        except game.items.GenericGameActionFailure as exception:
+            party.alert(exception.message, level=0)        
+        else:
+            party.body.backpack.add(item)
         
         
 class Synchronous_Combat_Engine(Engine):
     
-    menu_selection = ["attack", "defend", "ability", "item", "run", "surrender"]
-            
+    defaults = {"handler_types" : ("game.mechanics.enginetest.Attack_Handler", 
+                                   "game.mechanics.enginetest.Defend_Handler", 
+                                   "game.mechanics.enginetest.Ability_Handler", 
+                                   "game.mechanics.enginetest.Item_Handler", 
+                                   "game.mechanics.enginetest.Flee_Handler", 
+                                   "game.mechanics.enginetest.Surrender_Handler")}
+    
+    def __init__(self, *args, **kwargs):
+        super(Synchronous_Combat_Engine, self).__init__(*args, **kwargs)
+        self.battle_result_handler = Battle_Result_Handler()
+        
     def run(self, party1, party2):
         battle_engaged = True        
         active_party = party2
@@ -265,7 +313,7 @@ class Synchronous_Combat_Engine(Engine):
         print("\nBeginning battle!...")
         while battle_engaged:
             active_party, other_party = other_party, active_party
-            if active_party.is_human_player: 
+            if not active_party.npc: 
                 last_selection = self.present_menu(active_party, other_party)
             else:
                 last_selection = self.combat_ai_handle(active_party, other_party)
@@ -294,38 +342,37 @@ class Synchronous_Combat_Engine(Engine):
         
     def end_battle(self, party1, party2, last_selection):
         outcome = self.determine_battle_outcome(party1, party2, last_selection)        
-        getattr(self.result_handler, "handle_{}".format(outcome))(party1, party2)
+        getattr(self.battle_result_handler, "handle_{}".format(outcome))(party1, party2)
                         
     def present_menu(self, active_party, other_party):
         print('*' * 79)        
-        print("Currently engaged in combat with: {} (hp: {}/{})".format(other_party.name, *other_party.stats.health.display_values))
+        print("Currently engaged in combat with: {} (hp: {})".format(other_party.name, other_party.health))
         print('*' * 79)
         selection = get_selection(self.selection_prompt, self.invalid_selection_prompt, self.menu_selection)
         assert selection in self.menu_selection
-        getattr(self.synchronous_combat_handler, "handle_{}".format(selection))(active_party, other_party)
+        getattr(self, selection).run(active_party, other_party)
         return selection                
     
     def combat_ai_handle(self, active_party, other_party):
-        game.mechanics.combat.process_attack(active_party, other_party)
+        game.mechanics.combat2.process_attack(active_party, other_party)
         return "attack"
         
     @classmethod
     def unit_test(cls):
-        import game.character
+        import game.character2
         import game.mechanics.randomgeneration as randomgeneration
         engine = cls()        
-        party1 = game.character.Character(name="Ella!", npc=False)
+        party1 = game.character2.Character(name="Ella!", npc=False)
         while True:
-            party2 = game.character.Character(name=randomgeneration.random_selection(["Caitlin", "Lacey", "Patti", "Mick"]))
+            party2 = game.character2.Character(name=randomgeneration.random_selection(["Caitlin", "Lacey", "Patti", "Mick"]))
             engine.run(party1, party2)
-            party1.stats.health.current_health += 1
-                 
+                             
                                
 class Attack_Handler(Handler):
             
     def run(self, *args):
         active_party, other_party = args
-        game.mechanics.combat.process_attack(active_party, other_party)
+        game.mechanics.combat2.process_attack(active_party, other_party)
         
         
 class Defend_Handler(Handler):
@@ -349,11 +396,11 @@ class Item_Handler(Handler):
         active_party.alert("*Items*(NotImplemented)", level=0, display_name=active_party.name)
         
         
-class Run_Handler(Handler):
+class Flee_Handler(Handler):
             
     def run(self, *args):
         active_party, other_party = args
-        game.mechanics.combat.process_flee(active_party, other_party)
+        game.mechanics.combat2.process_flee(active_party, other_party)
         
         
 class Surrender_Handler(Handler):
@@ -365,6 +412,6 @@ class Surrender_Handler(Handler):
         
 if __name__ == "__main__":
     #Engine.unit_test()
-    Basic_Game.unit_test()
-    #Synchronous_Combat_Engine.unit_test()
+    #Basic_Game.unit_test()
+    Synchronous_Combat_Engine.unit_test()
     

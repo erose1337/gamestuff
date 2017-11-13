@@ -11,12 +11,13 @@ class Unarmed(Melee_Weapon):
         
     defaults = {"weapon_type" : ("Melee", "Unarmed"), "damage" : (0, 1), "reach" : 1}
            
-                                
+                                                              
 class Knife(Melee_Weapon):
         
     component_pieces = ("handle", "blade")
     defaults = {"handle" : None, "blade" : None, "weapon_type" : ("Melee", "Knife")}
     required_attributes = ("handle", "blade")
+    required_tools_to_assemble = ("hammer", )
     
     class Knife_Handle(game.items.Weapon_Part):
         
