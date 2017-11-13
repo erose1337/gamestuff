@@ -54,10 +54,10 @@ class Combat(Skill):
 
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
         self.attack = Attack(critical_hit, dot, strength)
-        self.defence = Defence(dodge, regen, soak) 
+        self.defense = Defence(dodge, regen, soak) 
         self.health = Health(health)       
         self.damage = damage
-        self.level = (self.attack.level + self.defence.level) / 2
+        self.level = (self.attack.level + self.defense.level) / 2
         
 
 class Skills(object):
@@ -75,10 +75,15 @@ class Character(pride.components.base.Base):
     def _get_health(self):
         return self._health
     def _set_health(self, value):
+        value = min(value, self.skills.combat.health.max_health)
         self._health = max(value, 0)
         if not self._health:
             self.die()
     health = property(_get_health, _set_health)
+    
+    def _get_max_health(self):
+        return self.skills.combat.health.max_health
+    max_health = property(_get_max_health)
     
     def _get_is_dead(self):
         return True if not self._health else False

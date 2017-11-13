@@ -17,10 +17,10 @@ def process_attack(party1, party2):
         if dot_bonus:
             party1.alert("{} for {}".format(party1_attack.dot.hit_string, dot_bonus))
         
-    party2_defence = party2.skills.combat.defence    
-    soak_modifier = party2_defence.soak.level
+    party2_defense = party2.skills.combat.defense    
+    soak_modifier = party2_defense.soak.level
     if random.randint(0, 100) <= 66:
-        dodge_modifier = int(damage * party2_defence.dodge.level * .15)
+        dodge_modifier = int(damage * party2_defense.dodge.level * .15)
         if dodge_modifier:
             party2.alert("dodge!")
     else:
@@ -30,13 +30,13 @@ def process_attack(party1, party2):
     party2.health -= final_damage
     party1.alert("Dealt {} + {} + {} = {} damage".format(damage, critical_bonus, dot_bonus, final_damage))
     party2.alert("Received {} + {} + {} = {} damage".format(damage, critical_bonus, dot_bonus, final_damage))
-    if party2.health: # not dead
+    if not party2.is_dead and party2_defense.regen.level > 0: # not dead
         if random.randint(0, 100) <= 33:
-            regeneration = int(party2.skills.combat.health.level * .03 * party2_defence.regen.level)
+            regeneration = int(party2.skills.combat.health.max_health * .03 * party2_defense.regen.level)            
             if regeneration:
                 party2.health += regeneration
-                party2.alert("Regenerated {} health".format(regeneration))
-        
+                party2.alert("Regenerated {} health".format(regeneration))        
+            
 def process_flee(party1, party2):
     if random.randint(0, 100) <= 50:        
         process_attack(party2, party1)

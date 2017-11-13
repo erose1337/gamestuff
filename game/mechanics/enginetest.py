@@ -233,10 +233,27 @@ class Wander_Handler(Engine):
                 
 class Basic_Game(Engine):
                         
-    defaults = {"handler_types" : ("game.mechanics.enginetest.Wander_Handler", 
+    defaults = {"handler_types" : ("game.mechanics.enginetest.Character_Handler",
+                                   "game.mechanics.enginetest.Wander_Handler", 
                                    "game.mechanics.enginetest.Crafting_Handler")}
     
     
+class Character_Handler(Engine):
+       
+    def run(self, *args):
+        party = args[0]        
+        string = "Combat: level: {}    damage: {}   hp:    {}/{}\n"
+        string += "critical hit:  {}    DoT:    {}   strength: {}\n"
+        string += "dodge:         {}    regen:  {}   soak:     {}\n"
+        skills = party.skills.combat
+        attack = skills.attack
+        defense = skills.defense
+        print string.format(skills.level, skills.damage, party.health, party.max_health,
+                            attack.critical_hit.level, attack.dot.level, attack.strength.level,
+                            defense.dodge.level, defense.regen.level, defense.soak.level)
+        super(Character_Handler, self).run(*args)
+        
+        
 class Crafting_Handler(Engine):
         
     defaults = {"handler_types" : ("game.mechanics.enginetest.Tools_Handler", )}
@@ -307,6 +324,8 @@ class Synchronous_Combat_Engine(Engine):
         self.battle_result_handler = Battle_Result_Handler()
         
     def run(self, party1, party2):
+        if party1.is_dead or party2.is_dead:
+            raise ValueError("Battle initiated with dead participants:\nparty1.is_dead: {};\nparty2.is_dead: {}".format(party1.is_dead, party2.is_dead))
         battle_engaged = True        
         active_party = party2
         other_party = party1    
@@ -345,7 +364,8 @@ class Synchronous_Combat_Engine(Engine):
         getattr(self.battle_result_handler, "handle_{}".format(outcome))(party1, party2)
                         
     def present_menu(self, active_party, other_party):
-        print('*' * 79)        
+        print('*' * 79)      
+        print("Current stats: hp: {}".format(active_party.health))
         print("Currently engaged in combat with: {} (hp: {})".format(other_party.name, other_party.health))
         print('*' * 79)
         selection = get_selection(self.selection_prompt, self.invalid_selection_prompt, self.menu_selection)
@@ -362,7 +382,8 @@ class Synchronous_Combat_Engine(Engine):
         import game.character2
         import game.mechanics.randomgeneration as randomgeneration
         engine = cls()        
-        party1 = game.character2.Character(name="Ella!", npc=False)
+        skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
+        party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)
         while True:
             party2 = game.character2.Character(name=randomgeneration.random_selection(["Caitlin", "Lacey", "Patti", "Mick"]))
             engine.run(party1, party2)
@@ -412,6 +433,6 @@ class Surrender_Handler(Handler):
         
 if __name__ == "__main__":
     #Engine.unit_test()
-    #Basic_Game.unit_test()
-    Synchronous_Combat_Engine.unit_test()
+    Basic_Game.unit_test()
+    #Synchronous_Combat_Engine.unit_test()
     
