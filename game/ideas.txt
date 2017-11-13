@@ -467,6 +467,7 @@ graphics stuff
     
 level system
 --------
+total xp: 1     level 0
 total xp: 10    level 1
 total xp: 100   level 2
 total xp: 1000  level 3
@@ -475,7 +476,11 @@ total xp: 10**x -> level x
 
 generalized: xp_base ** n -> required xp to be level n
 
-
+task value: 
+task level ->   level 0 -> 1   <-- xp gained for completion (i.e. beating level 0 opposition)
+ie monster lvl  level 1 -> 10  <-- xp gained for completion (i.e. beating level 1 opposition)
+                level 2 -> 100 <-- xp gained for completion (i.e. beating level 2 opposition)
+            
     
 stats 
 =======

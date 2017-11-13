@@ -41,6 +41,7 @@ class Battle_Result_Handler(Handler):
     def handle_victory(self, victorious_party, defeated_party):
         victorious_party.alert("Victory!", level=0, display_name=victorious_party.name)
         defeated_party.alert("Defeat!", level=0, display_name=defeated_party.name)
+        victorious_party.gain_xp(10 ** defeated_party.level)
         
     def handle_defeat(self, defeated_party, victorious_party):
         victorious_party.alert("Victory!", level=0, display_name=victorious_party.name)
@@ -138,8 +139,7 @@ class Engine(pride.base.Base):
         return getattr(self, "{}_handler".format(selection))(party)
                 
     def present_menu(self, active_party):
-        print('*' * 79)        
-        #print(self.get_current_status())
+        print('*' * 79)                
         print('*' * 79)
         selection = get_selection(self.selection_prompt, self.invalid_selection_prompt, self.menu_selection)
         assert selection in self.menu_selection
@@ -156,7 +156,10 @@ class Engine(pride.base.Base):
         import game.character2
         print "Unit testing: ", cls
         engine = cls()        
-        party1 = game.character2.Character(name="Ella!", npc=False)
+        skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
+        skills.combat.attack.attack_focus = "critical hit"
+        skills.combat.defense.defense_focus = "regen"
+        party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)        
         while True:            
             engine.run(party1)  
 
@@ -238,21 +241,20 @@ class Basic_Game(Engine):
                                    "game.mechanics.enginetest.Crafting_Handler")}
     
     
-class Character_Handler(Engine):
-       
+class Character_Handler(Handler):
+               
     def run(self, *args):
-        party = args[0]        
-        string = "Combat: level: {}    damage: {}   hp:    {}/{}\n"
-        string += "critical hit:  {}    DoT:    {}   strength: {}\n"
-        string += "dodge:         {}    regen:  {}   soak:     {}\n"
+        party = args[0]                
+        string = "Name: {}  Combat: level: {}    damage: {}   hp:    {}/{}\n"
+        string += "critical hit:  {}    DoT:    {}   strength: {}   focus: {}\n"
+        string += "dodge:         {}    regen:  {}   soak:     {}   focus: {}\n"
         skills = party.skills.combat
         attack = skills.attack
-        defense = skills.defense
-        print string.format(skills.level, skills.damage, party.health, party.max_health,
-                            attack.critical_hit.level, attack.dot.level, attack.strength.level,
-                            defense.dodge.level, defense.regen.level, defense.soak.level)
-        super(Character_Handler, self).run(*args)
-        
+        defense = skills.defense             
+        print string.format(party.name, skills.level, skills.damage, party.health, party.max_health,
+                            attack.critical_hit.level, attack.dot.level, attack.strength.level, attack.attack_focus,
+                            defense.dodge.level, defense.regen.level, defense.soak.level, defense.defense_focus)
+                               
         
 class Crafting_Handler(Engine):
         
@@ -383,7 +385,11 @@ class Synchronous_Combat_Engine(Engine):
         import game.mechanics.randomgeneration as randomgeneration
         engine = cls()        
         skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
+        skills.combat.attack.attack_focus = "critical hit"
+        skills.combat.defense.defense_focus = "regen"
         party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)
+        assert party1.skills.combat.attack is skills.combat.attack
+        assert hasattr(party1.skills.combat.attack.attack_focus)
         while True:
             party2 = game.character2.Character(name=randomgeneration.random_selection(["Caitlin", "Lacey", "Patti", "Mick"]))
             engine.run(party1, party2)

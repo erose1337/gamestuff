@@ -68,9 +68,9 @@ class Skills(object):
         
 class Character(pride.components.base.Base):
     
-    defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True}    
+    defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None}    
     verbosity = {"die" : 0}
-    flags = {"skills" : None, "_health" : 0}
+    flags = {"_health" : 0}
     
     def _get_health(self):
         return self._health
@@ -89,9 +89,17 @@ class Character(pride.components.base.Base):
         return True if not self._health else False
     is_dead = property(_get_is_dead)
     
-    def __init__(self, *args, **kwargs):
+    def _get_xp(self):
+        return self._xp
+    def _set_xp(self, value):        
+        self._xp = value
+        if self._xp > 10 ** (self.skills.combat.level + 1):            
+            self.level_up()
+    xp = property(_get_xp, _set_xp)
+    
+    def __init__(self, *args, **kwargs):        
         super(Character, self).__init__(*args, **kwargs)
-        if self.skills is None:
+        if self.skills is None:                        
             self.skills = self.skill_tree_type(damage=10)
         self.health = 100 + (10 * self.skills.combat.health.level)
         
@@ -102,4 +110,18 @@ class Character(pride.components.base.Base):
         if display_name is None:
             display_name = self.name
         super(Character, self).alert(message, level=level, display_name=display_name)
+        
+    def level_up(self):
+        skills = self.skills.combat        
+        skills.level += 1
+        attack_skills = skills.attack
+        defense_skills = skills.defense
+        attack_focus = attack_skills.focus
+        defense_focs = defense_skills.focus
+        
+        attack_skill = getattr(attack_skills, attack_focus)
+        defense_skill = getatr(defense_skills, defense_focus)
+        setattr(attack_skills, attack_focus, attack_skill.level + 1)
+        setattr(defense_skills, defense_focus, defense_skill.level + 1)        
+        
         
