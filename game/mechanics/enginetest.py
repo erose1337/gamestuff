@@ -1,4 +1,4 @@
-import itertools
+import traceback
 import pprint
 import os
 
@@ -282,7 +282,7 @@ class LoadCharacter_Handler(Handler):
                 data = _file.read()            
             character = game.character2.Character.load(data)
             engine = Basic_Game()
-            engine.run(character)
+            engine.run(character)    
             with open("{}.sav".format(name), "wb") as _file:
                 _file.truncate()
                 _file.write(character.save())
@@ -293,11 +293,44 @@ class LoadCharacter_Handler(Handler):
 class Basic_Game(Engine):
                         
     defaults = {"handler_types" : ("game.mechanics.enginetest.Character_Handler",
+                                   "game.mechanics.enginetest.Quests_Handler",
                                    "game.mechanics.enginetest.Town_Handler",
                                    "game.mechanics.enginetest.Wander_Handler", 
                                    "game.mechanics.enginetest.Crafting_Handler")}
     
 
+class Quests_Handler(Engine):
+        
+    defaults = {"handler_types" : ("game.mechanics.enginetest.The_Duel_Quest_Handler", )}
+    
+
+class Quest_Handler(Handler):
+        
+    defaults = {"quest_name" : '', "quest_description" : '',
+                "quest_starting_point" : '', "quest_reward" : ''}
+                
+    def __init__(self, selection_text=None):    
+        if selection_text is not None:
+            raise ValueError("selection_text must be None for Quest_Handler")
+        for key, value in self.defaults.items():
+            setattr(self, key, value)
+        selection_text = self.quest_name
+        super(Quest_Handler, self).__init__(selection_text)
+        
+    def run(self, player):
+        print("\nQuest:     {}".format(self.quest_name))
+        print("Completed:   {}".format(self.quest_name in player.complete_quests))
+        print("Description:\n   {}".format(self.quest_description))
+        print("Starting point:  {}".format(self.quest_starting_point))
+        print("Reward:  {}".format(self.quest_reward_hint))
+    
+    
+class The_Duel_Quest_Handler(Quest_Handler):
+    
+    defaults = {"quest_name" : "The Duel", "quest_description" : "Test your mettle at the duel arena!",
+                "quest_starting_point" : "town->duel", "quest_reward_hint" : "Combat XP"}
+                    
+        
 class Town_Handler(Engine):
         
     defaults = {"handler_types" : ("game.mechanics.enginetest.Duel_Handler", )}
@@ -309,7 +342,22 @@ class Town_Handler(Engine):
     
 class Duel_Handler(Engine):
     
-    defaults = {"handler_types" : ("game.mechanics.enginetest.FairFight_Handler", )}
+    defaults = {"handler_types" : ("game.mechanics.enginetest.FairFight_Handler", 
+                                   "game.mechanics.enginetest.The_Duel_Handler")}
+    
+
+class The_Duel_Handler(Handler):
+       
+    def run(self, player):
+        assert hasattr(player.skills.combat.attack, "attack_focus")
+        opponent_skill = game.character2.Skills.random_skills(0)
+        opponent = game.character2.Character(name="El toriablo", skills=opponent_skill)
+        battle = Synchronous_Combat_Engine()
+        outcome = battle.run(player, opponent)
+        if outcome == "victory" and "The Duel" not in player.complete_quests:
+            assert hasattr(player.skills.combat.attack, "attack_focus")
+            player.xp += 90
+            player.complete_quests.add("The Duel")
     
     
 class FairFight_Handler(Handler):
@@ -318,7 +366,7 @@ class FairFight_Handler(Handler):
         super(FairFight_Handler, self).__init__(selection_name)
     
     def run(self, player):
-        level = player.skills.combat.level
+        level = player.skills.combat.level        
         opponent_skill = game.character2.Skills.random_skills(level)
         opponent = game.character2.Character(name="captive beast", skills=opponent_skill)
         battle = Synchronous_Combat_Engine()
@@ -330,7 +378,7 @@ class Character_Handler(Handler):
     @staticmethod
     def run(*args):
         party = args[0]                
-        string = "Name: {}  Combat: level: {}   xp: {}  damage: {}   hp:    {}/{}\n"
+        string = "Name: {}  level: {}   xp:     {}   damage:   {}   hp:    {}/{}\n"
         string += "critical hit:  {}    DoT:    {}   strength: {}   focus: {}\n"
         string += "dodge:         {}    regen:  {}   soak:     {}   focus: {}\n"
         skills = party.skills.combat
@@ -425,7 +473,7 @@ class Synchronous_Combat_Engine(Engine):
                 last_selection = self.combat_ai_handle(active_party, other_party)
             battle_engaged = self.determine_battle_engaged(active_party, other_party, last_selection)
             
-        self.end_battle(active_party, other_party, last_selection)
+        return self.end_battle(active_party, other_party, last_selection)
         
     def determine_battle_engaged(self, active_party, other_party, last_selection):        
         continue_flag = True
@@ -449,7 +497,8 @@ class Synchronous_Combat_Engine(Engine):
     def end_battle(self, party1, party2, last_selection):
         outcome = self.determine_battle_outcome(party1, party2, last_selection)        
         getattr(self.battle_result_handler, "handle_{}".format(outcome))(party1, party2)
-                        
+        return outcome
+        
     def present_menu(self, active_party, other_party):
         print('*' * 79)      
         print("Current stats: hp: {}".format(active_party.health))

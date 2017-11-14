@@ -44,7 +44,7 @@ class Magic(Major_Skill):
     defaults = {"minor_skills" : (type(name, (Minor_Skill, ), {}) for name in game.items.magic.weapons.WEAPON_TYPES)}
 
 
-class Defence(Major_Skill): pass
+class Defense(Major_Skill): pass
 
 
 class Crafting(Major_Skill): pass
@@ -58,7 +58,7 @@ class Potions(Major_Skill): pass
     
 class Skills(pride.components.base.Base):
     
-    defaults = {"major_skills" : ("Melee", "Range", "Magic", "Defence",
+    defaults = {"major_skills" : ("Melee", "Range", "Magic", "Defense",
                                   "Crafting", "Spellcraft", "Potions")}
                 
     def __init__(self, **kwargs):

@@ -33,13 +33,14 @@ class Attack(Skill):
         self.level = sum((critical_hit, dot, strength))
         
     
-class Defence(Skill):
+class Defense(Skill):
             
     def __init__(self, dodge=0, regen=0, soak=0):
         self.dodge = Dodge(dodge)
         self.regen = Regen(regen)
         self.soak = Soak(soak)
         self.level = sum((dodge, regen, soak))
+        
         
 class Health(Skill): 
     
@@ -57,7 +58,7 @@ class Combat(Skill):
 
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
         self.attack = Attack(critical_hit, dot, strength)
-        self.defense = Defence(dodge, regen, soak) 
+        self.defense = Defense(dodge, regen, soak) 
         self.health = Health(health)       
         self.damage = damage
         self.level = (self.attack.level + self.defense.level) / 2
@@ -88,6 +89,7 @@ class Character(pride.components.base.Base):
     defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None}    
     verbosity = {"die" : 0}
     flags = {"_health" : 0, "_xp" : 0}
+    mutable_defaults = {"complete_quests" : set}
     
     def _get_health(self):
         return self._health
@@ -129,18 +131,25 @@ class Character(pride.components.base.Base):
         super(Character, self).alert(message, level=level, display_name=display_name)
         
     def level_up(self):
-        skills = self.skills.combat        
+        skills = self.skills.combat
+        assert isinstance(skills, Combat)
         skills.level += 1
+        self.alert("Level increased to {}".format(skills.level))
         attack_skills = skills.attack
+        assert isinstance(attack_skills, Attack)
         defense_skills = skills.defense
-        attack_focus = attack_skills.focus
-        defense_focs = defense_skills.focus
+        assert isinstance(defense_skills, Defense)
+        attack_focus = attack_skills.attack_focus
+        defense_focus = defense_skills.defense_focus
         
         attack_skill = getattr(attack_skills, attack_focus)
-        defense_skill = getatr(defense_skills, defense_focus)
-        setattr(attack_skills, attack_focus, attack_skill.level + 1)
-        setattr(defense_skills, defense_focus, defense_skill.level + 1)        
-                
+        defense_skill = getattr(defense_skills, defense_focus)
+        
+        attack_skill.level += 1
+        defense_skill.level += 1
+        self.alert("{} increased to level {}".format(attack_focus, attack_skill.level))
+        self.alert("{} increased to level {}".format(defense_focus, defense_skill.level))
+        
     def save(self):
         return pickle.dumps(self)
         
