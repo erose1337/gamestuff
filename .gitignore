@@ -50,3 +50,5 @@ Temporary Items
 /build/
 /dist/
 /game.egg-info/
+
+*.sav

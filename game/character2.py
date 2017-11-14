@@ -1,4 +1,5 @@
 import random
+import pickle # todo: use prides save feature instead
 
 import pride.components.base
 
@@ -65,7 +66,7 @@ class Skills(object):
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
         self.combat = Combat(critical_hit, dot, strength, dodge, regen, soak, health, damage)
              
-        
+    
 class Character(pride.components.base.Base):
     
     defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None}    
@@ -107,7 +108,7 @@ class Character(pride.components.base.Base):
         self.alert("Died", level=self.verbosity["die"])
         
     def alert(self, message, level=0, display_name=None):
-        if display_name is None:
+        if display_name is None and hasattr(self, "name"):
             display_name = self.name
         super(Character, self).alert(message, level=level, display_name=display_name)
         
@@ -123,5 +124,11 @@ class Character(pride.components.base.Base):
         defense_skill = getatr(defense_skills, defense_focus)
         setattr(attack_skills, attack_focus, attack_skill.level + 1)
         setattr(defense_skills, defense_focus, defense_skill.level + 1)        
+                
+    def save(self):
+        return pickle.dumps(self)
         
+    @staticmethod
+    def load(data):
+        return pickle.loads(data)
         

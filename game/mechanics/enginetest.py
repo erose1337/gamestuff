@@ -1,13 +1,10 @@
-# options
-# turn based, no timers (synchronous)
-#   - a la pokemon
-# cooldowns/timers      (asynchronous)
-#   - a la diablo
 import itertools
 import pprint
+import os
 
 import pride.components.base
 
+import game.character2
 import game.mechanics.combat2
 import game.mechanics.droptable
 
@@ -233,7 +230,63 @@ class Wander_Handler(Engine):
                                    "game.mechanics.enginetest.Fish_Handler", 
                                    "game.mechanics.enginetest.Rest_Handler")}                      
        
+    
+class StartMenu_Handler(Engine):
+        
+    defaults = {"handler_types" : ("game.mechanics.enginetest.CharacterCreation_Handler",
+                                   "game.mechanics.enginetest.LoadCharacter_Handler")}
+                                   
+                                   
+class CharacterCreation_Handler(Handler):
+                                
+    def __init__(self, selection_text="Create character"):
+        super(CharacterCreation_Handler, self).__init__(selection_text)
+    
+    @staticmethod
+    def run(*args):        
+        while True:
+            name = raw_input("Name: ")
+            prompt = "Select an attack focus: {} or {} or {}: "
+            selections = ("critical hit", "dot", "strength")
+            attack_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
+            
+            prompt = "Select a defense focus: {} or {} or {}: "
+            selections = ("dodge", "regen", "soak")
+            defense_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
+            
+            skills = game.character2.Skills(damage=10)
+            skills.combat.attack.attack_focus = attack_focus
+            skills.combat.defense.defense_focus = defense_focus
+            character = game.character2.Character(name=name, npc=False, skills=skills)
+            
+            Character_Handler.run(character)
+            if 'y' == raw_input("Use this character?: y/n ").lower():
+                break
                 
+        with open("{}.sav".format(name), "wb") as _file:
+            _file.truncate()
+            _file.write(character.save())
+            
+            
+class LoadCharacter_Handler(Handler):
+                
+    def __init__(self, selection_text="Load character"):
+        super(LoadCharacter_Handler, self).__init__(selection_text)
+        
+    @staticmethod
+    def run(*args):        
+        name = raw_input("Enter character name: ")
+        if os.path.lexists(name + ".sav"):
+            with open("{}.sav".format(name), "rb") as _file:
+                data = _file.read()            
+            character = game.character2.Character.load(data)
+            engine = Basic_Game()
+            engine.run(character)
+        else:
+            print "Character {} does not exist".format(name)
+        
+        
+            
 class Basic_Game(Engine):
                         
     defaults = {"handler_types" : ("game.mechanics.enginetest.Character_Handler",
@@ -242,8 +295,9 @@ class Basic_Game(Engine):
     
     
 class Character_Handler(Handler):
-               
-    def run(self, *args):
+     
+    @staticmethod
+    def run(*args):
         party = args[0]                
         string = "Name: {}  Combat: level: {}    damage: {}   hp:    {}/{}\n"
         string += "critical hit:  {}    DoT:    {}   strength: {}   focus: {}\n"
@@ -439,6 +493,8 @@ class Surrender_Handler(Handler):
         
 if __name__ == "__main__":
     #Engine.unit_test()
-    Basic_Game.unit_test()
+    #Basic_Game.unit_test()
     #Synchronous_Combat_Engine.unit_test()
+    menu = StartMenu_Handler()
+    menu.run(None)
     
