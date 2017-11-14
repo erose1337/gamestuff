@@ -8,6 +8,7 @@ class Skill(object):
     def __init__(self, level=1):
         self.level = level
         
+        
 class Critical_Hit(Skill): pass
             
 class DoT(Skill): 
@@ -31,6 +32,7 @@ class Attack(Skill):
         self.strength = Strength(strength) 
         self.level = sum((critical_hit, dot, strength))
         
+    
 class Defence(Skill):
             
     def __init__(self, dodge=0, regen=0, soak=0):
@@ -64,14 +66,28 @@ class Combat(Skill):
 class Skills(object):
     
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
-        self.combat = Combat(critical_hit, dot, strength, dodge, regen, soak, health, damage)
-             
-    
+        self.combat = Combat(critical_hit, dot, strength, dodge, regen, soak, health, damage)                
+        
+    @classmethod
+    def random_skills(cls, level):
+        defense_points = attack_points = level
+        kwargs = {"critical_hit" : 0, "dot" : 0, "strength" : 0}
+        for point in range(attack_points):
+            random_skill = random.choice(("critical_hit", "dot", "strength"))
+            kwargs[random_skill] += 1
+        for point in range(defense_points):
+            random_skill = random.choice(("dodge", "regen", "soak"))
+            kwargs[random_skill] += 1
+        kwargs["health"] = level
+        kwargs["damage"] = 10 + level
+        combat = Combat(**kwargs)
+        
+        
 class Character(pride.components.base.Base):
     
     defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None}    
     verbosity = {"die" : 0}
-    flags = {"_health" : 0}
+    flags = {"_health" : 0, "_xp" : 0}
     
     def _get_health(self):
         return self._health
@@ -103,7 +119,7 @@ class Character(pride.components.base.Base):
         if self.skills is None:                        
             self.skills = self.skill_tree_type(damage=10)
         self.health = 100 + (10 * self.skills.combat.health.level)
-        
+                
     def die(self):
         self.alert("Died", level=self.verbosity["die"])
         

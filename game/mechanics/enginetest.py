@@ -38,7 +38,8 @@ class Battle_Result_Handler(Handler):
     def handle_victory(self, victorious_party, defeated_party):
         victorious_party.alert("Victory!", level=0, display_name=victorious_party.name)
         defeated_party.alert("Defeat!", level=0, display_name=defeated_party.name)
-        victorious_party.gain_xp(10 ** defeated_party.level)
+        victorious_party.alert("Gained {} experience".format(10 ** defeated_party.skills.combat.level))                        
+        victorious_party.xp += 10 ** defeated_party.skills.combat.level
         
     def handle_defeat(self, defeated_party, victorious_party):
         victorious_party.alert("Victory!", level=0, display_name=victorious_party.name)
@@ -116,7 +117,7 @@ class Engine(pride.base.Base):
             selection_text = handler.selection_text
             setattr(self, selection_text, handler)
             menu_selection.append(selection_text)            
-        menu_selection.append("return")
+        menu_selection.append("exit")
         
         selection_prompt = " ".join("{}" for count in range(len(menu_selection)))                        
         self.selection_prompt = selection_prompt.format(*menu_selection) + "\nChoice: "    
@@ -128,7 +129,7 @@ class Engine(pride.base.Base):
         self.running = True                               
         while self.running:
             selection = self.present_menu(party1)   
-            if selection == "return":
+            if selection == "exit":
                 break
             self.process_selection(selection, party1)                   
         
@@ -282,30 +283,60 @@ class LoadCharacter_Handler(Handler):
             character = game.character2.Character.load(data)
             engine = Basic_Game()
             engine.run(character)
+            with open("{}.sav".format(name), "wb") as _file:
+                _file.truncate()
+                _file.write(character.save())
         else:
             print "Character {} does not exist".format(name)
-        
-        
+                
             
 class Basic_Game(Engine):
                         
     defaults = {"handler_types" : ("game.mechanics.enginetest.Character_Handler",
+                                   "game.mechanics.enginetest.Town_Handler",
                                    "game.mechanics.enginetest.Wander_Handler", 
                                    "game.mechanics.enginetest.Crafting_Handler")}
     
+
+class Town_Handler(Engine):
+        
+    defaults = {"handler_types" : ("game.mechanics.enginetest.Duel_Handler", )}
+    
+    def run(self, party):
+        party.health = party.max_health
+        super(Town_Handler, self).run(party)
+        
+    
+class Duel_Handler(Engine):
+    
+    defaults = {"handler_types" : ("game.mechanics.enginetest.FairFight_Handler", )}
+    
+    
+class FairFight_Handler(Handler):
+        
+    def __init__(self, selection_name="Fair fight"):
+        super(FairFight_Handler, self).__init__(selection_name)
+    
+    def run(self, player):
+        level = player.skills.combat.level
+        opponent_skill = game.character2.Skills.random_skills(level)
+        opponent = game.character2.Character(name="captive beast", skills=opponent_skill)
+        battle = Synchronous_Combat_Engine()
+        battle.run(player, opponent)
+        
     
 class Character_Handler(Handler):
      
     @staticmethod
     def run(*args):
         party = args[0]                
-        string = "Name: {}  Combat: level: {}    damage: {}   hp:    {}/{}\n"
+        string = "Name: {}  Combat: level: {}   xp: {}  damage: {}   hp:    {}/{}\n"
         string += "critical hit:  {}    DoT:    {}   strength: {}   focus: {}\n"
         string += "dodge:         {}    regen:  {}   soak:     {}   focus: {}\n"
         skills = party.skills.combat
         attack = skills.attack
         defense = skills.defense             
-        print string.format(party.name, skills.level, skills.damage, party.health, party.max_health,
+        print string.format(party.name, skills.level, party.xp, skills.damage, party.health, party.max_health,
                             attack.critical_hit.level, attack.dot.level, attack.strength.level, attack.attack_focus,
                             defense.dodge.level, defense.regen.level, defense.soak.level, defense.defense_focus)
                                
