@@ -72,7 +72,8 @@ class Skills(object):
     @classmethod
     def random_skills(cls, level):
         defense_points = attack_points = level
-        kwargs = {"critical_hit" : 0, "dot" : 0, "strength" : 0}
+        kwargs = {"critical_hit" : 0, "dot" : 0, "strength" : 0,
+                  "dodge" : 0, "regen" : 0, "soak" : 0}
         for point in range(attack_points):
             random_skill = random.choice(("critical_hit", "dot", "strength"))
             kwargs[random_skill] += 1
@@ -134,6 +135,8 @@ class Character(pride.components.base.Base):
         skills = self.skills.combat
         assert isinstance(skills, Combat)
         skills.level += 1
+        skills.damage += 1
+        skills.health.level += 1
         self.alert("Level increased to {}".format(skills.level))
         attack_skills = skills.attack
         assert isinstance(attack_skills, Attack)

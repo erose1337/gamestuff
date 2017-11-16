@@ -20,11 +20,14 @@ def get_selection(prompt, prompt2, answers):
     return selection    
               
               
-class Handler(object):     
+class Handler(pride.base.Base):     
     
-    def __init__(self, selection_text=''):        
-        super(Handler, self).__init__()
-        self.selection_text = selection_text or self.__class__.__name__.split('_')[-2].lower() #  "otherInfo_X_Handler"
+    defaults = {"selection_text" : ''}
+    
+    def __init__(self, *args, **kwargs):        
+        super(Handler, self).__init__(*args, **kwargs)
+        if self.selection_text == '':
+            self.selection_text = self.__class__.__name__.split('_')[-2].lower() #  "otherInfo_X_Handler"
 
         
 class Return_Handler(Handler):
@@ -239,19 +242,26 @@ class StartMenu_Handler(Engine):
                                    
                                    
 class CharacterCreation_Handler(Handler):
-                                
-    def __init__(self, selection_text="Create character"):
-        super(CharacterCreation_Handler, self).__init__(selection_text)
-    
+            
+    defaults = {"selection_text" : "Create character",
+                "critical_hit_description" : "Provides a 15% chance to deal 66% * level extra damage",
+                "dot_description" : "Provides a 33% chance to deal 33% * level extra damage",
+                "strength" : "Provides a 100% chance to deal 100% * level extra damage",
+                "dodge_description" : "Provides a 15% chance to avoid 66% * level damage",
+                "regen_description" : "Provides a 33% chance to recover health each turn",
+                "soak_description" : "Reduces incoming damage by 1 point per level"}
+
     @staticmethod
     def run(*args):        
         while True:
             name = raw_input("Name: ")
-            prompt = "Select an attack focus: {} or {} or {}: "
-            selections = ("critical hit", "dot", "strength")
+            prompt = "Select an attack focus:\n{}: {}\n{}: {}\n{}: {}"
+            selections = ("critical hit", self.critical_hit_description, 
+                          "dot", self.dot_description,
+                          "strength", self.strength_description)
             attack_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
             
-            prompt = "Select a defense focus: {} or {} or {}: "
+            prompt = "Select a defense focus:\n{}: {}\n{}: {}\n{}: {}"
             selections = ("dodge", "regen", "soak")
             defense_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
             
@@ -271,9 +281,8 @@ class CharacterCreation_Handler(Handler):
             
 class LoadCharacter_Handler(Handler):
                 
-    def __init__(self, selection_text="Load character"):
-        super(LoadCharacter_Handler, self).__init__(selection_text)
-        
+    defaults = {"selection_text" : "Load character"}
+
     @staticmethod
     def run(*args):        
         name = raw_input("Enter character name: ")
@@ -307,18 +316,15 @@ class Quests_Handler(Engine):
 class Quest_Handler(Handler):
         
     defaults = {"quest_name" : '', "quest_description" : '',
-                "quest_starting_point" : '', "quest_reward" : ''}
+                "quest_starting_point" : '', "quest_reward" : '',
+                "recommended_level" : 0}
                 
-    def __init__(self, selection_text=None):    
-        if selection_text is not None:
-            raise ValueError("selection_text must be None for Quest_Handler")
-        for key, value in self.defaults.items():
-            setattr(self, key, value)
-        selection_text = self.quest_name
-        super(Quest_Handler, self).__init__(selection_text)
-        
+    def __init__(self, *args, **kwargs):            
+        super(Quest_Handler, self).__init__(*args, **kwargs)
+        self.selection_text = self.quest_name
+                    
     def run(self, player):
-        print("\nQuest:     {}".format(self.quest_name))
+        print("\nQuest:     {}      recommended level: {}".format(self.quest_name, self.recommended_level))
         print("Completed:   {}".format(self.quest_name in player.complete_quests))
         print("Description:\n   {}".format(self.quest_description))
         print("Starting point:  {}".format(self.quest_starting_point))
@@ -328,7 +334,8 @@ class Quest_Handler(Handler):
 class The_Duel_Quest_Handler(Quest_Handler):
     
     defaults = {"quest_name" : "The Duel", "quest_description" : "Test your mettle at the duel arena!",
-                "quest_starting_point" : "town->duel", "quest_reward_hint" : "Combat XP"}
+                "quest_starting_point" : "town->duel", "quest_reward_hint" : "Combat XP",
+                "recommended_level" : 0}
                     
         
 class Town_Handler(Engine):
@@ -348,10 +355,13 @@ class Duel_Handler(Engine):
 
 class The_Duel_Handler(Handler):
        
+    defaults = {"selection_text" : "The Duel"}
+    
     def run(self, player):
         assert hasattr(player.skills.combat.attack, "attack_focus")
-        opponent_skill = game.character2.Skills.random_skills(0)
+        opponent_skill = game.character2.Skills.random_skills(0)                
         opponent = game.character2.Character(name="El toriablo", skills=opponent_skill)
+        opponent.health -= 25
         battle = Synchronous_Combat_Engine()
         outcome = battle.run(player, opponent)
         if outcome == "victory" and "The Duel" not in player.complete_quests:
@@ -362,9 +372,8 @@ class The_Duel_Handler(Handler):
     
 class FairFight_Handler(Handler):
         
-    def __init__(self, selection_name="Fair fight"):
-        super(FairFight_Handler, self).__init__(selection_name)
-    
+    defaults = {"selection_text" : "Fair fight"}
+
     def run(self, player):
         level = player.skills.combat.level        
         opponent_skill = game.character2.Skills.random_skills(level)

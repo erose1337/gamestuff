@@ -634,3 +634,59 @@ combat style options:
     NvK, action points pool: fallout
     
     
+    
+    
+battle style options:
+    Fair fight: 1v1 with equal level
+    Boss fight: 1v1 or 1vk or NvK with special opponent (preset levels/dynamically generated combinations)
+        - might be higher level then player by significant margin
+    Brawl: 1vk with varied level with equivalent level    
+    Rumble: NvK with equivalent levels
+    
+quest options:
+    presets
+        The Duel - tutorial to get character from level 0 to level 1
+        
+    dynamically generated
+        - hunt
+            - defeat X opponents of type Y
+            - gather X drops from opponent of type Y
+        - gather
+            - requires going to particular location
+                - can put battles in the way
+            - gather x items
+                - can put a limit on inventory size
+            - gather x, y, z different items
+                - can require obtaining items in order (or not)
+        - deliver
+            - be given item(s) to take to a particular location
+                - can put battles in the way
+        
+                
+element type ideas:    
+    - at character creation choose (at least) one element        
+        - Element X deals extra damage against element Y and less damage against element Z              
+              weak         element   strong
+            - water    <-  fire      +> air
+              fire     <-  air       +> stone
+              air      <-  stone     +> electric
+              stone    <-  electric  +> water
+              electric <-  water     +> fire                                         
+            - fire - air - stone - electric - water 
+            
+        - Element X receives extra damage from element Y and less damage against element Z
+            - Taking more elements is not necessarily better
+        - Element determines DoT type
+            - which effect hits can be random, if multiple elements are possible
+        - "excellence" - no element
+            - just a mundane individual with exceptional skill
+            - no penalties, but no advantages
+            
+    earth/stone fire water/ice air/electric death/poison life dragon magic pierce slash smash             
+    two dimensions:
+        - X increased damage against some element
+        - X decreased damage against some other element
+            - X = 50%
+    # incorporate changes into character creation
+    # incorporate changes into combat
+    # incorporate changes for DoT display string
