@@ -1,12 +1,20 @@
 import traceback
 import pprint
 import os
+import random
 
 import pride.components.base
 
 import game.character2
 import game.mechanics.combat2
 import game.mechanics.droptable
+
+ELEMENT_BONUS = {"Fire" : "Air", "Air" : "Stone", "Stone" : "Electric", 
+                 "Electric" : "Water", "Water" : "Fire", "Excellence" : "None", "Neutral" : "None"}
+ELEMENT_PENALTY = dict((value, key) for key, value in ELEMENT_BONUS.items())
+del ELEMENT_PENALTY["None"]
+ELEMENT_PENALTY["Excellence"] = "None"
+ELEMENT_PENALTY["Neutral"] = "None"
 
 def get_selection(prompt, prompt2, answers):
     """ Displays prompt to the user. Only input from the supplied answers iterable
@@ -243,32 +251,45 @@ class StartMenu_Handler(Engine):
                                    
 class CharacterCreation_Handler(Handler):
             
-    defaults = {"selection_text" : "Create character",
-                "critical_hit_description" : "Provides a 15% chance to deal 66% * level extra damage",
-                "dot_description" : "Provides a 33% chance to deal 33% * level extra damage",
-                "strength" : "Provides a 100% chance to deal 100% * level extra damage",
-                "dodge_description" : "Provides a 15% chance to avoid 66% * level damage",
-                "regen_description" : "Provides a 33% chance to recover health each turn",
+    defaults = {"selection_text" : "Create character", 
+                "element_prompt" : "You may choose to be empowered with a certain element.\nDoing so will bestow an advantage against another opposing element, as well as a weakness against another. \nAlternatively, you may choose to remain neutral and create a mundane but exceptional mortal.",
+                "element_selections" : ("Fire", "Air", "Stone", "Electric", "Water", "Excellence"),
+                "element_descriptions" : ("Fire:\n    You are empowered with fire.\n    +50% to Air, -50% to Water",
+                                          "\nAir:\n    You are empowered with air.\n    +50% to Stone, -50% to Fire",
+                                          "\nStone:\n    You are empowered with Stone.\n    +50% to Electric, -50% to Air",
+                                          "\nElectric:\n    You are empowered with Electricity.\n    +50% to Water, -50% to Stone",
+                                          "\nWater:\n    You are empowered with Water.\n    +50% to Fire, -50% to Electric",
+                                          "\nExcellence:\n    You are a normal mortal with exceptional skills.\n    No damage bonus or resistance"),
+                "critical_hit_description" : "Provides a 15% chance to deal 6.6 * level extra damage",
+                "dot_description" : "Provides a 33% chance to deal 3.3 * level extra damage",
+                "strength_description" : "Increases minimum damage by 1 * level",
+                "dodge_description" : "Provides a 15% chance to avoid 6.6 * level damage",
+                "regen_description" : "Provides a 33% chance to recover 3.3 * level health each turn",
                 "soak_description" : "Reduces incoming damage by 1 point per level"}
-
-    @staticmethod
-    def run(*args):        
+    
+    def run(self, *args):        
         while True:
             name = raw_input("Name: ")
-            prompt = "Select an attack focus:\n{}: {}\n{}: {}\n{}: {}"
+            print self.element_prompt
+            print ''.join(self.element_descriptions)
+            element = get_selection("Please choose an element: ", "invalid selection", self.element_selections)            
+            
+            prompt = "Select an attack focus:\n{}:\n   {}\n{}:\n   {}\n{}:\n   {}\nSelection: "
             selections = ("critical hit", self.critical_hit_description, 
                           "dot", self.dot_description,
                           "strength", self.strength_description)
             attack_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
             
-            prompt = "Select a defense focus:\n{}: {}\n{}: {}\n{}: {}"
-            selections = ("dodge", "regen", "soak")
+            prompt = "Select a defense focus:\n{}:\n   {}\n{}:\n   {}\n{}:\n   {}\nSelection: "
+            selections = ("dodge", self.dodge_description,
+                          "regen", self.regen_description, 
+                          "soak", self.soak_description)
             defense_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
             
             skills = game.character2.Skills(damage=10)
             skills.combat.attack.attack_focus = attack_focus
             skills.combat.defense.defense_focus = defense_focus
-            character = game.character2.Character(name=name, npc=False, skills=skills)
+            character = game.character2.Character(name=name, npc=False, skills=skills, element=element)
             
             Character_Handler.run(character)
             if 'y' == raw_input("Use this character?: y/n ").lower():
@@ -377,7 +398,11 @@ class FairFight_Handler(Handler):
     def run(self, player):
         level = player.skills.combat.level        
         opponent_skill = game.character2.Skills.random_skills(level)
-        opponent = game.character2.Character(name="captive beast", skills=opponent_skill)
+        element = random.choice(ELEMENT_BONUS.keys())
+        if element == "Excellence":
+            element = "Neutral"
+        element = "Water"
+        opponent = game.character2.Character(name="captive beast", skills=opponent_skill, element=element)
         battle = Synchronous_Combat_Engine()
         battle.run(player, opponent)
         
@@ -388,6 +413,11 @@ class Character_Handler(Handler):
     def run(*args):
         party = args[0]                
         string = "Name: {}  level: {}   xp:     {}   damage:   {}   hp:    {}/{}\n"
+        
+        element = party.element
+        bonus = ELEMENT_BONUS[element]
+        penalty = ELEMENT_PENALTY[element]
+        string += "Element: {}  +50% against: {}   -50% against {}\n".format(element, bonus, penalty)
         string += "critical hit:  {}    DoT:    {}   strength: {}   focus: {}\n"
         string += "dodge:         {}    regen:  {}   soak:     {}   focus: {}\n"
         skills = party.skills.combat

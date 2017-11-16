@@ -87,7 +87,8 @@ class Skills(object):
         
 class Character(pride.components.base.Base):
     
-    defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None}    
+    defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None,
+                "element" : "Neutral"}    
     verbosity = {"die" : 0}
     flags = {"_health" : 0, "_xp" : 0}
     mutable_defaults = {"complete_quests" : set}
@@ -122,7 +123,8 @@ class Character(pride.components.base.Base):
         if self.skills is None:                        
             self.skills = self.skill_tree_type(damage=10)
         self.health = 100 + (10 * self.skills.combat.health.level)
-                
+        self.name += " ({})".format(self.element)
+        
     def die(self):
         self.alert("Died", level=self.verbosity["die"])
         

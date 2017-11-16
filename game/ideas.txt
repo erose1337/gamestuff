@@ -686,7 +686,9 @@ element type ideas:
     two dimensions:
         - X increased damage against some element
         - X decreased damage against some other element
-            - X = 50%
-    # incorporate changes into character creation
+            - X = 50%    
     # incorporate changes into combat
     # incorporate changes for DoT display string
+    # make focus give +1 to selected skill
+    make training dummy for explaining combat
+                 
