@@ -60,7 +60,7 @@ class Battle_Result_Handler(Handler):
         party1.alert("Draw!", level=0, display_name=party1.name)
         party2.alert("Draw!", level=0, display_name=party2.name)
         
-    def handle_run(self, fleeing_party, other_party):
+    def handle_flee(self, fleeing_party, other_party):
         fleeing_party.alert("Runs away!", level=0, display_name=fleeing_party.name)
         
     def handle_surrender(self, surrendering_party, capturer):
@@ -507,7 +507,9 @@ class Synchronous_Combat_Engine(Engine):
         while battle_engaged:
             active_party, other_party = other_party, active_party
             if not active_party.npc: 
-                last_selection = self.present_menu(active_party, other_party)
+                last_selection, flag = self.present_menu(active_party, other_party)
+                if flag is True:
+                    break
             else:
                 last_selection = self.combat_ai_handle(active_party, other_party)
             battle_engaged = self.determine_battle_engaged(active_party, other_party, last_selection)
@@ -516,7 +518,7 @@ class Synchronous_Combat_Engine(Engine):
         
     def determine_battle_engaged(self, active_party, other_party, last_selection):        
         continue_flag = True
-        if (last_selection in ("run", "surrender") or
+        if (last_selection in ("flee", "surrender") or
             active_party.is_dead or other_party.is_dead):
             continue_flag = False            
         return continue_flag
@@ -545,8 +547,8 @@ class Synchronous_Combat_Engine(Engine):
         print('*' * 79)
         selection = get_selection(self.selection_prompt, self.invalid_selection_prompt, self.menu_selection)
         assert selection in self.menu_selection
-        getattr(self, selection).run(active_party, other_party)
-        return selection                
+        flag = getattr(self, selection).run(active_party, other_party)
+        return selection, flag
     
     def combat_ai_handle(self, active_party, other_party):
         game.mechanics.combat2.process_attack(active_party, other_party)
@@ -600,7 +602,9 @@ class Flee_Handler(Handler):
             
     def run(self, *args):
         active_party, other_party = args
-        game.mechanics.combat2.process_flee(active_party, other_party)
+        if game.mechanics.combat2.process_flee(active_party, other_party):
+            end_battle = True
+            return end_battle
         
         
 class Surrender_Handler(Handler):

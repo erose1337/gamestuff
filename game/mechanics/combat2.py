@@ -67,7 +67,8 @@ def process_attack(party1, party2):
                 party2.health += regeneration
                 party2.alert("Regenerated {} health".format(regeneration))  
     
-    final_damage = max(0, damage + critical_bonus + dot_bonus + strength_bonus - soak_modifier - dodge_modifier - regeneration)
+    final_damage = max(0, damage + critical_bonus + dot_bonus + strength_bonus - soak_modifier - dodge_modifier)
+    
     element1 = party1.element
     element2 = party2.element
     element_modifier = 0
@@ -79,7 +80,8 @@ def process_attack(party1, party2):
         party1.alert("Element damage penalty: {}".format(element_modifier))
     final_damage += element_modifier
     assert final_damage >= 0
-    party2.health -= max(0, final_damage)
+        
+    party2.health -= final_damage - regeneration
     party1.alert("Dealt {} damage".format(final_damage))
     party2.alert("Received {} damage".format(final_damage))
       

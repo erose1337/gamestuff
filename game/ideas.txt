@@ -747,4 +747,4 @@ active abilities:
     # include "abilities" menu in combat
     # toggle abilities drain X points per turn
     # include description of abilities somewhere (character creation or character screen)
-    
+        
