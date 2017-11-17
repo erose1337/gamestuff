@@ -687,8 +687,64 @@ element type ideas:
         - X increased damage against some element
         - X decreased damage against some other element
             - X = 50%    
-    # incorporate changes into combat
+    
     # incorporate changes for DoT display string
-    # make focus give +1 to selected skill
+        - customizable strings for each skill activation    
     make training dummy for explaining combat
                  
+                 
+combat options:
+    guard - tank damage for another target
+        - effectively moves dodge/regen/soak points to other team members
+            - the guard will take damage instead of the protected target
+                - possibility target will take damage anyways?
+                - dot effect always hits intended target?
+    heal - apply regen effect to target instead of caster
+        - requires hard points in regen
+        - effectively moves regen points to target participant
+    
+    attack - attack a specific participant
+        - damage may end up hitting a guard instead of target
+        
+active abilities:
+    each skill has different abilities
+        - using them temporarily consumes X skill levels
+        - skills can be restored:
+            - via location
+                - points become precious and cannot be easily restored
+                - i.e. town
+            - via items
+                - points can be slightly expensive
+                - effectively trades a future turn to activate an ability
+            - via time
+                - very slow or very fast
+                    - fast: every x combat turns
+                    - slow: every x 
+            - via location + items
+    Toggle abilities:
+        6 levels. Each toggle drains X attack (or defense)  points per turn
+        critical hit:
+            focus: +15*X% crit chance 
+        dot:
+            intensity +10*X% chance to activate, +1.5*X extra damage         
+        strength: 
+            super strength: +X strength (+X extra damage)
+        dodge:
+            celerity: +5*X% chance to dodge, +1.5*X damage avoided
+        regen:            
+            adrenaline: +10*X% chance to activate, +1.5*X health restored           
+        soak:
+            dauntless: +X damage soaked    
+    Active abilities:
+        critical hit:
+        dot:
+        strength:
+        dodge:
+        regen:               
+            heal:  restores 3 * X health to a target            
+        soak:
+        
+    # include "abilities" menu in combat
+    # toggle abilities drain X points per turn
+    # include description of abilities somewhere (character creation or character screen)
+    

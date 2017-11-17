@@ -10,33 +10,59 @@ ELEMENT_PENALTY["Neutral"] = "None"
 def process_attack(party1, party2):    
     party1.alert("Attack!")
     party1_attack = party1.skills.combat.attack
-    
+    attack_focus = getattr(party1_attack, "attack_focus", None)
     critical_bonus = dot_bonus = 0
     damage = random.randint(0, party1.skills.combat.damage)
-    strength_bonus = party1_attack.strength.level   
+    if attack_focus == "strength":
+        bonus = 1
+    else:
+        bonus = 0
+    strength_bonus = party1_attack.strength.level + bonus 
 
     if random.randint(0, 100) <= 15:
-        critical_bonus = int(6.6 * party1_attack.critical_hit.level)   
+        if attack_focus == "critical_hit":
+            bonus = 1
+        else:
+            bonus = 0
+        critical_bonus = int(6.6 * (party1_attack.critical_hit.level + bonus))   
         if critical_bonus:
             party1.alert("critical hit for {} extra damage!".format(critical_bonus))
     
     if random.randint(0, 100) <= 33:
-        dot_bonus = int(3.3 * party1_attack.dot.level)
+        if attack_focus == "dot":
+            bonus = 1
+        else:
+            bonus = 0
+        dot_bonus = int(3.3 * (party1_attack.dot.level + bonus))
         if dot_bonus:
             party1.alert("{} for {}".format(party1_attack.dot.hit_string, dot_bonus))
         
-    party2_defense = party2.skills.combat.defense    
-    soak_modifier = party2_defense.soak.level
+    party2_defense = party2.skills.combat.defense  
+    defense_focus = getattr(party2_defense, "defense_focus", None)
+    
+    if defense_focus == "soak":
+        bonus = 1
+    else:
+        bonus = 0
+    soak_modifier = party2_defense.soak.level + bonus
     dodge_modifier = 0
     if random.randint(0, 100) <= 66:
-        dodge_modifier = int(1.5 * party2_defense.dodge.level)
+        if defense_focus == "dodge":
+            bonus = 1
+        else:
+            bonus = 0
+        dodge_modifier = int(1.5 * (party2_defense.dodge.level + bonus))
         if dodge_modifier:
             party2.alert("dodged {} damage!".format(dodge_modifier))
     
     regeneration = 0
-    if party2_defense.regen.level > 0: 
+    if defense_focus == "regen":
+        bonus = 1
+    else:
+        bonus = 0    
+    if party2_defense.regen.level + bonus > 0: 
         if random.randint(0, 100) <= 33:
-            regeneration = int(3.3 * party2_defense.regen.level)            
+            regeneration = int(3.3 * (party2_defense.regen.level + 1))            
             if regeneration:
                 party2.health += regeneration
                 party2.alert("Regenerated {} health".format(regeneration))  
