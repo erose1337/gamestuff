@@ -116,7 +116,8 @@ class Synchronous_Combat_Handler(Handler):
 class Engine(pride.base.Base):
     
     defaults = {"invalid_selection_prompt" : "Invalid selection",
-                "handler_types" : tuple(), "selection_text" : ''}   
+                "handler_types" : tuple(), "selection_text" : '',
+                "menu_includes_exit" : True}   
                 
     mutable_defaults = {"menu_selection" : list}
     
@@ -128,7 +129,8 @@ class Engine(pride.base.Base):
             selection_text = handler.selection_text
             setattr(self, selection_text, handler)
             menu_selection.append(selection_text)            
-        menu_selection.append("exit")
+        if self.menu_includes_exit:
+            menu_selection.append("exit")
         
         selection_prompt = " ".join("{}" for count in range(len(menu_selection)))                        
         self.selection_prompt = selection_prompt.format(*menu_selection) + "\nChoice: "    
@@ -278,13 +280,13 @@ class CharacterCreation_Handler(Handler):
             selections = ("critical hit", self.critical_hit_description, 
                           "dot", self.dot_description,
                           "strength", self.strength_description)
-            attack_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
+            attack_focus = get_selection(prompt.format(*selections), "invalid selection", selections).replace(' ', '_')
             
             prompt = "Select a defense focus:\n{}:\n   {}\n{}:\n   {}\n{}:\n   {}\nSelection: "
             selections = ("dodge", self.dodge_description,
                           "regen", self.regen_description, 
                           "soak", self.soak_description)
-            defense_focus = get_selection(prompt.format(*selections), "invalid selection", selections)
+            defense_focus = get_selection(prompt.format(*selections), "invalid selection", selections).replace(' ', '_')
             
             skills = game.character2.Skills(damage=10)
             skills.combat.attack.attack_focus = attack_focus
@@ -385,7 +387,7 @@ class The_Duel_Handler(Handler):
         opponent.health -= 25
         battle = Synchronous_Combat_Engine()
         outcome = battle.run(player, opponent)
-        if outcome == "victory" and "The Duel" not in player.complete_quests:
+        if outcome == "victory" and "The Duel" not in player.complete_quests and not player.is_dead:
             assert hasattr(player.skills.combat.attack, "attack_focus")
             player.xp += 90
             player.complete_quests.add("The Duel")
@@ -491,30 +493,32 @@ class Synchronous_Combat_Engine(Engine):
                                    "game.mechanics.enginetest.Ability_Handler", 
                                    "game.mechanics.enginetest.Item_Handler", 
                                    "game.mechanics.enginetest.Flee_Handler", 
-                                   "game.mechanics.enginetest.Surrender_Handler")}
-    
-    def __init__(self, *args, **kwargs):
-        super(Synchronous_Combat_Engine, self).__init__(*args, **kwargs)
-        self.battle_result_handler = Battle_Result_Handler()
-        
+                                   "game.mechanics.enginetest.Surrender_Handler"),
+                "menu_includes_exit" : False}
+    mutable_defaults = {"battle_result_handler" : Battle_Result_Handler}
+                    
     def run(self, party1, party2):
         if party1.is_dead or party2.is_dead:
             raise ValueError("Battle initiated with dead participants:\nparty1.is_dead: {};\nparty2.is_dead: {}".format(party1.is_dead, party2.is_dead))
-        battle_engaged = True        
-        active_party = party2
-        other_party = party1    
+        battle_engaged1 = battle_engaged2 = True        
+        active_party = party1
+        other_party = party2        
         print("\nBeginning battle!...")
-        while battle_engaged:
-            active_party, other_party = other_party, active_party
-            if not active_party.npc: 
-                last_selection, flag = self.present_menu(active_party, other_party)
-                if flag is True:
-                    break
-            else:
-                last_selection = self.combat_ai_handle(active_party, other_party)
-            battle_engaged = self.determine_battle_engaged(active_party, other_party, last_selection)
-            
-        return self.end_battle(active_party, other_party, last_selection)
+        while battle_engaged1 and battle_engaged2:
+            # active_party, other_party = other_party, active_party 
+            selection1, flag1 = self.handle_turn(active_party, other_party)
+            selection2, flag2 = self.handle_turn(other_party, active_party)
+                               
+            battle_engaged1 = self.determine_battle_engaged(active_party, other_party, selection1)
+            battle_engaged2 = self.determine_battle_engaged(other_party, active_party, selection2)
+        return self.end_battle(active_party, other_party, selection1)
+        
+    def handle_turn(self, active_party, other_party):
+        if not active_party.npc: 
+            handler = self.present_menu
+        else:
+            handler = self.combat_ai_handle
+        return handler(active_party, other_party)
         
     def determine_battle_engaged(self, active_party, other_party, last_selection):        
         continue_flag = True
@@ -552,7 +556,7 @@ class Synchronous_Combat_Engine(Engine):
     
     def combat_ai_handle(self, active_party, other_party):
         game.mechanics.combat2.process_attack(active_party, other_party)
-        return "attack"
+        return "attack", True
         
     @classmethod
     def unit_test(cls):

@@ -18,7 +18,7 @@ def process_attack(party1, party2):
     else:
         bonus = 0
     strength_bonus = party1_attack.strength.level + bonus 
-
+    
     if random.randint(0, 100) <= 15:
         if attack_focus == "critical_hit":
             bonus = 1
@@ -63,8 +63,7 @@ def process_attack(party1, party2):
     if party2_defense.regen.level + bonus > 0: 
         if random.randint(0, 100) <= 33:
             regeneration = int(3.3 * (party2_defense.regen.level + 1))            
-            if regeneration:
-                party2.health += regeneration
+            if regeneration:                
                 party2.alert("Regenerated {} health".format(regeneration))  
     
     final_damage = max(0, damage + critical_bonus + dot_bonus + strength_bonus - soak_modifier - dodge_modifier)
@@ -74,17 +73,18 @@ def process_attack(party1, party2):
     element_modifier = 0
     if ELEMENT_BONUS[element1] == element2:
         element_modifier = final_damage / 2
-        party1.alert("Dealt {} bonus elemental damage".format(element_modifier))
+        if element_modifier:
+            party1.alert("Dealt {} bonus elemental damage".format(element_modifier))
     elif ELEMENT_PENALTY[element1] == element2:
         element_modifier = -1 * (final_damage / 2)
-        party1.alert("Element damage penalty: {}".format(element_modifier))
+        if element_modifier:
+            party1.alert("Element damage penalty: {}".format(element_modifier))
     final_damage += element_modifier
     assert final_damage >= 0
-        
-    party2.health -= final_damage - regeneration
+            
     party1.alert("Dealt {} damage".format(final_damage))
     party2.alert("Received {} damage".format(final_damage))
-      
+    party2.health -= final_damage - regeneration
             
 def process_flee(party1, party2):
     if random.randint(0, 100) <= 50:        
