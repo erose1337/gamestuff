@@ -722,7 +722,7 @@ active abilities:
                     - slow: every x 
             - via location + items
     Toggle abilities:
-        6 levels. Each toggle drains X attack (or defense)  points per turn
+        5 levels. Each toggle drains X attack (or defense)  points per turn
         critical hit:
             focus: +15*X% crit chance 
         dot:
@@ -734,7 +734,7 @@ active abilities:
         regen:            
             adrenaline: +10*X% chance to activate, +1.5*X health restored           
         soak:
-            dauntless: +X damage soaked    
+            dauntless: *(X + 1) damage soaked    
     Active abilities:
         critical hit:
         dot:

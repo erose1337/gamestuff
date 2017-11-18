@@ -17,9 +17,18 @@ def process_attack(party1, party2):
         bonus = 1
     else:
         bonus = 0
-    strength_bonus = party1_attack.strength.level + bonus 
-    
-    if random.randint(0, 100) <= 15:
+    if "super strength" in party1.toggle_abilities:
+        strength_modifier = 2
+    else:
+        strength_modifier = 1
+    strength_bonus = (party1_attack.strength.level + bonus) * strength_modifier
+        
+    if "focus" in party1.toggle_abilities:
+        print "Focus active!"
+        chance_modifier = 15
+    else:
+        chance_modifier = 0
+    if random.randint(0, 100) <= 15 + chance_modifier:
         if attack_focus == "critical_hit":
             bonus = 1
         else:
@@ -28,12 +37,18 @@ def process_attack(party1, party2):
         if critical_bonus:
             party1.alert("critical hit for {} extra damage!".format(critical_bonus))
     
-    if random.randint(0, 100) <= 33:
+    if "intensity" in party1.toggle_abilities:
+        chance_modifier = 10
+        damage_modifier = 1.5
+    else:
+        chance_modifier = damage_modifier = 0
+        
+    if random.randint(0, 100) <= 33 + chance_modifier:
         if attack_focus == "dot":
             bonus = 1
         else:
             bonus = 0
-        dot_bonus = int(3.3 * (party1_attack.dot.level + bonus))
+        dot_bonus = int((damage_modifier + 3.3) * (party1_attack.dot.level + bonus))
         if dot_bonus:
             party1.alert("{} for {}".format(party1_attack.dot.hit_string, dot_bonus))
         
@@ -44,14 +59,24 @@ def process_attack(party1, party2):
         bonus = 1
     else:
         bonus = 0
-    soak_modifier = party2_defense.soak.level + bonus
+    if "dauntless" in party2.toggle_abilities:
+        soak_multiplier = 1 + 1
+    else:
+        soak_multiplier = 1
+    soak_modifier = (party2_defense.soak.level + bonus) * soak_multiplier
+    
+    if "celerity" in party2.toggle_abilities:
+        chance_modifier = 5
+        damage_modifier = 1.5
+    else:
+        chance_modifier = damage_modifier = 0
     dodge_modifier = 0
-    if random.randint(0, 100) <= 66:
+    if random.randint(0, 100) <= 66 + chance_modifier:
         if defense_focus == "dodge":
             bonus = 1
         else:
             bonus = 0
-        dodge_modifier = int(1.5 * (party2_defense.dodge.level + bonus))
+        dodge_modifier = int((damage_modifier + 1.5) * (party2_defense.dodge.level + bonus))
         if dodge_modifier:
             party2.alert("dodged {} damage!".format(dodge_modifier))
     
@@ -60,9 +85,14 @@ def process_attack(party1, party2):
         bonus = 1
     else:
         bonus = 0    
+    if "adrenaline" in party2.toggle_abilities:
+        chance_modifier = 10
+        damage_modifier = 1.5
+    else:
+        chance_modifier = damage_modifier = 0
     if party2_defense.regen.level + bonus > 0: 
-        if random.randint(0, 100) <= 33:
-            regeneration = int(3.3 * (party2_defense.regen.level + 1))            
+        if random.randint(0, 100) <= 33 + chance_modifier:
+            regeneration = int((damage_modifier + 3.3) * (party2_defense.regen.level + 1))            
             if regeneration:                
                 party2.alert("Regenerated {} health".format(regeneration))  
     

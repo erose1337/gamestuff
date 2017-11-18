@@ -91,7 +91,7 @@ class Character(pride.components.base.Base):
                 "element" : "Neutral"}    
     verbosity = {"die" : 0}
     flags = {"_health" : 0, "_xp" : 0}
-    mutable_defaults = {"complete_quests" : set}
+    mutable_defaults = {"complete_quests" : set, "toggle_abilities" : list}
     
     def _get_health(self):
         return self._health

@@ -588,11 +588,51 @@ class Defend_Handler(Handler):
         active_party.alert("*Defends*(NotImplemented)", level=0, display_name=active_party.name)
         
         
-class Ability_Handler(Handler):
+class Ability_Handler(Engine):
            
+    defaults = {"handler_types" : ("game.mechanics.enginetest.Toggle_Abilities",
+                                   "game.mechanics.enginetest.Active_Abilities")}
+                                   
+    def run(self, party1, party2):
+        super(Ability_Handler, self).run(party1)
+        
+        
+class Toggle_Abilities(Handler):
+        
+    defaults = {"menu_selection" : ("focus", "intensity", "super strength",
+                                    "celerity", "adrenaline", "dauntless", "exit"),
+                "focus_description" : "Increases critical hit chance by 15%",
+                "intensity_description" : "+10% activation chance by 10% and +1.5 damage for dot effect",
+                "super_strength_description" : "Increases strength by 100%",
+                "celerity_description" : "Increases dodge chance by 5% and amount avoided by 1.5 damage",
+                "adrenaline_description" : "Increases regeneration chance by 10% and +1.5 damage healed",
+                "dauntless_description" : "Increases soak by 100%",
+                "prompt" : "Toggle abilities provide a passive effect each round they are active.\n" +
+                           "Each active ability will drain 1 point per level per round\n" +
+                           "Focus:\n    {}\n" + 
+                           "Intensity:\n    {}\n" +
+                           "Super Strength:\n    {}\n" +
+                           "Celerity:\n    {}\n" + 
+                           "Adrenaline:\n    {}\n" + 
+                           "Dauntless:\n    {}\n"}
+    
     def run(self, *args):
-        active_party, other_party = args
-        active_party.alert("*Ability*(NotImplemented)", level=0, display_name=active_party.name)
+        party = args[0]
+        prompt = self.prompt.format(self.focus_description, self.intensity_description, self.super_strength_description,
+                                    self.celerity_description, self.adrenaline_description, self.dauntless_description)
+        prompt += "Choice: "
+        selection = get_selection(prompt, "invalid selection", self.menu_selection).replace(' ', '_')
+        if selection != "exit":
+            if selection in party.toggle_abilities:
+                party.toggle_abilities.remove(selection)
+            else:
+                party.toggle_abilities.append(selection)
+                
+        
+class Active_Abilities(Handler):
+            
+    def process_selection(self, selection, party):
+        raise NotImplementedError()
         
         
 class Item_Handler(Handler):
