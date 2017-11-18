@@ -17,15 +17,18 @@ def process_attack(party1, party2):
         bonus = 1
     else:
         bonus = 0
+        
+    toggles_cost1 = 0
     if "super strength" in party1.toggle_abilities:
         strength_modifier = 2
+        toggles_cost1 += 1
     else:
         strength_modifier = 1
     strength_bonus = (party1_attack.strength.level + bonus) * strength_modifier
         
-    if "focus" in party1.toggle_abilities:
-        print "Focus active!"
+    if "focus" in party1.toggle_abilities:        
         chance_modifier = 15
+        toggles_cost1 += 1
     else:
         chance_modifier = 0
     if random.randint(0, 100) <= 15 + chance_modifier:
@@ -40,6 +43,7 @@ def process_attack(party1, party2):
     if "intensity" in party1.toggle_abilities:
         chance_modifier = 10
         damage_modifier = 1.5
+        toggles_cost1 += 1
     else:
         chance_modifier = damage_modifier = 0
         
@@ -59,8 +63,11 @@ def process_attack(party1, party2):
         bonus = 1
     else:
         bonus = 0
+        
+    toggles_cost2 = 0
     if "dauntless" in party2.toggle_abilities:
         soak_multiplier = 1 + 1
+        toggles_cost2 += 1
     else:
         soak_multiplier = 1
     soak_modifier = (party2_defense.soak.level + bonus) * soak_multiplier
@@ -68,6 +75,7 @@ def process_attack(party1, party2):
     if "celerity" in party2.toggle_abilities:
         chance_modifier = 5
         damage_modifier = 1.5
+        toggles_cost2 += 1
     else:
         chance_modifier = damage_modifier = 0
     dodge_modifier = 0
@@ -88,6 +96,7 @@ def process_attack(party1, party2):
     if "adrenaline" in party2.toggle_abilities:
         chance_modifier = 10
         damage_modifier = 1.5
+        toggles_cost2 += 1
     else:
         chance_modifier = damage_modifier = 0
     if party2_defense.regen.level + bonus > 0: 
@@ -115,6 +124,10 @@ def process_attack(party1, party2):
     party1.alert("Dealt {} damage".format(final_damage))
     party2.alert("Received {} damage".format(final_damage))
     party2.health -= final_damage - regeneration
+            
+    party1.combat_points -= toggles_cost1
+    party2.combat_points -= toggles_cost2
+    
             
 def process_flee(party1, party2):
     if random.randint(0, 100) <= 50:        

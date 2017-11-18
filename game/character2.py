@@ -90,7 +90,7 @@ class Character(pride.components.base.Base):
     defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None,
                 "element" : "Neutral"}    
     verbosity = {"die" : 0}
-    flags = {"_health" : 0, "_xp" : 0}
+    flags = {"_health" : 0, "_xp" : 0, "_combat_points" : 0}
     mutable_defaults = {"complete_quests" : set, "toggle_abilities" : list}
     
     def _get_health(self):
@@ -106,6 +106,16 @@ class Character(pride.components.base.Base):
         return self.skills.combat.health.max_health
     max_health = property(_get_max_health)
     
+    def _get_combat_points(self):
+        return self._combat_points
+    def _set_combat_points(self, value):
+        value = min(value, self.skills.combat.level * 2)
+        self._combat_points = max(value, 0)        
+        if not self._combat_points and self.toggle_abilities:
+            self.alert("ran out of combat points, toggles disabled!")
+            self.toggle_abilities = []
+    combat_points = property(_get_combat_points, _set_combat_points)
+        
     def _get_is_dead(self):
         return True if not self._health else False
     is_dead = property(_get_is_dead)
