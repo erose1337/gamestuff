@@ -365,8 +365,10 @@ class Town_Handler(Engine):
         
     defaults = {"handler_types" : ("game.mechanics.enginetest.Duel_Handler", )}
     
-    def run(self, party):
-        party.health = party.max_health
+    def run(self, party):        
+        party.alert("gets some rest while in town (health and combat points restored)")           
+        party.health = party.max_health        
+        party.combat_points = party.max_combat_points
         super(Town_Handler, self).run(party)
         
     
@@ -414,7 +416,8 @@ class Character_Handler(Handler):
     @staticmethod
     def run(*args):
         party = args[0]                
-        string = "Name: {}  level: {}   xp:     {}   damage:   {}   hp:    {}/{}\n"
+        string =  "Name: {}     level: {}   xp: {}\n"
+        string += "damage:   {}   hp:    {}/{}    combat points: {}/{}\n"
         
         element = party.element
         bonus = ELEMENT_BONUS[element]
@@ -425,7 +428,8 @@ class Character_Handler(Handler):
         skills = party.skills.combat
         attack = skills.attack
         defense = skills.defense             
-        print string.format(party.name, skills.level, party.xp, skills.damage, party.health, party.max_health,
+        print string.format(party.name, skills.level, party.xp, 
+                            skills.damage, party.health, party.max_health, party.combat_points, party.max_combat_points,
                             attack.critical_hit.level, attack.dot.level, attack.strength.level, attack.attack_focus,
                             defense.dodge.level, defense.regen.level, defense.soak.level, defense.defense_focus)
                                
@@ -622,11 +626,14 @@ class Toggle_Abilities(Handler):
                                     self.celerity_description, self.adrenaline_description, self.dauntless_description)
         prompt += "Choice: "
         selection = get_selection(prompt, "invalid selection", self.menu_selection).replace(' ', '_')
-        if selection != "exit":
+        if selection != "exit":                    
             if selection in party.toggle_abilities:
                 party.toggle_abilities.remove(selection)
             else:
-                party.toggle_abilities.append(selection)
+                if len(party.toggle_abilities) >= party.combat_points:
+                    print("Insufficient combat points")
+                else:
+                    party.toggle_abilities.append(selection)
                 
         
 class Active_Abilities(Handler):

@@ -116,6 +116,10 @@ class Character(pride.components.base.Base):
             self.toggle_abilities = []
     combat_points = property(_get_combat_points, _set_combat_points)
         
+    def _get_max_combat_points(self):
+        return self.skills.combat.level * 2
+    max_combat_points = property(_get_max_combat_points)
+    
     def _get_is_dead(self):
         return True if not self._health else False
     is_dead = property(_get_is_dead)
@@ -133,7 +137,7 @@ class Character(pride.components.base.Base):
         if self.skills is None:                        
             self.skills = self.skill_tree_type(damage=10)
         self.health = 100 + (10 * self.skills.combat.health.level)
-        self.name += " ({})".format(self.element)
+       # self.name += " ({})".format(self.element)
         
     def die(self):
         self.alert("Died", level=self.verbosity["die"])

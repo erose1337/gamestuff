@@ -744,7 +744,9 @@ active abilities:
             heal:  restores 3 * X health to a target            
         soak:
         
-    # include "abilities" menu in combat
+    # include abilities requirements
+    # add different levels for abilities
     # toggle abilities drain X points per turn
-    # include description of abilities somewhere (character creation or character screen)
-        
+    # change focus to focus1 and focus2 instead of attack_focus and defense_focus
+    # establish how/when to recover combat points
+    
