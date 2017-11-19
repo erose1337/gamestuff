@@ -104,7 +104,9 @@ class Character(pride.components.base.Base):
     
     defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None,
                 "element" : "Neutral"}    
-    verbosity = {"die" : 0}
+    verbosity = {"die" : 0, "critical hit" : 0, "dot" : 0, "dodge" : 0, "regen" : 0,
+                 "elemental_damage" : 0, "elemental_damage_penalty" : 0,
+                 "dealt damage" : 0, "received damage" : 0, "attack" : 0}
     flags = {"_health" : 0, "_xp" : 0, "_combat_points" : 0}
     mutable_defaults = {"complete_quests" : set, "toggle_abilities" : list}
     
@@ -198,4 +200,10 @@ class Character(pride.components.base.Base):
     @staticmethod
     def load(data):
         return pickle.loads(data)
+        
+    @classmethod
+    def random_character(cls, level, element=None, name=''):
+        skill = game.character2.Skills.random_skills(level)
+        element = random.choice(ELEMENT_BONUS.keys()) if element is None else element
+        return game.character2.Character(name=name or "Random Character", skills=skill, element=element)        
         

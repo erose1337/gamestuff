@@ -8,7 +8,7 @@ ELEMENT_PENALTY["Excellence"] = "None"
 ELEMENT_PENALTY["Neutral"] = "None"
 
 def process_attack(party1, party2):    
-    party1.alert("Attack!")
+    party1.alert("Attack!", level=party1.verbosity["attack"])
     party1_attack = party1.skills.combat.attack
     focus1 = party1.skills.combat.focus1    
     focus2 = party2.skills.combat.focus2
@@ -40,7 +40,9 @@ def process_attack(party1, party2):
             bonus = 0
         critical_bonus = int(6.6 * (party1_attack.critical_hit.level + bonus))   
         if critical_bonus:
-            party1.alert("critical hit for {} extra damage!".format(critical_bonus))
+            critical_bonus = random.randint(1, critical_bonus)        
+            party1.alert("critical hit for {} extra damage!".format(critical_bonus), 
+                         level=party1.verbosity["critical hit"])
     
     if "intensity" in party1.toggle_abilities:
         chance_modifier = 10
@@ -56,7 +58,9 @@ def process_attack(party1, party2):
             bonus = 0
         dot_bonus = int((damage_modifier + 3.3) * (party1_attack.dot.level + bonus))
         if dot_bonus:
-            party1.alert("{} for {}".format(party1_attack.dot.hit_string, dot_bonus))
+            dot_bonus = random.randint(1, dot_bonus)
+            party1.alert("{} for {}".format(party1_attack.dot.hit_string, dot_bonus),
+                         level=party1.verbosity["dot"])
         
     party2_defense = party2.skills.combat.defense 
     focus1 = party2.skills.combat.focus1
@@ -89,7 +93,9 @@ def process_attack(party1, party2):
             bonus = 0
         dodge_modifier = int((damage_modifier + 1.5) * (party2_defense.dodge.level + bonus))
         if dodge_modifier:
-            party2.alert("dodged {} damage!".format(dodge_modifier))
+            dodge_modifier = random.randint(1, dodge_modifier)
+            party2.alert("dodged {} damage!".format(dodge_modifier), 
+                         level=party2.verbosity["dodge"])
     
     regeneration = 0
     if "regen" in (focus1, focus2):
@@ -105,8 +111,10 @@ def process_attack(party1, party2):
     if party2_defense.regen.level + bonus > 0: 
         if random.randint(0, 100) <= 33 + chance_modifier:
             regeneration = int((damage_modifier + 3.3) * (party2_defense.regen.level + 1))            
-            if regeneration:                
-                party2.alert("Regenerated {} health".format(regeneration))  
+            if regeneration:    
+                regeneration = random.randint(1, regeneration)
+                party2.alert("Regenerated {} health".format(regeneration),
+                             level=party2.verbosity["regen"])  
     
     final_damage = max(0, damage + critical_bonus + dot_bonus + strength_bonus - soak_modifier - dodge_modifier)
     
@@ -116,16 +124,18 @@ def process_attack(party1, party2):
     if ELEMENT_BONUS[element1] == element2:
         element_modifier = final_damage / 2
         if element_modifier:
-            party1.alert("Dealt {} bonus elemental damage".format(element_modifier))
+            party1.alert("Dealt {} bonus elemental damage".format(element_modifier),
+                         level=party1.verbosity["elemental_damage"])
     elif ELEMENT_PENALTY[element1] == element2:
         element_modifier = -1 * (final_damage / 2)
         if element_modifier:
-            party1.alert("Element damage penalty: {}".format(element_modifier))
+            party1.alert("Element damage penalty: {}".format(element_modifier),
+                         level=party2.verbosity["elemental_damage_penalty"])
     final_damage += element_modifier
     assert final_damage >= 0
             
-    party1.alert("Dealt {} damage".format(final_damage))
-    party2.alert("Received {} damage".format(final_damage))
+    party1.alert("Dealt {} damage".format(final_damage), level=party1.verbosity["dealt damage"])
+    party2.alert("Received {} damage".format(final_damage), level=party2.verbosity["received damage"])
     party2.health -= final_damage - regeneration
             
     party1.combat_points -= toggles_cost1
