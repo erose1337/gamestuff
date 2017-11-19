@@ -10,13 +10,15 @@ import game.character2
 class Balance_Test(object):
     
     @classmethod
-    def unit_test(cls, trials=1000):
+    def unit_test(cls, trials=100):
         battle = game.mechanics.enginetest.Synchronous_Combat_Engine()
         verbosity = dict((item, 'v') for item in game.character2.Character.verbosity.keys())
-        for level in range(1):
+        for level in range(10, 11):
             characters = []            
-            for skill in ("critical_hit", "dot", "strength", "dodge", "regen", "soak"):
-                kwargs = {skill : level, "name" : skill, "verbosity" : verbosity}
+            for skill in ("critical_hit", "dot", "strength", "dodge", "regen", "soak"): 
+                kwargs = {skill : level}
+                skills = game.character2.Skills(**kwargs)
+                kwargs = {"skills" : skills, "name" : skill, "verbosity" : verbosity}
                 characters.append(game.character2.Character(**kwargs))
                 
             battle_log = {}            
