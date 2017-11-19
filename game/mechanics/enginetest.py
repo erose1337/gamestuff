@@ -269,6 +269,13 @@ class CharacterCreation_Handler(Handler):
                 "regen_description" : "Provides a 33% chance to recover 3.3 * level health each turn",
                 "soak_description" : "Reduces incoming damage by 1 point per level"}
     
+    dot_effect_text = {"Fire" : "Fire burns your opponent", 
+                       "Air" : "Air pressure suffocates your opponent",
+                       "Water" : "Water drowns your opponent",
+                       "Stone" : "Stones pummel your opponent", 
+                       "Electric" : "Electricity shocks your opponent",
+                       "Excellence" : "Your opponent is hurt by wounds"}                       
+                       
     def run(self, *args):        
         while True:
             name = raw_input("Name: ")
@@ -295,6 +302,7 @@ class CharacterCreation_Handler(Handler):
             skills = game.character2.Skills(damage=10)
             skills.combat.focus1 = focus1.replace(' ', '_') # for "critical hit"
             skills.combat.focus2 = focus2.replace(' ', '_')
+            skills.combat.attack.dot.hit_string = self.dot_effect_text[element]
             character = game.character2.Character(name=name, npc=False, skills=skills, element=element)
             
             print('*' * 79)
@@ -394,6 +402,7 @@ class The_Duel_Handler(Handler):
         battle = Synchronous_Combat_Engine()
         outcome = battle.run(player, opponent)
         if outcome == "victory" and "The Duel" not in player.complete_quests and not player.is_dead:      
+            player.alert("Received 90 XP as a reward for completing The Duel")
             player.xp += 90
             player.complete_quests.add("The Duel")
     
@@ -406,9 +415,6 @@ class FairFight_Handler(Handler):
         level = player.skills.combat.level        
         opponent_skill = game.character2.Skills.random_skills(level)
         element = random.choice(ELEMENT_BONUS.keys())
-        if element == "Excellence":
-            element = "Neutral"
-        element = "Water"
         opponent = game.character2.Character(name="captive beast", skills=opponent_skill, element=element)
         battle = Synchronous_Combat_Engine()
         battle.run(player, opponent)

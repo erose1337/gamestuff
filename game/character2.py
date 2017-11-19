@@ -26,21 +26,27 @@ class Soak(Skill): pass
 
 class Attack(Skill):
     
+    def _get_level(self):
+        return sum((self.critical_hit.level, self.dot.level, self.strength.level))
+    level = property(_get_level)
+    
     def __init__(self, critical_hit=0, dot=0, strength=0):        
         self.critical_hit = Critical_Hit(critical_hit)
         self.dot = DoT(dot)
         self.strength = Strength(strength) 
-        self.level = sum((critical_hit, dot, strength))
-        
+            
     
 class Defense(Skill):
             
+    def _get_level(self):
+        return sum((self.dodge.level, self.regen.level, self.soak.level))
+    level = property(_get_level)
+    
     def __init__(self, dodge=0, regen=0, soak=0):
         self.dodge = Dodge(dodge)
         self.regen = Regen(regen)
         self.soak = Soak(soak)
-        self.level = sum((dodge, regen, soak))
-        
+            
         
 class Health(Skill): 
     
@@ -56,13 +62,16 @@ class Health(Skill):
 
 class Combat(Skill):    
 
+    def _get_level(self):
+        return (self.attack.level + self.defense.level) / 2
+    level = property(_get_level)
+    
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, 
                  regen=0, soak=0, health=0, damage=1, focus1=None, focus2=None):
         self.attack = Attack(critical_hit, dot, strength)
         self.defense = Defense(dodge, regen, soak) 
         self.health = Health(health)       
-        self.damage = damage
-        self.level = (self.attack.level + self.defense.level) / 2
+        self.damage = damage        
         self.focus1 = focus1
         self.focus2 = focus2
 
@@ -85,7 +94,10 @@ class Skills(object):
             kwargs[random_skill] += 1
         kwargs["health"] = level
         kwargs["damage"] = 10 + level
-        combat = Combat(**kwargs)
+        combat = Combat(**kwargs)                        
+        skills = cls()
+        skills.combat = combat
+        return skills
         
         
 class Character(pride.components.base.Base):
@@ -153,10 +165,10 @@ class Character(pride.components.base.Base):
     def level_up(self):
         skills = self.skills.combat
         assert isinstance(skills, Combat)
-        skills.level += 1
+        #skills.level += 1
         skills.damage += 1
         skills.health.level += 1
-        self.alert("Level increased to {}".format(skills.level))
+        
         attack_skills = skills.attack
         assert isinstance(attack_skills, Attack)
         defense_skills = skills.defense
@@ -176,6 +188,7 @@ class Character(pride.components.base.Base):
             
         skill1.level += 1
         skill2.level += 1
+        self.alert("Level increased to {}".format(skills.level))
         self.alert("{} increased to level {}".format(focus1.replace('_', ' '), skill1.level))
         self.alert("{} increased to level {}".format(focus2.replace('_', ' '), skill2.level))
         
