@@ -168,8 +168,8 @@ class Engine(pride.base.Base):
         print "Unit testing: ", cls
         engine = cls()        
         skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
-        skills.combat.attack.attack_focus = "critical hit"
-        skills.combat.defense.defense_focus = "regen"
+        skills.combat.focus1 = "critical hit"
+        skills.combat.focus2 = "regen"
         party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)        
         while True:            
             engine.run(party1)  
@@ -272,27 +272,32 @@ class CharacterCreation_Handler(Handler):
     def run(self, *args):        
         while True:
             name = raw_input("Name: ")
+            print('*' * 79)
             print self.element_prompt
             print ''.join(self.element_descriptions)
-            element = get_selection("Please choose an element: ", "invalid selection", self.element_selections)            
+            element = get_selection("Please choose an element: ", "invalid selection", self.element_selections)        
+            print('*' * 79)
+            print("Please choose two skills to focus on.")
+            print("The selected skills will automatically increase by 1 at level up")
+            print("Each skill provides a bonus in combat: ")            
+            prompt = "critical hit:\n    {}\ndot:\n    {}\nstrength:\n    {}\n"
+            prompt += "dodge:\n    {}\nregen:\n    {}\nsoak:\n    {}\n"
             
-            prompt = "Select an attack focus:\n{}:\n   {}\n{}:\n   {}\n{}:\n   {}\nSelection: "
-            selections = ("critical hit", self.critical_hit_description, 
-                          "dot", self.dot_description,
-                          "strength", self.strength_description)
-            attack_focus = get_selection(prompt.format(*selections), "invalid selection", selections).replace(' ', '_')
+            descriptions = (self.critical_hit_description, self.dot_description, self.strength_description,
+                            self.dodge_description, self.regen_description, self.soak_description)            
+            prompt = prompt.format(*descriptions)
             
-            prompt = "Select a defense focus:\n{}:\n   {}\n{}:\n   {}\n{}:\n   {}\nSelection: "
-            selections = ("dodge", self.dodge_description,
-                          "regen", self.regen_description, 
-                          "soak", self.soak_description)
-            defense_focus = get_selection(prompt.format(*selections), "invalid selection", selections).replace(' ', '_')
-            
+            selections = ["critical hit", "dot", "strength", "dodge", "regen", "soak"]
+            focus1 = get_selection(prompt + "Select focus#1: ", "invalid selection", selections)
+            selections.remove(focus1)
+            focus2 = get_selection(prompt + "Select focus#2: ", "invalid selection", selections)
+
             skills = game.character2.Skills(damage=10)
-            skills.combat.attack.attack_focus = attack_focus
-            skills.combat.defense.defense_focus = defense_focus
+            skills.combat.focus1 = focus1.replace(' ', '_') # for "critical hit"
+            skills.combat.focus2 = focus2.replace(' ', '_')
             character = game.character2.Character(name=name, npc=False, skills=skills, element=element)
             
+            print('*' * 79)
             Character_Handler.run(character)
             if 'y' == raw_input("Use this character?: y/n ").lower():
                 break
@@ -382,15 +387,13 @@ class The_Duel_Handler(Handler):
        
     defaults = {"selection_text" : "The Duel"}
     
-    def run(self, player):
-        assert hasattr(player.skills.combat.attack, "attack_focus")
+    def run(self, player):        
         opponent_skill = game.character2.Skills.random_skills(0)                
         opponent = game.character2.Character(name="El toriablo", skills=opponent_skill)
         opponent.health -= 25
         battle = Synchronous_Combat_Engine()
         outcome = battle.run(player, opponent)
-        if outcome == "victory" and "The Duel" not in player.complete_quests and not player.is_dead:
-            assert hasattr(player.skills.combat.attack, "attack_focus")
+        if outcome == "victory" and "The Duel" not in player.complete_quests and not player.is_dead:      
             player.xp += 90
             player.complete_quests.add("The Duel")
     
@@ -430,8 +433,8 @@ class Character_Handler(Handler):
         defense = skills.defense             
         print string.format(party.name, skills.level, party.xp, 
                             skills.damage, party.health, party.max_health, party.combat_points, party.max_combat_points,
-                            attack.critical_hit.level, attack.dot.level, attack.strength.level, attack.attack_focus,
-                            defense.dodge.level, defense.regen.level, defense.soak.level, defense.defense_focus)
+                            attack.critical_hit.level, attack.dot.level, attack.strength.level, skills.focus1.replace('_', ' '),
+                            defense.dodge.level, defense.regen.level, defense.soak.level, skills.focus2.replace('_', ' '))
                                
         
 class Crafting_Handler(Engine):
@@ -568,11 +571,9 @@ class Synchronous_Combat_Engine(Engine):
         import game.mechanics.randomgeneration as randomgeneration
         engine = cls()        
         skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
-        skills.combat.attack.attack_focus = "critical hit"
-        skills.combat.defense.defense_focus = "regen"
-        party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)
-        assert party1.skills.combat.attack is skills.combat.attack
-        assert hasattr(party1.skills.combat.attack.attack_focus)
+        skills.combat.focus1 = "critical hit"
+        skills.combat.focus2 = "regen"
+        party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)                
         while True:
             party2 = game.character2.Character(name=randomgeneration.random_selection(["Caitlin", "Lacey", "Patti", "Mick"]))
             engine.run(party1, party2)
@@ -611,7 +612,7 @@ class Toggle_Abilities(Handler):
                 "celerity_description" : "Increases dodge chance by 5% and amount avoided by 1.5 damage",
                 "adrenaline_description" : "Increases regeneration chance by 10% and +1.5 damage healed",
                 "dauntless_description" : "Increases soak by 100%",
-                "prompt" : "Toggle abilities provide a passive effect each round they are active.\n" +
+                "prompt" : "\nToggle abilities provide a passive effect each round they are active.\n" +
                            "Each active ability will drain 1 point per level per round\n" +
                            "Focus:\n    {}\n" + 
                            "Intensity:\n    {}\n" +

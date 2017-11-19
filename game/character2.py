@@ -56,14 +56,17 @@ class Health(Skill):
 
 class Combat(Skill):    
 
-    def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
+    def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, 
+                 regen=0, soak=0, health=0, damage=1, focus1=None, focus2=None):
         self.attack = Attack(critical_hit, dot, strength)
         self.defense = Defense(dodge, regen, soak) 
         self.health = Health(health)       
         self.damage = damage
         self.level = (self.attack.level + self.defense.level) / 2
-        
+        self.focus1 = focus1
+        self.focus2 = focus2
 
+        
 class Skills(object):
     
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
@@ -158,16 +161,23 @@ class Character(pride.components.base.Base):
         assert isinstance(attack_skills, Attack)
         defense_skills = skills.defense
         assert isinstance(defense_skills, Defense)
-        attack_focus = attack_skills.attack_focus
-        defense_focus = defense_skills.defense_focus
-        
-        attack_skill = getattr(attack_skills, attack_focus)
-        defense_skill = getattr(defense_skills, defense_focus)
-        
-        attack_skill.level += 1
-        defense_skill.level += 1
-        self.alert("{} increased to level {}".format(attack_focus, attack_skill.level))
-        self.alert("{} increased to level {}".format(defense_focus, defense_skill.level))
+        focus1 = skills.focus1
+        focus2 = skills.focus2
+                
+        try:
+            skill1 = getattr(attack_skills, focus1)
+        except AttributeError:
+            skill1 = getattr(defense_skills, focus2)
+            
+        try:
+            skill2 = getattr(attack_skills, focus2)
+        except AttributeError:
+            skill2 = getattr(defense_skills, focus2)
+            
+        skill1.level += 1
+        skill2.level += 1
+        self.alert("{} increased to level {}".format(focus1.replace('_', ' '), skill1.level))
+        self.alert("{} increased to level {}".format(focus2.replace('_', ' '), skill2.level))
         
     def save(self):
         return pickle.dumps(self)

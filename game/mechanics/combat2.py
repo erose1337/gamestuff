@@ -10,10 +10,12 @@ ELEMENT_PENALTY["Neutral"] = "None"
 def process_attack(party1, party2):    
     party1.alert("Attack!")
     party1_attack = party1.skills.combat.attack
-    attack_focus = getattr(party1_attack, "attack_focus", None)
+    focus1 = party1.skills.combat.focus1    
+    focus2 = party2.skills.combat.focus2
+    
     critical_bonus = dot_bonus = 0
     damage = random.randint(0, party1.skills.combat.damage)
-    if attack_focus == "strength":
+    if "strength" in (focus1, focus2):
         bonus = 1
     else:
         bonus = 0
@@ -32,7 +34,7 @@ def process_attack(party1, party2):
     else:
         chance_modifier = 0
     if random.randint(0, 100) <= 15 + chance_modifier:
-        if attack_focus == "critical_hit":
+        if "critical_hit" in (focus1, focus2):
             bonus = 1
         else:
             bonus = 0
@@ -48,7 +50,7 @@ def process_attack(party1, party2):
         chance_modifier = damage_modifier = 0
         
     if random.randint(0, 100) <= 33 + chance_modifier:
-        if attack_focus == "dot":
+        if "dot" in (focus1, focus2):
             bonus = 1
         else:
             bonus = 0
@@ -56,10 +58,11 @@ def process_attack(party1, party2):
         if dot_bonus:
             party1.alert("{} for {}".format(party1_attack.dot.hit_string, dot_bonus))
         
-    party2_defense = party2.skills.combat.defense  
-    defense_focus = getattr(party2_defense, "defense_focus", None)
-    
-    if defense_focus == "soak":
+    party2_defense = party2.skills.combat.defense 
+    focus1 = party2.skills.combat.focus1
+    focus2 = party2.skills.combat.focus2
+        
+    if "soak" in (focus1, focus2):
         bonus = 1
     else:
         bonus = 0
@@ -80,7 +83,7 @@ def process_attack(party1, party2):
         chance_modifier = damage_modifier = 0
     dodge_modifier = 0
     if random.randint(0, 100) <= 66 + chance_modifier:
-        if defense_focus == "dodge":
+        if "dodge" in (focus1, focus2):
             bonus = 1
         else:
             bonus = 0
@@ -89,7 +92,7 @@ def process_attack(party1, party2):
             party2.alert("dodged {} damage!".format(dodge_modifier))
     
     regeneration = 0
-    if defense_focus == "regen":
+    if "regen" in (focus1, focus2):
         bonus = 1
     else:
         bonus = 0    
