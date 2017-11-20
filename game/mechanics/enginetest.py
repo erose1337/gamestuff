@@ -590,6 +590,7 @@ class Attack_Handler(Handler):
     def run(self, *args):
         active_party, other_party = args
         game.mechanics.combat2.process_attack(active_party, other_party)
+        active_party.combat_points -= len(active_party.toggle_abilities)
         
         
 class Defend_Handler(Handler):
@@ -597,6 +598,7 @@ class Defend_Handler(Handler):
     def run(self, *args):
         active_party, other_party = args
         active_party.alert("*Defends*(NotImplemented)", level=0, display_name=active_party.name)
+        active_party.combat_points -= len(active_party.toggle_abilities)
         
         
 class Ability_Handler(Engine):
@@ -606,7 +608,7 @@ class Ability_Handler(Engine):
                                    
     def run(self, party1, party2):
         super(Ability_Handler, self).run(party1)
-        
+                
         
 class Toggle_Abilities(Handler):
         
@@ -634,7 +636,7 @@ class Toggle_Abilities(Handler):
         prompt += "Choice: "
         selection = get_selection(prompt, "invalid selection", self.menu_selection).replace(' ', '_')
         if selection != "exit":                    
-            if selection in party.toggle_abilities:
+            if selection in party.toggle_abilities:                
                 party.toggle_abilities.remove(selection)
             else:
                 if len(party.toggle_abilities) >= party.combat_points:

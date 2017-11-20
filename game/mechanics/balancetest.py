@@ -10,27 +10,31 @@ import game.character2
 class Balance_Test(object):
     
     @classmethod
-    def unit_test(cls, trials=100):
+    def unit_test(cls, trials=50, test_skills=("critical_hit", "dot", "strength", "dodge", "regen", "soak")):
         battle = game.mechanics.enginetest.Synchronous_Combat_Engine()
         verbosity = dict((item, 'v') for item in game.character2.Character.verbosity.keys())
         for level in range(10, 11):
             characters = []            
-            for skill in ("critical_hit", "dot", "strength", "dodge", "regen", "soak"): 
-                kwargs = {skill : level}
+            for skill in test_skills:
+                kwargs = {skill : level, "health" : 100 + (10 * level), "damage" : 10 + level}
                 skills = game.character2.Skills(**kwargs)
                 kwargs = {"skills" : skills, "name" : skill, "verbosity" : verbosity}
                 characters.append(game.character2.Character(**kwargs))
                 
             battle_log = {}            
             for trial in range(trials):
-              #  print("Trial {}/{}".format(trial, trials))
+                #print("Trial {}/{}".format(trial, trials))
                 for character in characters:
                     for character2 in characters:
                         if character is character2:
                             continue
                         character.health = character.max_health
                         character2.health = character2.max_health
-                        while not (character.is_dead or character2.is_dead):
+                       # print "Testing: {} v {}".format(character.name, character2.name)
+                     #   if character.name == "regen" and character2.name == "soak":
+                      #  verbosity = dict((item, 0) for item in game.character2.Character.verbosity.keys())
+                      #  character2.verbosity = character.verbosity = verbosity
+                        while not (character.is_dead or character2.is_dead):                                                 
                             game.mechanics.combat2.process_attack(character, character2)
                             game.mechanics.combat2.process_attack(character2, character)
                         if character.is_dead:
@@ -45,7 +49,37 @@ class Balance_Test(object):
                             except KeyError:
                                 battle_log[(character.name, character2.name)] = 1
             pprint.pprint(battle_log)
-            
+    
+def test_probability():
+    import random
+    chance1 = 15
+    damage1 = 13
+    
+    chance2 = 66    
+    damage2 = 13
+    
+    samples1 = []
+    samples2 = []
+    crits_dodged = []
+    for count in range(100):
+        if random.randint(0, 100) <= chance1:
+            samples1.append(random.randint(1, damage1))
+            if random.randint(0, 100) <= chance2:
+                crits_dodged.append(random.randint(1, damage2))
+        if random.randint(0, 100) <= chance2:
+            samples2.append(random.randint(1, damage2))
+    print len(samples1), sum(samples1)
+    print len(samples2), sum(samples2)
+    print(len(crits_dodged), sum(crits_dodged))
+        
 if __name__ == "__main__":
-    Balance_Test.unit_test()
+    test_skills = ["critical_hit", "dot", "strength", "dodge", "regen", "soak"]          
+    for test_skill in ("soak", ):#test_skills:
+        print "Testing: {}".format(test_skill)
+        _test_skills = test_skills[:]
+        _test_skills.remove(test_skill)
+        for skill in _test_skills:
+            Balance_Test.unit_test(test_skills=(test_skill, skill))
+    #test_probability()
+    
     

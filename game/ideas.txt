@@ -687,9 +687,8 @@ element type ideas:
         - X increased damage against some element
         - X decreased damage against some other element
             - X = 50%    
-    
-    # incorporate changes for DoT display string
-        - customizable strings for each skill activation    
+        
+    - customizable dot strings for each skill activation    
     make training dummy for explaining combat
                  
                  
@@ -736,7 +735,7 @@ active abilities:
         soak:
             dauntless: *(X + 1) damage soaked    
     Active abilities:
-        critical hit:
+        critical hit: 
         dot:
         strength:
         dodge:
@@ -745,6 +744,70 @@ active abilities:
         soak:
             
     # add different levels for abilities    
-    # change focus to focus1 and focus2 instead of attack_focus and defense_focus
-    # establish how/when to recover combat points
+        - wait for better interface
+    # add active abilities
+        
+    
+deals damage
+deals elemental damage
+hits multiple targets
+causes status effect
+    - crit chance 
+    - dot chance/damage 
+    - strength damage
+    - dodge chance/damage
+    - regen chance/damage
+    - abilities disabled
+    - sleep/stun/disables
+manipulates stats    
+    health
+    combat points
+        - can damage combat points
+    (temporary) skill points modifications
+    
+
+dodge    <- critical hit +> soak
+dot      <- dodge        +> critical hit
+regen    <- dot          +> dodge
+    
+
+    
+    
+critical hit ============== dodge
+            +    
+                +    
+dot          ============== regen
+                      +
+                          +
+strength     ============== soak    
+    
+    
+    
+    
+strength beats dodge
+critical hit beats soak - +
+dodge beats dot - +
+
+
+
+attack skills
+
+critical hit:                                                        dodge:
+triggers when damage roll is >= 90% of base damage (10% chance)      triggers when received damage is >= 10% of max health
+adds additional damage (range)                                       reduces damage (range)
+creates damage spikes and raises max hit                             shrinks damage spikes    
+    
+
+strength:                                                            toughness:
+increases base damage                                                increases max health
+    - increases average damage                                           
+    
+    
+penetration                                                           soak:
+damage bonus that is added after dodge is applied                     damage reduction after dodge has been applied
+    - can only soak/heal damage caused by penetration                     - can prevent penetration damage
+increases minimum damage                                              decreases minimum damage
+    
+    
+    
     
