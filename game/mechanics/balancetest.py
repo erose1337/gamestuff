@@ -30,10 +30,9 @@ class Balance_Test(object):
                             continue
                         character.health = character.max_health
                         character2.health = character2.max_health
-                       # print "Testing: {} v {}".format(character.name, character2.name)
-                     #   if character.name == "regen" and character2.name == "soak":
-                      #  verbosity = dict((item, 0) for item in game.character2.Character.verbosity.keys())
-                      #  character2.verbosity = character.verbosity = verbosity
+                        
+                        #verbosity = dict((item, 0) for item in game.character2.Character.verbosity.keys())
+                        #character2.verbosity = character.verbosity = verbosity
                         while not (character.is_dead or character2.is_dead):                                                 
                             game.mechanics.combat2.process_attack(character, character2)
                             game.mechanics.combat2.process_attack(character2, character)
@@ -52,16 +51,16 @@ class Balance_Test(object):
     
 def test_probability():
     import random
-    chance1 = 15
-    damage1 = 13
+    chance1 = 10
+    damage1 = 5
     
-    chance2 = 66    
-    damage2 = 13
+    chance2 = 33    
+    damage2 = 2
     
     samples1 = []
     samples2 = []
     crits_dodged = []
-    for count in range(100):
+    for count in range(1000):
         if random.randint(0, 100) <= chance1:
             samples1.append(random.randint(1, damage1))
             if random.randint(0, 100) <= chance2:
@@ -70,16 +69,17 @@ def test_probability():
             samples2.append(random.randint(1, damage2))
     print len(samples1), sum(samples1)
     print len(samples2), sum(samples2)
-    print(len(crits_dodged), sum(crits_dodged))
+    print(float(len(crits_dodged)) / len(samples1), sum(crits_dodged))
         
 if __name__ == "__main__":
-    test_skills = ["critical_hit", "dot", "strength", "dodge", "regen", "soak"]          
-    for test_skill in ("soak", ):#test_skills:
-        print "Testing: {}".format(test_skill)
-        _test_skills = test_skills[:]
-        _test_skills.remove(test_skill)
-        for skill in _test_skills:
-            Balance_Test.unit_test(test_skills=(test_skill, skill))
-    #test_probability()
+    #trials = 50
+    #test_skills = ["critical_hit", "strength", "dodge", "soak"]          
+    #for test_skill in ("critical_hit", "dodge", "soak", "strength"):#test_skills:
+    #    print "Testing: {}".format(test_skill)
+    #    _test_skills = test_skills[:]
+    #    _test_skills.remove(test_skill)
+    #    for skill in _test_skills:
+    #        Balance_Test.unit_test(trials=trials, test_skills=(test_skill, skill))
+    test_probability()
     
     

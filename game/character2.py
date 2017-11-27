@@ -66,6 +66,10 @@ class Combat(Skill):
         return (self.attack.level + self.defense.level) / 2
     level = property(_get_level)
     
+    def _get_focus(self):
+        return self.focus1, self.focus2
+    focus = property(_get_focus)
+    
     def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, 
                  regen=0, soak=0, health=0, damage=1, focus1=None, focus2=None):
         self.attack = Attack(critical_hit, dot, strength)

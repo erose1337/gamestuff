@@ -811,3 +811,40 @@ increases minimum damage                                              decreases 
     
     
     
+    
+    
+    
+player designed actions
+target type:
+    - self
+    - close ("touch" distance)
+    - target (ranged attack)
+    - [checkbox] area (splash)
+    
+effect type:       
+    - drain stat            
+        - i.e. weapon damage, magic damage, elemental damage
+    - restore stat  
+        - i.e. health restored, action points restored
+    - buff stat
+        - + temporary hit points, + temporary action points
+        
+parameters:    
+    - potency
+        - magnitude of stat modification
+        - i.e. min and max damage
+    - duration
+        - how long the effect lasts
+        - [checkbox] permanent
+        
+auto-calculated cost
+    effect_type_base * (potency + target_modifier) * duration * area_modifier    
+     
+    
+weapon damage effect
+1-1, instant
+close    
+
+
+
+
