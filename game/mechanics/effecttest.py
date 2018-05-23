@@ -60,11 +60,11 @@ class Effect(pride.components.base.Base):
         return stat * effect * duration * area * (potency + target)
                                       
     def process_effect(self, target):
-        if self.duration:
+        if self.duration > 0:
             magnitude = random.randint(self.min_magnitude, self.max_magnitude)
             stat_name = self.target_stat
             stat_value = getattr(target, stat_name)
-            self.alert("{} hit for magnitude: {}".format(target.name, magnitude))
+            #self.alert("{} hit for magnitude: {}".format(target.name, magnitude))
             if self.effect_type == "drain":
                 magnitude = -magnitude            
             setattr(target, stat_name, stat_value + magnitude)
@@ -92,7 +92,7 @@ class Drain(Effect):
         player2 = Character(name="player2")
         while True:
             for round in range(4):
-                drain1 = cls(max_magnitude=3, duration=1)
+                drain1 = cls(max_magnitude=3)
                 drain2 = cls(duration=2)            
                 stack.append((drain1, player2))
                 stack.append((drain2, player1))

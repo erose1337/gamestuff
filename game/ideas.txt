@@ -812,6 +812,17 @@ increases minimum damage                                              decreases 
     
     
     
+critical hit:                                                       dodge:
+20% chance to deal +5 more damage                                   33% chance to avoid 3 damage
+creates damage spikes and raises max hit                            avoids damage spikes 
+    
+intensity:                                                          regen:
+50% chance to deal +2 more damage                                   50% chance to recover 2 health
+increases average damage                                            increases average-case longevity    
+    
+strength:                                                           soak:
+100% chance to deal +1 damage (per level)                           -1 damage per hit (100% of the time)
+increases minimum damage                                            decreases opponents minimum damage    
     
     
 player designed actions
@@ -848,3 +859,18 @@ close
 
 
 
+
+when can skills be designed/crafted?
+- whenever (outside of battle)
+    - totally free
+        - just open the menu
+    - requires currency
+        - use gold or special items to craft
+        
+- at specific points in time
+    - character creation
+    - every X levels
+    
+    
+    
+    

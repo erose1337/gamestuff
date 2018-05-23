@@ -88,56 +88,43 @@ class Pressure(Tile_Attribute): pass
 
 class Light(Tile_Attribute): 
 
-    defaults = {"source_magnitude" : 76, "is_source" : True, "adjustment" : 0, "_amount" : 0, "value" : 0}    
+    defaults = {"source_magnitude" : 76, "is_source" : False, "adjustment" : 0, 
+                "_amount" : 0, "value" : 0, "dropoff" : 8}    
     
-    def process_attribute(self, neighbor_attribute):     
-        amount = neighbor_attribute._amount                        
-        neighbor_attribute.adjustment -= amount
-        self.adjustment += amount        
-
-    def post_process(self):                          
-        _adjustment = -self.value
-        self.value += self.adjustment 
-        self.adjustment = 0        
+    def process_attribute(self, neighbor_attribute):                             
+        self.adjustment = max(self.adjustment, neighbor_attribute.value - self.dropoff)  
         
-        if self.is_source and self.source_magnitude:
-            self.value += self.source_magnitude            
-            self.value -= int(log(abs(self.value - self.adjustment) or 1, 2))
-            self.adjustment = _adjustment
-            
-        self._amount, excess = divmod(self.value, len(self.parent.neighbors))           
-        self.value -= excess
-        
- 
-   # def process_attribute(self, neighbor_attribute):
-        
-               
+    def post_process(self):                  
+        adjustment = self.adjustment
+        if self.is_source:
+            self.value = max(self.source_magnitude, adjustment)
+        else:
+            self.value = adjustment
+        self.adjustment = 0            
+                
         
 class Water_Level(Tile_Attribute): 
 
     defaults = {"adjustment" : 0, "_amount" : 0}
     
     def process_attribute(self, neighbor_attribute):     
-        amount = self._amount
+        neighbor_value = neighbor_attribute.value
+        self_value = self.value
+        if neighbor_value > self_value:
+            adjustment = neighbor_value / 8
+            neighbor.value -= adjustment
+            self.adjustment += adjustment   
 
-        self_elevation = self.parent.elevation.value
-        neighbor_elevation = neighbor_attribute.parent.elevation.value
-        elevation_adjustment = int(log(abs(self_elevation - neighbor_elevation) or 1))
-        if self_elevation < neighbor_elevation:
-            elevation_adjustment = -elevation_adjustment
-        amount += elevation_adjustment
-        
-        if (not neighbor_attribute.is_source) or neighbor_attribute.source_magnitude == 0:
-            neighbor_attribute.adjustment += amount               
-        self.adjustment -= amount        
-
-    def post_process(self):                          
+    def post_process(self):      
+        adjustment = self.adjustment
         self.value += self.adjustment
         self.adjustment = 0
-        
-        if self.is_source:
-            self.value += self.source_magnitude  
-        self._amount = self.value / len(self.parent.neighbors)
+        #self.value += self.adjustment
+        #self.adjustment = 0
+        #
+        #if self.is_source:
+        #    self.value += self.source_magnitude  
+        #self._amount = self.value / len(self.parent.neighbors)
         
 BRIGHTNESS_LEVELS = 64
 BRIGHTNESS_SCALAR = 3.0 / BRIGHTNESS_LEVELS
@@ -155,13 +142,15 @@ class Game_Tile(pride.gui.gui.Button):
     def __init__(self, **kwargs):        
         super(Game_Tile, self).__init__(**kwargs)                 
         for name, _type in self.attribute_listing:
-            value = self.create(_type)            
+            value = self.create(_type)                        
             setattr(self, name, value)            
             self.children.remove(value)
             self._child_attributes.append(value)
             self.process_attributes.append(value)
         self.light_overlay = self.create(Tile_Overlay)
         self.light_overlay.background_color = (0, 0, 0, 0)
+        self.water_overlay = self.create(Tile_Overlay)
+        self.water_overlay.background_color = (0, 0, 0, 0)
         
     def remove(self, item):        
         try:
@@ -177,20 +166,21 @@ class Game_Tile(pride.gui.gui.Button):
         for index, attribute_object in enumerate(self.process_attributes):               
             attribute_object.process_attribute(neighbor_processes[index])      
         
-        moisture = self.water_level.value
-        if moisture > WATER_OVERLAY_THRESHOLD:
-            if self.overlay is None:
-                self.overlay = self.create(Tile_Overlay)
-                self.overlay.pack()
-            self.overlay.background_color = (0, 0, moisture, moisture)
-        elif self.overlay is not None:
-            self.overlay.delete()
-            self.overlay = None
+        water_level = self.water_level.value
+        self.water_overlay.background_color = (0, 5, water_level, water_level)
+        #moisture = self.water_level.value
+        #if moisture > WATER_OVERLAY_THRESHOLD:
+        #    if self.overlay is None:
+        #        self.overlay = self.create(Tile_Overlay)
+        #        self.overlay.pack()
+        #    self.overlay.background_color = (0, 0, moisture, moisture)
+        #elif self.overlay is not None:
+        #    self.overlay.delete()
+        #    self.overlay = None
         
-        brightness = self.light.value#BRIGHTNESS[self.light.value / BRIGHTNESS_DIVISOR]
-        
-        self.light_overlay.background_color = (brightness, brightness, brightness, max(255 - max(128, brightness), 0))
-        
+        brightness = self.light.value#BRIGHTNESS[self.light.value / BRIGHTNESS_DIVISOR]        
+        self.light_overlay.background_color = (brightness, brightness, brightness, 255)
+        #assert self.light_overlay.z == self.z + 1, (self.light_overlay.z, self.z)
         #brightness = self.light.value / 76.0
         #self.background_color = tuple(min(int(color * brightness), 255) for color in EARTH_COLOR)
                 
@@ -206,6 +196,8 @@ class Game_Tile(pride.gui.gui.Button):
         
 class Tile_Overlay(pride.gui.gui.Button):   
 
+    defaults = {"pack_mode" : 'z'}
+    
     def left_click(self, mouse):
         return self.parent.left_click(mouse)
         
@@ -411,15 +403,15 @@ class Map(pride.gui.gui.Window):
                         other_region.southern_border.neighbors.append(region.northern_border)
                         region.northern_border.neighbors.append(other_region.southern_border)
                         
-            region.northern_border.neighbors.append(region.western_border)
-            region.northern_border.neighbors.append(region.eastern_border)
-            region.southern_border.neighbors.append(region.western_border)
-            region.southern_border.neighbors.append(region.eastern_border)
-            
-            region.western_border.neighbors.append(region.northern_border)
-            region.western_border.neighbors.append(region.southern_border)
-            region.eastern_border.neighbors.append(region.northern_border)
-            region.eastern_border.neighbors.append(region.southern_border)
+            #region.northern_border.neighbors.append(region.western_border)
+            #region.northern_border.neighbors.append(region.eastern_border)
+            #region.southern_border.neighbors.append(region.western_border)
+            #region.southern_border.neighbors.append(region.eastern_border)
+            #
+            #region.western_border.neighbors.append(region.northern_border)
+            #region.western_border.neighbors.append(region.southern_border)
+            #region.eastern_border.neighbors.append(region.northern_border)
+            #region.eastern_border.neighbors.append(region.southern_border)
             
             
             

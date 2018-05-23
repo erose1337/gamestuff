@@ -16,7 +16,7 @@ class Balance_Test(object):
         for level in range(10, 11):
             characters = []            
             for skill in test_skills:
-                kwargs = {skill : level, "health" : 100 + (10 * level), "damage" : 10 + level}
+                kwargs = {skill : level, "health" : 10 * level}
                 skills = game.character2.Skills(**kwargs)
                 kwargs = {"skills" : skills, "name" : skill, "verbosity" : verbosity}
                 characters.append(game.character2.Character(**kwargs))
@@ -34,6 +34,7 @@ class Balance_Test(object):
                         #verbosity = dict((item, 0) for item in game.character2.Character.verbosity.keys())
                         #character2.verbosity = character.verbosity = verbosity
                         while not (character.is_dead or character2.is_dead):                                                 
+                            print character.health, character2.health
                             game.mechanics.combat2.process_attack(character, character2)
                             game.mechanics.combat2.process_attack(character2, character)
                         if character.is_dead:
@@ -72,14 +73,14 @@ def test_probability():
     print(float(len(crits_dodged)) / len(samples1), sum(crits_dodged))
         
 if __name__ == "__main__":
-    #trials = 50
-    #test_skills = ["critical_hit", "strength", "dodge", "soak"]          
-    #for test_skill in ("critical_hit", "dodge", "soak", "strength"):#test_skills:
-    #    print "Testing: {}".format(test_skill)
-    #    _test_skills = test_skills[:]
-    #    _test_skills.remove(test_skill)
-    #    for skill in _test_skills:
-    #        Balance_Test.unit_test(trials=trials, test_skills=(test_skill, skill))
-    test_probability()
+    trials = 10
+    test_skills = ["critical_hit", "strength", "dodge", "soak", "regen", "intensity"]          
+    for test_skill in ("critical_hit", ):#("critical_hit", "dodge", "soak", "strength"):#test_skills:
+        print "Testing: {}".format(test_skill)
+        _test_skills = test_skills[:]
+        _test_skills.remove(test_skill)
+        for skill in ("dodge", ):#_test_skills:
+            Balance_Test.unit_test(trials=trials, test_skills=(test_skill, skill))
+    #test_probability()
     
     

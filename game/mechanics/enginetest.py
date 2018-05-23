@@ -167,7 +167,7 @@ class Engine(pride.base.Base):
         import game.character2
         print "Unit testing: ", cls
         engine = cls()        
-        skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
+        skills = game.character2.Skills(health=1, intensity=1, regen=1, soak=1, critical_hit=1, damage=10)
         skills.combat.focus1 = "critical hit"
         skills.combat.focus2 = "regen"
         party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)        
@@ -263,13 +263,13 @@ class CharacterCreation_Handler(Handler):
                                           "\nWater:\n    You are empowered with Water.\n    +50% to Fire, -50% to Electric",
                                           "\nExcellence:\n    You are a normal mortal with exceptional skills.\n    No damage bonus or resistance"),
                 "critical_hit_description" : "Provides a 15% chance to deal 6.6 * level extra damage",
-                "dot_description" : "Provides a 33% chance to deal 3.3 * level extra damage",
+                "intensity_description" : "Provides a 33% chance to deal 3.3 * level extra damage",
                 "strength_description" : "Increases minimum damage by 1 * level",
                 "dodge_description" : "Provides a 15% chance to avoid 6.6 * level damage",
                 "regen_description" : "Provides a 33% chance to recover 3.3 * level health each turn",
                 "soak_description" : "Reduces incoming damage by 1 point per level"}
     
-    dot_effect_text = {"Fire" : "Fire burns your opponent", 
+    intensity_effect_text = {"Fire" : "Fire burns your opponent", 
                        "Air" : "Air pressure suffocates your opponent",
                        "Water" : "Water drowns your opponent",
                        "Stone" : "Stones pummel your opponent", 
@@ -287,22 +287,26 @@ class CharacterCreation_Handler(Handler):
             print("Please choose two skills to focus on.")
             print("The selected skills will automatically increase by 1 at level up")
             print("Each skill provides a bonus in combat: ")            
-            prompt = "critical hit:\n    {}\ndot:\n    {}\nstrength:\n    {}\n"
+            prompt = "critical hit:\n    {}\nintensity:\n    {}\nstrength:\n    {}\n"
             prompt += "dodge:\n    {}\nregen:\n    {}\nsoak:\n    {}\n"
             
-            descriptions = (self.critical_hit_description, self.dot_description, self.strength_description,
+            descriptions = (self.critical_hit_description, self.intensity_description, self.strength_description,
                             self.dodge_description, self.regen_description, self.soak_description)            
             prompt = prompt.format(*descriptions)
             
-            selections = ["critical hit", "dot", "strength", "dodge", "regen", "soak"]
+            selections = ["critical hit", "intensity", "strength", "dodge", "regen", "soak"]
             focus1 = get_selection(prompt + "Select focus#1: ", "invalid selection", selections)
             selections.remove(focus1)
             focus2 = get_selection(prompt + "Select focus#2: ", "invalid selection", selections)
 
-            skills = game.character2.Skills(damage=10)
-            skills.combat.focus1 = focus1.replace(' ', '_') # for "critical hit"
-            skills.combat.focus2 = focus2.replace(' ', '_')
-            skills.combat.attack.dot.hit_string = self.dot_effect_text[element]
+            focus1 = focus1.replace(' ', '_')
+            focus2 = focus2.replace(' ', '_')
+            kwargs = {focus1: 1, focus2 : 1, "health" : 1}
+            
+            skills = game.character2.Skills(**kwargs)
+            skills.combat.focus1 = focus1
+            skills.combat.focus2 = focus2            
+            skills.combat.attack.intensity.hit_string = self.intensity_effect_text[element]
             character = game.character2.Character(name=name, npc=False, skills=skills, element=element)
             
             print('*' * 79)
@@ -398,12 +402,12 @@ class The_Duel_Handler(Handler):
     def run(self, player):        
         opponent_skill = game.character2.Skills.random_skills(0)                
         opponent = game.character2.Character(name="El toriablo", skills=opponent_skill)
-        opponent.health -= 25
+        opponent.health /= 2
         battle = Synchronous_Combat_Engine()
         outcome = battle.run(player, opponent)
         if outcome == "victory" and "The Duel" not in player.complete_quests and not player.is_dead:      
-            player.alert("Received 90 XP as a reward for completing The Duel")
-            player.xp += 90
+            player.alert("Received 99 XP as a reward for completing The Duel")
+            player.xp += 99
             player.complete_quests.add("The Duel")
     
     
@@ -426,7 +430,7 @@ class Character_Handler(Handler):
     def run(*args):
         party = args[0]                
         string =  "Name: {}     level: {}   xp: {}\n"
-        string += "damage:   {}   hp:    {}/{}    combat points: {}/{}\n"
+        string += "hp:   {}/{}    combat points: {}/{}\n"
         
         element = party.element
         bonus = ELEMENT_BONUS[element]
@@ -438,8 +442,8 @@ class Character_Handler(Handler):
         attack = skills.attack
         defense = skills.defense             
         print string.format(party.name, skills.level, party.xp, 
-                            skills.damage, party.health, party.max_health, party.combat_points, party.max_combat_points,
-                            attack.critical_hit.level, attack.dot.level, attack.strength.level, skills.focus1.replace('_', ' '),
+                            party.health, party.max_health, party.combat_points, party.max_combat_points,
+                            attack.critical_hit.level, attack.intensity.level, attack.strength.level, skills.focus1.replace('_', ' '),
                             defense.dodge.level, defense.regen.level, defense.soak.level, skills.focus2.replace('_', ' '))
                                
         
@@ -576,7 +580,7 @@ class Synchronous_Combat_Engine(Engine):
         import game.character2
         import game.mechanics.randomgeneration as randomgeneration
         engine = cls()        
-        skills = game.character2.Skills(health=1, dot=1, regen=1, soak=1, critical_hit=1, damage=10)
+        skills = game.character2.Skills(health=1, intensity=1, regen=1, soak=1, critical_hit=1, damage=10)
         skills.combat.focus1 = "critical hit"
         skills.combat.focus2 = "regen"
         party1 = game.character2.Character(name="Ella!", npc=False, skills=skills)                
@@ -615,7 +619,7 @@ class Toggle_Abilities(Handler):
     defaults = {"menu_selection" : ("focus", "intensity", "super strength",
                                     "celerity", "adrenaline", "dauntless", "exit"),
                 "focus_description" : "Increases critical hit chance by 15%",
-                "intensity_description" : "+10% activation chance by 10% and +1.5 damage for dot effect",
+                "intensity_description" : "+10% activation chance by 10% and +1.5 damage for intensity effect",
                 "super_strength_description" : "Increases strength by 100%",
                 "celerity_description" : "Increases dodge chance by 5% and amount avoided by 1.5 damage",
                 "adrenaline_description" : "Increases regeneration chance by 10% and +1.5 damage healed",

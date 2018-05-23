@@ -11,9 +11,9 @@ class Skill(object):
         
 class Critical_Hit(Skill): pass
             
-class DoT(Skill): 
+class Intensity(Skill): 
     
-    hit_string = "Unknown DoT effect harms your opponent!"
+    hit_string = "Unknown Intensity effect harms your opponent!"
     
     
 class Strength(Skill): pass
@@ -27,12 +27,12 @@ class Soak(Skill): pass
 class Attack(Skill):
     
     def _get_level(self):
-        return sum((self.critical_hit.level, self.dot.level, self.strength.level))
+        return sum((self.critical_hit.level, self.intensity.level, self.strength.level))
     level = property(_get_level)
     
-    def __init__(self, critical_hit=0, dot=0, strength=0):        
+    def __init__(self, critical_hit=0, intensity=0, strength=0):        
         self.critical_hit = Critical_Hit(critical_hit)
-        self.dot = DoT(dot)
+        self.intensity = Intensity(intensity)
         self.strength = Strength(strength) 
             
     
@@ -49,14 +49,14 @@ class Defense(Skill):
             
         
 class Health(Skill): 
-    
+        
     flags = {"_level" : 0}
     
     def _get_level(self):
         return self._level
     def _set_level(self, value):        
         self._level = value
-        self.max_health = 100 + (10 * value)
+        self.max_health = (10 * value)
     level = property(_get_level, _set_level)
     
 
@@ -70,37 +70,37 @@ class Combat(Skill):
         return self.focus1, self.focus2
     focus = property(_get_focus)
     
-    def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, 
-                 regen=0, soak=0, health=0, damage=1, focus1=None, focus2=None):
-        self.attack = Attack(critical_hit, dot, strength)
+    def __init__(self, critical_hit=0, intensity=0, strength=0, dodge=0, 
+                 regen=0, soak=0, health=0, focus1=None, focus2=None):
+        self.attack = Attack(critical_hit, intensity, strength)
         self.defense = Defense(dodge, regen, soak) 
-        self.health = Health(health)       
-        self.damage = damage        
+        self.health = Health(health)               
         self.focus1 = focus1
         self.focus2 = focus2
 
         
 class Skills(object):
     
-    def __init__(self, critical_hit=0, dot=0, strength=0, dodge=0, regen=0, soak=0, health=0, damage=1):
-        self.combat = Combat(critical_hit, dot, strength, dodge, regen, soak, health, damage)                
+    def __init__(self, critical_hit=0, intensity=0, strength=0, dodge=0, regen=0, soak=0, health=0):
+        self.combat = Combat(critical_hit, intensity, strength, dodge, regen, soak, health)                
         
     @classmethod
     def random_skills(cls, level):
         defense_points = attack_points = level
-        kwargs = {"critical_hit" : 0, "dot" : 0, "strength" : 0,
+        kwargs = {"critical_hit" : 0, "intensity" : 0, "strength" : 0,
                   "dodge" : 0, "regen" : 0, "soak" : 0}
         for point in range(attack_points):
-            random_skill = random.choice(("critical_hit", "dot", "strength"))
+            random_skill = random.choice(("critical_hit", "intensity", "strength"))
             kwargs[random_skill] += 1
         for point in range(defense_points):
             random_skill = random.choice(("dodge", "regen", "soak"))
             kwargs[random_skill] += 1
-        kwargs["health"] = level
-        kwargs["damage"] = 10 + level
+        kwargs["health"] = level or 1
+        
         combat = Combat(**kwargs)                        
         skills = cls()
         skills.combat = combat
+        assert skills.combat.health >= 1
         return skills
         
         
@@ -108,7 +108,7 @@ class Character(pride.components.base.Base):
     
     defaults = {"skill_tree_type" : Skills, "name" : '', "npc" : True, "skills" : None,
                 "element" : "Neutral"}    
-    verbosity = {"die" : 0, "critical hit" : 0, "dot" : 0, "dodge" : 0, "regen" : 0,
+    verbosity = {"die" : 0, "critical_hit" : 0, "intensity" : 0, "dodge" : 0, "regen" : 0,
                  "elemental_damage" : 0, "elemental_damage_penalty" : 0,
                  "dealt damage" : 0, "received damage" : 0, "attack" : 0}
     flags = {"_health" : 0, "_xp" : 0, "_combat_points" : 0}
@@ -149,15 +149,15 @@ class Character(pride.components.base.Base):
         return self._xp
     def _set_xp(self, value):        
         self._xp = value
-        if self._xp > 10 ** (self.skills.combat.level + 1):            
+        if self._xp > 10 ** self.skills.combat.level:            
             self.level_up()
     xp = property(_get_xp, _set_xp)
     
     def __init__(self, *args, **kwargs):        
         super(Character, self).__init__(*args, **kwargs)
         if self.skills is None:                        
-            self.skills = self.skill_tree_type(damage=10)
-        self.health = 100 + (10 * self.skills.combat.health.level)
+            self.skills = self.skill_tree_type(health=1)
+        self.health = 10 * self.skills.combat.health.level
        # self.name += " ({})".format(self.element)
         
     def die(self):
@@ -171,8 +171,7 @@ class Character(pride.components.base.Base):
     def level_up(self):
         skills = self.skills.combat
         assert isinstance(skills, Combat)
-        #skills.level += 1
-        skills.damage += 1
+        #skills.level += 1        
         skills.health.level += 1
         
         attack_skills = skills.attack
@@ -185,7 +184,7 @@ class Character(pride.components.base.Base):
         try:
             skill1 = getattr(attack_skills, focus1)
         except AttributeError:
-            skill1 = getattr(defense_skills, focus2)
+            skill1 = getattr(defense_skills, focus1)
             
         try:
             skill2 = getattr(attack_skills, focus2)
@@ -209,5 +208,7 @@ class Character(pride.components.base.Base):
     def random_character(cls, level, element=None, name=''):
         skill = game.character2.Skills.random_skills(level)
         element = random.choice(ELEMENT_BONUS.keys()) if element is None else element
-        return game.character2.Character(name=name or "Random Character", skills=skill, element=element)        
+        character = game.character2.Character(name=name or "Random Character", skills=skill, element=element)        
+        assert character.health >= 0, (character.skills.combat.health, character.health)
+        return character
         
