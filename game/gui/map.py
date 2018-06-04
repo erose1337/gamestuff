@@ -1,3 +1,8 @@
+# todo: 
+# make border regions only act to facilitate transfer of values to adjacent cells - without having attributes/values themselves
+# make map larger
+# devise a method for elevation to "evolve"
+
 from math import log
 
 import pride.gui.gui
@@ -74,7 +79,7 @@ class Biology(Tile_Attribute):
 class Elevation(Tile_Attribute):
         
     defaults = {"classifications" : ((32, "subterranean"), (64, "below sea level"), (96, "sea level"), (128, "hills"), (160, "mountains")),
-                "value" : 96}
+                "value" : 0}
     
     def process_attribute(self, neighbor_attribute):
         pass
@@ -110,21 +115,21 @@ class Water_Level(Tile_Attribute):
     def process_attribute(self, neighbor_attribute):     
         neighbor_value = neighbor_attribute.value
         self_value = self.value
-        if neighbor_value > self_value:
-            adjustment = neighbor_value / 8
-            neighbor.value -= adjustment
+        if neighbor_value > self_value: # more water in neighbor cell - it flows into this one
+            adjustment = neighbor_value / 8 # ensures all (up to 8) neighbor cells receive an adjustment
+                        
+            neighbor_height = neighbor_attribute.parent.elevation.value
+            self_height = self.parent.elevation.value
+            if self_height > neighbor_height:                                    
+                adjustment = max(0, adjustment - self_height - neighbor_height)                
+
+            neighbor_attribute.value -= adjustment
             self.adjustment += adjustment   
 
     def post_process(self):      
         adjustment = self.adjustment
         self.value += self.adjustment
         self.adjustment = 0
-        #self.value += self.adjustment
-        #self.adjustment = 0
-        #
-        #if self.is_source:
-        #    self.value += self.source_magnitude  
-        #self._amount = self.value / len(self.parent.neighbors)
         
 BRIGHTNESS_LEVELS = 64
 BRIGHTNESS_SCALAR = 3.0 / BRIGHTNESS_LEVELS
@@ -167,23 +172,11 @@ class Game_Tile(pride.gui.gui.Button):
             attribute_object.process_attribute(neighbor_processes[index])      
         
         water_level = self.water_level.value
-        self.water_overlay.background_color = (0, 5, water_level, water_level)
-        #moisture = self.water_level.value
-        #if moisture > WATER_OVERLAY_THRESHOLD:
-        #    if self.overlay is None:
-        #        self.overlay = self.create(Tile_Overlay)
-        #        self.overlay.pack()
-        #    self.overlay.background_color = (0, 0, moisture, moisture)
-        #elif self.overlay is not None:
-        #    self.overlay.delete()
-        #    self.overlay = None
-        
+        self.water_overlay.background_color = (0, 0, 255, water_level * 2)
+         
         brightness = self.light.value#BRIGHTNESS[self.light.value / BRIGHTNESS_DIVISOR]        
-        self.light_overlay.background_color = (brightness, brightness, brightness, 255)
-        #assert self.light_overlay.z == self.z + 1, (self.light_overlay.z, self.z)
-        #brightness = self.light.value / 76.0
-        #self.background_color = tuple(min(int(color * brightness), 255) for color in EARTH_COLOR)
-                
+        self.light_overlay.background_color = (brightness, brightness, brightness, 128)   
+        
     def post_process(self):
         for attribute in self.process_attributes:
             attribute.post_process()
@@ -402,16 +395,4 @@ class Map(pride.gui.gui.Window):
                     elif other_height == region_y:
                         other_region.southern_border.neighbors.append(region.northern_border)
                         region.northern_border.neighbors.append(other_region.southern_border)
-                        
-            #region.northern_border.neighbors.append(region.western_border)
-            #region.northern_border.neighbors.append(region.eastern_border)
-            #region.southern_border.neighbors.append(region.western_border)
-            #region.southern_border.neighbors.append(region.eastern_border)
-            #
-            #region.western_border.neighbors.append(region.northern_border)
-            #region.western_border.neighbors.append(region.southern_border)
-            #region.eastern_border.neighbors.append(region.northern_border)
-            #region.eastern_border.neighbors.append(region.southern_border)
-            
-            
-            
+                                    
