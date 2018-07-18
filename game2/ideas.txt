@@ -1,0 +1,69 @@
+stats
+---
+
+- health
+- energy
+- attack
+- defence
+- recovery
+- resists
+    - pierce, slash, smash
+    - fire, water, air, earth, lightning, magic, poison, light, darkness
+
+abilities
+---
+- dodge
+- block
+- custom
+
+
+ability design
+----
+who:
+    
+- target (self)
+- target (close)
+- target (far)
+- (optional) area effect
+    
+what:
+    
+- damage
+- heal
+- buff
+- debuff
+- movement
+ 
+when:
+    
+- manually activated        
+- activate on strike        
+- activate when hit
+- active for x turns
+- active until disabled 
+    - energy cost every turn
+    
+    
+Levels/experience/etc
+----    
+Given x points to allocate to stats
+
+Defeating an enemy with x points worth of stats garners x experience
+   
+- gain another stat point once y experience is accumulated, where y = level
+    
+    
+Combat
+----
+Takes place on KxN grid
+
+Simultaneous turn based 
+    
+damage = attack - defence
+
+
+Equipment
+-----
+Provides stat bonuses
+Provides abilities
+

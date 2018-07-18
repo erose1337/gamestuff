@@ -871,6 +871,4 @@ when can skills be designed/crafted?
     - character creation
     - every X levels
     
-    
-    
-    
+   

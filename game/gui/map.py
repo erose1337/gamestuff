@@ -131,14 +131,24 @@ class Water_Level(Tile_Attribute):
         self.value += self.adjustment
         self.adjustment = 0
         
-BRIGHTNESS_LEVELS = 64
-BRIGHTNESS_SCALAR = 3.0 / BRIGHTNESS_LEVELS
-BRIGHTNESS = [BRIGHTNESS_SCALAR * count for count in range(BRIGHTNESS_LEVELS)]#.25, .5, .75, 1.0, 1.25, 1.5, 1.75, 2.0]
-BRIGHTNESS_DIVISOR = 256 / BRIGHTNESS_LEVELS
        
+class Game_Tile_Theme(pride.gui.gui.Theme):
+
+    def draw_texture(self):
+        area = self.area        
+        self.draw("fill", area, color=self.background_color)
+        self.draw("rect_width", area, color=self.color, width=self.outline_width)        
+        
+        water_color = (0, 0, 255, self.parent.water_level.value * 2)
+        self.draw("fill", area, color=water_color)
+        
+        brightness = self.parent.light.value
+        self.draw("fill", area, color=(brightness, brightness, brightness, 128))
+        
+                      
 class Game_Tile(pride.gui.gui.Button):
     
-    defaults = {"background_color" : EARTH_COLOR,
+    defaults = {"background_color" : EARTH_COLOR, "theme_type" : Game_Tile_Theme,
                 "attribute_listing" : (("elevation", Elevation), ("water_level", Water_Level), ("light", Light))}#, ("temperature", Temperature), 
                                    #    ("pressure", Pressure), ("biology", Biology), ("light", Light))}
     mutable_defaults = {"process_attributes" : list, "neighbors" : list, "_child_attributes" : list}
@@ -152,11 +162,7 @@ class Game_Tile(pride.gui.gui.Button):
             self.children.remove(value)
             self._child_attributes.append(value)
             self.process_attributes.append(value)
-        self.light_overlay = self.create(Tile_Overlay)
-        self.light_overlay.background_color = (0, 0, 0, 0)
-        self.water_overlay = self.create(Tile_Overlay)
-        self.water_overlay.background_color = (0, 0, 0, 0)
-        
+
     def remove(self, item):        
         try:
             super(Game_Tile, self).remove(item)
@@ -170,13 +176,7 @@ class Game_Tile(pride.gui.gui.Button):
         neighbor_processes = neighbor.process_attributes
         for index, attribute_object in enumerate(self.process_attributes):               
             attribute_object.process_attribute(neighbor_processes[index])      
-        
-        water_level = self.water_level.value
-        self.water_overlay.background_color = (0, 0, 255, water_level * 2)
-         
-        brightness = self.light.value#BRIGHTNESS[self.light.value / BRIGHTNESS_DIVISOR]        
-        self.light_overlay.background_color = (brightness, brightness, brightness, 128)   
-        
+
     def post_process(self):
         for attribute in self.process_attributes:
             attribute.post_process()
