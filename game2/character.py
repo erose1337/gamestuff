@@ -32,7 +32,7 @@ class Equipment(pride.components.base.Base):
     
 class Character(pride.components.base.Base):
 
-    defaults = {"name" : ''}
+    defaults = {"name" : '', "button" : None}
 
     mutable_defaults = {"stats" : Stats, "abilities" : Abilities, "equipment" : Equipment,
                         "resists" : Resists}
