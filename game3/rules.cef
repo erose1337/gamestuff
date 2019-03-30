@@ -1,0 +1,191 @@
+Functions
+====
+
+identity
+----
+- x: x
+
+times_ten
+----
+- x: 10 * x
+
+
+Abilities
+=====
+
+Abilities
+-----
+- energy cost: max(0, ((aoe * target_count) * (range + effect_cost + homing_cost)) - grace)
+- acquire cost: 1
+
+Effects
+----
+- energy cost: ((1 + duration) * magnitude * influence) - affinity_discount
+
+Influence
+-----
+- toughness cost: 1
+- willpower cost: 1
+- mobility cost: 1
+- regeneration cost: 1
+- recovery cost: 1
+- recuperation cost: 1
+- soak cost: 1
+- grace cost: 1
+- conditioning cost: 1
+- health cost: 1
+- energy cost: 1
+- movement cost: 1
+- null cost: 1
+- position cost: 1
+
+Range
+----
+- value: level
+
+AOE
+----
+- value: level
+
+Target Count
+----
+value: level
+
+Homing
+----
+cost: value
+
+
+Attributes
+=====
+
+Toughness
+-----
+- acquire cost: identity(level)
+- value: 1 + times_ten(level)
+
+Willpower
+----
+- acquire cost: identity(level)
+- value: 10 + times_ten(level)
+
+Mobility
+----
+- acquire cost: identity(level)
+- value: 1 + times_ten(level)
+
+Regeneration
+----
+- acquire cost: identity(level)
+- value: times_ten(level)
+
+Recovery
+----
+- acquire cost: identity(level)
+- value: times_ten(level)
+
+Recuperation
+-----
+- acquire cost: identity(level)
+- value: times_ten(level)
+
+Soak
+----
+- acquire cost: identity(level)
+- value: times_ten(level)
+
+Grace
+----
+- acquire cost: identity(level)
+- value: times_ten(level)
+
+Conditioning
+----
+- acquire cost: identity(level)
+- value: times_ten(level)
+
+Affinity
+----
+- acquire cost: level
+- resistance: 2 * level
+- discount: 2 * level
+
+
+Effects
+====
+
+Permanent_Effect
+-----
+potency: magnitude
+
+Damage
+-----
+potency: magnitude - (soak + resistance)
+
+Heal
+----
+potency: magnitude
+
+Rest
+----
+potency: magnitude
+
+Condition Effect
+----
+potency: magnitude
+
+Buff
+----
+potency: magnitude
+
+Debuff
+----
+potency: magnitude
+
+Move
+----
+distance: magnitude
+
+Passive
+----
+potency: magnitude
+
+Regeneration
+----
+potency: magnitude
+
+Recovery
+----
+potency: magnitude
+
+Recuperation
+-----
+potency: magnitude
+
+
+Misc
+====
+
+Distance Calculation
+-----
+result: max(abs(x1 - x2), abs(y1 - y2))
+
+Movement Cost
+-----
+result: max(0, distance - conditioning)
+
+
+Character Creation
+====
+
+starting xp
+-----
+amount: 55
+
+ability potency
+-----
+limit: 10
+
+acquisition
+----
+cost: level

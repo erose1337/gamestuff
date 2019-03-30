@@ -1,0 +1,40 @@
+to do:
+----
+
+implement Reaction effects
+implement XP cost for abilities
+add energy source drop-down box for abilities?
+theme designer applet
+
+implement vis-mutex
+auto-pack
+break long text lines into multiple lines
+
+fix format_attributes to display nicely spaced entries
+implement summon effects
+
+Known Issues
+------
+Expressions such as 2 ^ (2 ^ 128) in the rules can cause the program to hang
+
+
+
+Unrelated
+----
+write tool that determines if package module name shadows built-in module name
+
+
+Roadmap
+-----
+
+finish implementing effects - done?!
+implement levels/xp/level-up costs
+guided character creation and how-to write a character sheet
+make pre-designed abilities
+test/balance default rules + test ai + how to write rules
+multiple characters on a team (NvK e.g. monster warrior)
+hero/villain status and persuading defeated enemies to join
+origin story, quests, equipment
+basic graphics (placeholders) and minimum viable product
+world maps (graphics)
+character customization (graphics)

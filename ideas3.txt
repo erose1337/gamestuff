@@ -1,0 +1,175 @@
+dice-less game
+
+Stats:
+-----
+            health                      energy (used by abilities)
+
+Attributes:
+-----
+                    health/defense              energy/abilities            movement
+                    -----                       -----------                 ---------
+max increase   |    max health                  max energy                  max movement points
+recovery amount|    health regeneration         energy regeneration         movement point regeneration
+discount       |    minus to damage taken       minus to energy cost        minus to movement point cost
+                    ("soak")                    ("grace")
+
+
+Skills
+-----
+
+movement (1 extra movement per point)               offense (1 damage per point)
+energy cost: 0                                      energy cost: 1 per point, per use
+note: n/a                                           note: these are single target attacks
+-----                                               ----
+physical (run, jump, acrobatics, swim, etc)         hand to hand
+flight                                              melee weapon
+teleport                                            ranged attack/weapon (includes "magic"/etc)
+
+
+
+defense (-x incoming damage per point)
+energy cost: variable
+note: n/a
+----
+defend (active)  (x: 1 per point, cost: 1 per block point, per use)
+resist (passive) (x: 1 per point, cost: 0) (sub-skills each target 1 particular element)
+
+
+
+misc
+energy cost: variable
+note: n/a
+----
+rest (active) (+ 1 energy recovery per point, cost: 0)
+heal (active) (+ 1 health recovery per point, cost: 0)
+
+
+
+
+Abilities
+----
+Abilities composed out of target(s) and effect(s)
+Abilities have a range, area of effect, and/or a number of targets. Abilities can be actively used or passive
+    Passive abilities cannot be "used" and cannot use "apply when used" effects
+
+Effects may have: element, magnitude, influence (buff/debuff target), duration, trigger, summon type
+    Only damage effects require an element type
+    Damage effects may only influence stats (health and energy)
+    Buff/Debuff effects may influence stats and attributes
+    move influences position
+    summon effects must have a summon type, indicating what is summoned
+
+
+Target                                   Effect
+note: increasing expensiveness           note: 1 ability can have more than 1 effect
+-----                                    -----
+- target (self)                          damage (must have element) (influences stats)
+- target (close)                         heal
+- target (far)                           buff
+- (optional) area effect                 debuff
+- multi target                           move
+                                         summon
+
+                                         Duration                   Trigger
+                                         -----                      ------
+                                         0 (instant)                apply when used
+                                         x turns                    apply when effect_type applied
+                                         until damaged              apply at beginning/end of turn
+                                                                    passive (apply when passive ability is first taken)
+
+effects
+-----
+     damage
+     -----
+     element: element_type
+     influence: stats (health/energy/movement points)
+     magnitude: x
+     duration: x (0 = instant/one application)
+     trigger: apply when: used/when effect_type applied/beginning or end of turn
+
+     heal
+     ----
+     magnitude: x
+     influence: stats (health/energy/movement points)
+     duration: x (0 = instant, 1 = instant + next turn, ...)
+     trigger: apply when: used/effect_type applied/beginning or end of turn
+
+     (de)buff
+     ----
+     magnitude: x
+     influence: attribute
+     duration: x
+     trigger: apply when: used/effect_type applied/beginning or end of turn
+
+     movement
+     ----
+     magnitude: x
+     trigger: apply when: used/effect_type applied/beginning or end of turn
+
+     summon
+     ----
+     duration: x
+     summon type: character type
+     trigger: apply when: used/effect_type applied/beginning or end of turn
+
+
+
+                                         name: passive_ability_name
+                                         effects:
+
+
+Attribute points and Ability points
+----
+Option 1
+-----
+Characters are granted X attribute points and Y ability points
+
+- Creating an ability only costs 1 ability point, regardless of what it does
+    - More powerful abilities require more energy to use
+    - problem: passives would be arbitrarily powerful
+- Increasing an attribute costs n attribute points, for n = f(level)
+
+Option 2
+----
+Characters are granted X attribute points, Y active ability points, Z passive ability point
+
+- Creating an active ability costs 1 ability point, regardless of what it does
+    - More powerful abilities require more energy to use
+- Creating a passive ability requires N points, determined by how potent the ability is
+- Increasing an attribute costs n attribute points, for n = f(level)
+
+Option 3
+----
+Characters are granted n XP points, which can be spent on attributes and abilities as desired
+
+- Creating an active ability costs x XP points, for some constant x
+    - at higher levels characters could acquire large numbers of abilities for negligible XP cost
+- Creating a passive ability costs x XP points, determined by potency
+- Increasing an attribute costs n XP points, for n = f(level)
+- Increasing an affinity costs n XP points, for n = f(level)
+
+Option 4
+----
+- Creating an active ability costs x XP points, for x = f(total xp)
+    - Can limit how many active abilities a character can take
+    - balancing xp between abilities and attributes could be difficult
+
+Option 5
+----
+- Create a new active ability after acquiring enough total XP points, for cost 0 <= x <= y
+    - Limits a characters active abilities
+    - No difficulty deciding whether or not to take an ability or attributes
+    - Can make "perks" that trade XP for more ability slots
+- Creating a new passive ability requires `n` XP points, for n = f(ability_potency)
+-
+
+Option 6
+----
+On character creation, grant w attribute points, x affinity points, y ability points
+    impose upper limit on ability potency
+
+
+Affinities
+
+    + x soak against element_type damage effects
+    - y cost when using element_type abilities
