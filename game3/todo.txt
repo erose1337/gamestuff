@@ -1,17 +1,23 @@
 to do:
 ----
 
-implement Reaction effects
-implement XP cost for abilities
+implement aoe for passives?
 add energy source drop-down box for abilities?
+remove homing option?
 theme designer applet
 
-implement vis-mutex
+
+
+figure out movement effects
+implement summon effects
+
+
+fix format_attributes to display nicely spaced entries
+
+
 auto-pack
 break long text lines into multiple lines
 
-fix format_attributes to display nicely spaced entries
-implement summon effects
 
 Known Issues
 ------

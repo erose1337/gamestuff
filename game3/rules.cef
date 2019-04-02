@@ -16,11 +16,12 @@ Abilities
 Abilities
 -----
 - energy cost: max(0, ((aoe * target_count) * (range + effect_cost + homing_cost)) - grace)
-- acquire cost: 1
+- acquire cost: max(0, (aoe * target_count) * (range + effect_cost + homing_cost))
 
 Effects
 ----
 - energy cost: ((1 + duration) * magnitude * influence) - affinity_discount
+- acquire cost: ((1 + duration) * magnitude * influence) - affinity_discount
 
 Influence
 -----

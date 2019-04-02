@@ -22,7 +22,7 @@ class Ability(pride.components.base.Base):
     def from_info(cls, name, **info):
         effect_list = []
         _removals = []
-        info["name"] = name
+        assert "name" not in info
         for key, value in info.items():
             if key[:6] == "effect":
                 if key == "effects":
@@ -36,13 +36,15 @@ class Ability(pride.components.base.Base):
                     info[key] = int(value)
                 except ValueError:
                     pass
+        info["name"] = name
+
         if effect_list:
             info["effects"] = tuple(effect_list)
         else:
             info["effects"] = tuple(info["effects"])
         _effects = info["_effects"] = []
         for effect_type in info["effects"]:
-            if issubclass(effect_type, effects.Reaction):
+            if effect_type.defaults["reaction"]:
                 _effects.append(effect_type(target=True))
             else:
                 _effects.append(effect_type())
@@ -56,7 +58,7 @@ class Ability(pride.components.base.Base):
     @classmethod
     def add_effect(cls, effect):
         cls.defaults["effects"] += (effect, )
-        if issubclass(effect, effects.Reaction):
+        if effect.defaults["reaction"]:
             _effect = effect(target=True) # effect is never applied, but target can't be Falsey
         else:
             _effect = effect()

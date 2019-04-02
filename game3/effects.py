@@ -14,7 +14,9 @@ class Effect(pride.components.base.Base):
     defaults = {"influence" : '', "element" : '', "magnitude" : 0,
                 "duration" : 0, "positive" : True, "do_process_reactions" : True,
                 "queue_number" : STANDARD_QUEUE, "name" : '', "element" : "null",
-                "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude}}
+                "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
+                "trigger" : '', "target" : '', "reaction" : False}
+
     predefaults = {"_name" : ''}
     required_attributes = ("influence", "magnitude")
 
@@ -33,10 +35,16 @@ class Effect(pride.components.base.Base):
     calculation_rule = property(_get_calulation_rule)
 
     def enqueue(self, source, target):
-        target.effect_queue[self.queue_number].append((self, source, target))
+        if self.reaction:
+            target.reaction_effects.append(self)
+        else:
+            target.effect_queue[self.queue_number].append((self, source, target))
 
     def dequeue(self, source, target):
-        target.effect_queue[self.queue_number].remove((self, source, target))
+        if self.reaction:
+            target.reaction_effects.remove(self)
+        else:
+            target.effect_queue[self.queue_number].remove((self, source, target))
 
     def apply(self, source, target):
         raise NotImplementedError()
@@ -61,6 +69,7 @@ class Effect(pride.components.base.Base):
                 info[key] = int(value)
             except (ValueError, TypeError):
                 continue
+
         defaults = cls.defaults.copy()
         defaults.update(info)
         return type(cls.__name__, (cls, ), {"defaults" : defaults})
@@ -88,7 +97,7 @@ class Permanent_Effect(Effect):
             print("{} effect influenced {}.{} by {}{}".format(self.name, _target.name,
                                                               self.influence, sign,
                                                               adjustment))
-            if source != _target and self.do_process_reactions:
+            if source != _target and not self.reaction:
                 self.process_reaction_effects(source, _target)
 
         self.duration -= 1
@@ -136,10 +145,16 @@ class Condition_Effect(Effect):
     defaults = {"already_applied" : False, "_adjustment" : None}
 
     def enqueue(self, source, target):
-        target.effect_queue[self.queue_number].append((self, source, target))
+        if self.reaction:
+            target.reaction_effects.append(self)
+        else:
+            target.effect_queue[self.queue_number].append((self, source, target))
 
     def dequeue(self, source, target):
-        target.effect_queue[self.queue_number].remove((self, source, target))
+        if self.reaction:
+            target.reaction_effects.remove(self)
+        else:
+            target.effect_queue[self.queue_number].remove((self, source, target))
 
     def apply(self, source, target):
         _target = target
@@ -169,7 +184,7 @@ class Condition_Effect(Effect):
                 print("{} influenced {}.{} by {}{}".format(self.name, _target.name,
                                                            self.influence, sign,
                                                            self._adjustment))
-                if source != _target and self.do_process_reactions:
+                if source != _target and self.reaction:
                     self.process_reaction_effects(source, _target)
             else:
                 self._adjustment = 0
@@ -255,39 +270,3 @@ class Recuperation(Restorative_Effect):
 
     defaults = {"influence" : "movement",
                 "formula_reagants" : lambda e, t, s: {"magnitude" : t.attributes.recuperation}}
-
-
-class Reaction(Condition_Effect):
-
-    defaults = {"trigger" : '', "reactions" : tuple(), "magnitude" : -1,
-                "influence" : "null", "target" : ''}
-    required_attributes = ("trigger", "reactions", "target")
-
-    def enqueue(self, source, target):
-        target.reaction_effects.append(self)#(self, source, target))
-
-    def dequeue(self, source, target):
-        target.reaction_effects.remove(self)#(self, source, target))
-
-    def apply(self, source, target):
-        for effect_type in self.reactions:
-            effect_type(duration=1, do_process_reactions=False).apply(source, target)
-
-        self.duration -= 1
-        if self.duration == -1:
-            self.dequeue(source, target)
-
-    @classmethod
-    def from_info(cls, **info):
-        reactions = []
-        removals = []
-        for key, value in info.items():
-            if key[:6] == "effect":
-                effect_name, effect_info = value.items()[0]
-                reactions.append(globals()[effect_name].from_info(**effect_info))
-                removals.append(key)
-        for key in removals:
-            del info[key]
-        if not info["reactions"]:
-            info["reactions"] = tuple(reactions)
-        return super(Reaction, cls).from_info(**info)

@@ -100,30 +100,23 @@ Abilities
     - passive: True
     - effect1:
 
-        Reaction
+        Heal
         ----
         - name: active regen
+        - reaction: True
         - trigger: damage
         - target: reacting actor
-        - effect:
+        - magnitude: 1
+        - influence: health
 
-            Heal
-            ----
-            - name: active regen
-            - magnitude: 1
-            - influence: health
     - effect2:
 
-        Reaction
+        Damage
         ----
         - name: reflect
+        - reaction: True
         - trigger: damage
         - target: triggering actor
-        - effect:
-
-            Damage
-            -----
-            - name: reflect
-            - magnitude: 1
-            - influence: health
-            - element: blunt
+        - magnitude: 1
+        - influence: health
+        - element: blunt

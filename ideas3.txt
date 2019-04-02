@@ -169,6 +169,18 @@ On character creation, grant w attribute points, x affinity points, y ability po
     impose upper limit on ability potency
 
 
+want:
+    - freedom to design and create abilities as desired
+    - possibility to upgrade existing abilities, so that abilities taken early on don't become worthless
+        - option(s):
+            - cost scaled to potency, pay with xp or ability points
+            - new ability point(s) after N xp points
+
+don't want:
+    - players to simply take every possible kind of ability
+        - must place some limit on how many abilities can be taken
+
+
 Affinities
 
     + x soak against element_type damage effects

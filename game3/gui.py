@@ -87,7 +87,7 @@ class XP_Cost_Indicator(pride.gui.gui.Container):
     def __init__(self, **kwargs):
         super(XP_Cost_Indicator, self).__init__(**kwargs)
         self.create("pride.gui.gui.Button", text="XP cost")
-        self.create("pride.gui.gui.Button", text='0')
+        self.display = self.create("pride.gui.gui.Button", text='0').reference
 
 
 class Energy_Cost_Indicator(pride.gui.gui.Container):
@@ -100,20 +100,11 @@ class Energy_Cost_Indicator(pride.gui.gui.Container):
         self.displayer = self.create("pride.gui.gui.Button", text='0').reference
 
 
-class Active_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Active", "selection_value" : "Active"}
-
-
-class Passive_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Passive", "selection_value" : "Passive"}
-
-
 class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Active or Passive:", "orientation" : "stacked",
-                "entry_types" : (Active_Selector, Passive_Selector),
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(_type)
+                                      for _type in ("Active", "Passive")),
                 "pack_mode" : "left", "ability_fields" : ''}
 
     def on_dropdown_selection(self, selection):
@@ -121,7 +112,7 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
         if selection == "Active":
             if ability_fields.active_or_passive != "Active":
                 ability_fields.active_or_passive = "Active"
-                for reference in ability_fields.effect_listing:
+                for reference in pride.objects[ability_fields.effects_window].window_listing:
                     effect_fields = pride.objects[reference]
                     effect_fields.update_values(duration=0)
                     duration_field = pride.objects[effect_fields.duration_field]
@@ -133,7 +124,7 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
                 ability_fields.active_or_passive = "Passive"
                 ability_fields.update_values(range="self", target_count=1)
 
-                for reference in ability_fields.effect_listing:
+                for reference in pride.objects[ability_fields.effects_window].window_listing:
                     effect_fields = pride.objects[reference]
                     effect_fields.update_values(duration=0)
                     pride.objects[pride.objects[effect_fields.duration_field].field].text = "passive"
@@ -142,20 +133,11 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
                 pride.objects[pride.objects[ability_fields.target_count_field].field].text = '1'
 
 
-class Homing_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "True", "selection_value" : "True"}
-
-
-class Nonhoming_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "False", "selection_value" : "False"}
-
-
 class Homing_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Homing", "orientation" : "stacked",
-                "entry_types" : (Homing_Selector, Nonhoming_Selector),
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(_type)
+                                      for _type in ("True", "False")),
                 "ability_fields" : '', "pack_mode" : "left",
                 "w_range" : (0, 120)}
 
@@ -170,19 +152,6 @@ class Homing_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed Effect"}
-
-    def delete_tab(self):
-        effect_fields = self.args[0]
-        ability_fields = pride.objects[self.target]
-        listing = ability_fields.effect_listing
-        listing.remove(effect_fields)
-        try:
-            ability_fields._view_effect(listing[-1])
-        except IndexError:
-            pass
-        _fields = pride.objects[effect_fields]
-        _fields.delete()
-        super(Effect_Tab, self).delete()
 
 
 class Range_Field(pride.gui.widgetlibrary.Spin_Field):
@@ -263,9 +232,9 @@ class Target_Count_Field(pride.gui.widgetlibrary.Spin_Field):
 
 class Ability_Fields(pride.gui.gui.Container):
 
-    defaults = {"tab" : '', "character" : None, "active_or_passive" : "Active"}
-    mutable_defaults = {"effect_listing" : list}
-    required_attributes = ("character", )
+    defaults = {"tab" : '', "character" : None, "active_or_passive" : "Active",
+                "character_screen" : '', "_old_xp_cost" : 0}
+    required_attributes = ("character", "character_screen")
 
     def __init__(self, **kwargs):
         super(Ability_Fields, self).__init__(**kwargs)
@@ -276,7 +245,7 @@ class Ability_Fields(pride.gui.gui.Container):
         # effects
         row1 = self.create("pride.gui.gui.Container", h_range=(0, 40))
         row1.create(Name_Field, pack_mode="left", write_field_method=self._write_ability_name)
-        row1.create(XP_Cost_Indicator, pack_mode="left", w_range=(0, 120))
+        self.xp_cost_indicator = row1.create(XP_Cost_Indicator, pack_mode="left", w_range=(0, 120)).reference
         self.energy_cost_indicator = row1.create(Energy_Cost_Indicator).reference
         self.homing_selector = row1.create(Homing_Type_Selector, ability_fields=self.reference).reference
 
@@ -286,34 +255,12 @@ class Ability_Fields(pride.gui.gui.Container):
         self.target_count_field = row2.create(Target_Count_Field, ability_fields=self.reference).reference
         row2.create(Aoe_Field, ability_fields=self.reference)
 
-        self.create(Effect_Selection_Window, ability_fields=self.reference)
+        self.effects_window = self.create(Effect_Selection_Window, ability_fields=self.reference).reference
         self.update_costs()
 
     def update_values(self, **kwargs):
         self.ability.defaults.update(kwargs)
         self.update_costs()
-
-    def new_effect(self):
-        for effect_reference in self.effect_listing:
-            pride.objects[effect_reference].hide()
-
-        effect_fields = self.create(Effect_Fields, character=self.character,
-                                    ability_fields=self.reference)
-        tab = self.tabs.create(Effect_Tab,
-                               target=self.reference, text="Unnamed effect",
-                               method="_view_effect", args=(effect_fields.reference, ))
-        effect_fields.tab = tab.reference
-        self.effect_listing.append(effect_fields.reference)
-        self.pack()
-
-    def _view_effect(self, effect_field):
-        effect_object = pride.objects[effect_field]
-        if effect_object.hidden:
-            effect_object.show()
-            for effect_reference in self.effect_listing:
-                if effect_reference != effect_field:
-                    pride.objects[effect_reference].hide()
-            self.pack()
 
     def update_costs(self):
         info = self.ability.defaults
@@ -327,8 +274,16 @@ class Ability_Fields(pride.gui.gui.Container):
         else:
             ability = abilities.Passive_Ability.from_info(**kwargs)
         self.ability = ability
-        energy_cost = rules.calculate_ability_cost(self.character, ability())
+        _ability = ability()
+        energy_cost = _ability.calculate_ability_cost(self.character, None)
         pride.objects[pride.objects[self.energy_cost_indicator].displayer].text = str(energy_cost)
+
+        character_screen = pride.objects[self.character_screen]
+        xp_cost = rules.calculate_ability_acquisition_cost(self.character, _ability)
+        character_screen._modify_xp(self._old_xp_cost)
+        character_screen._modify_xp(-xp_cost)
+        self._old_xp_cost = xp_cost
+        pride.objects[pride.objects[self.xp_cost_indicator].display].text = str(xp_cost)
 
     def _write_ability_name(self, field_name, name):
         self.ability.defaults["name"] = name
@@ -340,42 +295,18 @@ class Ability_Fields(pride.gui.gui.Container):
         del self.ability
         super(Ability_Fields, self).delete()
 
+    def add_effect(self, effect_type):
+        self.ability.add_effect(effect_type)
 
-class Damage_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Damage", "selection_value" : "Damage"}
-
-
-class Heal_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Heal", "selection_value" : "Heal"}
-
-
-class Buff_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults  = {"text" : "Buff", "selection_value" : "Buff"}
-
-
-class Debuff_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Debuff", "selection_value" : "Debuff"}
-
-
-class Movement_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Movement", "selection_value" : "Movement"}
-
-
-class Reaction_Selector(pride.gui.widgetlibrary.Dropdown_Box_Entry):
-
-    defaults = {"text" : "Reaction", "selection_value" : "Reaction"}
+    def remove_effect(self, effect_type):
+        self.ability.remove_effect(effect_type)
 
 
 class Trigger_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "trigger", "orientation" : "stacked",
-                "entry_types" : (Damage_Selector, Heal_Selector,
-                                 Buff_Selector, Debuff_Selector),
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(trigger)
+                                      for trigger in ("Damage", "Heal", "Buff", "Debuff")),
                 "effect_fields" : '', "pack_mode" : "left"}
 
     def on_dropdown_selection(self, selection):
@@ -385,19 +316,45 @@ class Trigger_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 class Effect_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Effect type", "orientation" : "stacked",
-                "entry_types" : (Damage_Selector, Heal_Selector, Buff_Selector,
-                                 Debuff_Selector, Movement_Selector, Reaction_Selector),
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(_type)
+                                      for _type in ("Damage", "Heal", "Buff", "Debuff",
+                                                    "Movement")),
                 "effect_fields" : '', "pack_mode" : "left"}
     required_attributes = ("effect_fields", )
 
     def on_dropdown_selection(self, selection):
         effect_fields = pride.objects[self.effect_fields]
         effect = effect_fields.effect
-        ability_fields = pride.objects[effect_fields.ability_fields]
-        ability_fields.ability.remove_effect(effect)
+        self.remove_old_effect(effect_fields, effect)
+
         info = effect.defaults
         kwargs = {"name" : info["name"], "influence" : info["influence"],
                   "magnitude" : info["magnitude"], "duration" : info["duration"]}
+
+        self.toggle_element_selector(selection, effect_fields, kwargs)
+        selector = pride.objects[effect_fields.influence_selector]
+
+        if selection in ("Damage", "Heal"):
+            self.select_damage_heal(selector, effect_fields, kwargs)
+        elif selection in ("Buff", "Debuff"):
+            self.select_buff_debuff(selector, effect_fields, kwargs)
+        else:
+            assert selection == "Movement"
+            self.select_movement(selector, effect_fields, kwargs)
+
+        effect = effect_fields.effect = getattr(effects, selection).from_info(**kwargs)
+        self.add_new_effect(effect_fields, effect)
+
+    def add_new_effect(self, effect_fields, effect):
+        ability_fields = pride.objects[effect_fields.ability_fields]
+        ability_fields.add_effect(effect)
+        ability_fields.update_costs()
+
+    def remove_old_effect(self, effect_fields, effect):
+        ability_fields = pride.objects[effect_fields.ability_fields]
+        ability_fields.remove_effect(effect)
+
+    def toggle_element_selector(self, selection, effect_fields, kwargs):
         if selection != "Damage":
             if effect_fields.element_selector is not None:
                 pride.objects[effect_fields.element_selector].delete()
@@ -410,67 +367,31 @@ class Effect_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
                 effect_fields.pack()
             kwargs["element"] = pride.objects[effect_fields.element_selector].selection
 
-        if selection != "Reaction":
-            row2 = pride.objects[effect_fields.row2]
-            if row2.hidden:
-                row2.show()
+    def _select_type(self, selector, effect_fields, kwargs, selector_type):
+        if not isinstance(selector, selector_type):
+            row = selector.parent
+            selector.delete()
+            selector = row.create(selector_type, effect_fields=effect_fields.reference)
+            effect_fields.influence_selector = selector.reference
+            effect_fields.pack()
+        kwargs["influence"] = selector.selection
+        return selector
 
-        selector = pride.objects[effect_fields.influence_selector]
-        if selection in ("Damage", "Heal"):
-            if not isinstance(selector, Influence_Selector_Permanent):
-                row = selector.parent
-                selector.delete()
-                selector = row.create(Influence_Selector_Permanent,
-                                      effect_fields=effect_fields.reference)
-                effect_fields.influence_selector = selector.reference
-                effect_fields.pack()
-            kwargs["influence"] = selector.selection
-        elif selection in ("Buff", "Debuff"):
-            if not isinstance(selector, Influence_Selector_Temporary):
-                row = selector.parent
-                selector.delete()
-                selector = row.create(Influence_Selector_Temporary,
-                                      effect_fields=effect_fields.reference)
-                effect_fields.influence_selector = selector.reference
-                effect_fields.pack()
-            kwargs["influence"] = selector.selection
-        elif selection == "Movement":
-            if not isinstance(selector, Influence_Selector_Position):
-                row = selector.parent
-                selector.delete()
-                selector = row.create(Influence_Selector_Position,
-                                      effect_fields=effect_fields.reference)
-                effect_fields.influence_selector = selector.reference
-                effect_fields.pack()
-            kwargs["influence"] = selector.selection
-        else:
-            assert selection == "Reaction"
-            if not isinstance(selector, Trigger_Selector):
-                row = selector.parent
-                selector.delete()
-                selector = row.create(Trigger_Selector,
-                                      effect_fields=effect_fields.reference)
-                effect_fields.influence_selector = selector.reference
-                effect_fields.pack()
-            kwargs["influence"] = "null"
-            kwargs["reactions"] = (effects.Null, )
-            kwargs["trigger"] = selector.selection
-            pride.objects[effect_fields.row2].hide()
-        #    effect_fields.open_reactions()
-            #effect_fields.create(Effect_Fields, ability_fields=effect_fields.ability_fields)
+    def select_damage_heal(self, selector, effect_fields, kwargs):
+        self._select_type(selector, effect_fields, kwargs, Influence_Selector_Permanent)
 
-        effect = effect_fields.effect = getattr(effects, selection).from_info(**kwargs)
-        ability_fields.ability.add_effect(effect)
-        ability_fields.update_costs()
+    def select_buff_debuff(self, selector, effect_fields, kwargs):
+        self._select_type(selector, effect_fields, kwargs, Influence_Selector_Temporary)
+
+    def select_movement(self, selector, effect_fields, kwargs):
+        self._select_type(selector, effect_fields, kwargs, Influence_Selector_Position)
 
 
 class Influence_Selector_Permanent(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Influence", "orientation" : "stacked",
-                "entry_types" : tuple([type("{}_Selector".format(stat.title()),
-                                            (pride.gui.widgetlibrary.Dropdown_Box_Entry, ),
-                                            {"defaults" : {"text" : stat, "selection_value" : stat}})
-                                       for stat in ("health", "energy", "movement")]),
+                "entry_types" : tuple([pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(stat) for
+                                       stat in ("health", "energy", "movement")]),
                 "effect_fields" : '', "pack_mode" : "left"}
     required_attributes = ("effect_fields", )
 
@@ -481,11 +402,8 @@ class Influence_Selector_Permanent(pride.gui.widgetlibrary.Dropdown_Field):
 class Influence_Selector_Temporary(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Influence", "orientation" : "stacked",
-                "entry_types" : tuple([type("{}_Selector".format(influence.title()),
-                                            (pride.gui.widgetlibrary.Dropdown_Box_Entry, ),
-                                            {"defaults" : {"text" : influence,
-                                             "selection_value" : "attributes.{}".format(influence)}}) for
-                                       influence in attributes.Attributes.attributes]),
+                "entry_types" : tuple([pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(influence, "attributes.{}".format(influence))
+                                       for influence in attributes.Attributes.attributes]),
                 "effect_fields" : '', "pack_mode" : "left"}
     required_attributes = ("effect_fields", )
 
@@ -496,8 +414,7 @@ class Influence_Selector_Temporary(pride.gui.widgetlibrary.Dropdown_Field):
 class Influence_Selector_Position(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Influence", "orientation" : "stacked",
-                "entry_types" : (type("Position_Selector", (pride.gui.widgetlibrary.Dropdown_Box_Entry, ),
-                                     {"defaults" : {"text" : "position", "selection_value" : "position"}}), ),
+                "entry_types" : (pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info("position"), ),
                 "effect_fields" : '', "pack_mode" : "left"}
     required_attributes = ("effect_fields", )
 
@@ -508,22 +425,59 @@ class Influence_Selector_Position(pride.gui.widgetlibrary.Dropdown_Field):
 class Influence_Selector_Null(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Influence", "orientation" : "stacked",
-                "entry_types" : (type("Null_Selector", (pride.gui.widgetlibrary.Dropdown_Box_Entry, ),
-                                      {"defaults" : {"text" : "----", "selection_value" : "null"}}), ),
+                "entry_types" : (pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info("----", selection_value="null"), ),
                 "effect_fields" : '', "pack_mode" : "left"}
 
     def on_dropdown_selection(self, selection):
         pass
 
 
+class Reaction_Selector(pride.gui.widgetlibrary.Dropdown_Field):
+
+    defaults = {"field_name" : "Reaction", "orientation" : "stacked",
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(choice)
+                                      for choice in ("False", "True")),
+                "effect_fields" : '', "pack_mode" : "left"}
+
+    def on_dropdown_selection(self, selection):
+        effect_fields = pride.objects[self.effect_fields]
+        update_info = False
+        if selection == "True":
+            effect_fields.open_reactions()
+            if not effect_fields.effect.defaults["reaction"]:
+                update_info = True
+                effect_type = pride.objects[effect_fields.effect_type_selector].selection
+                new_effect = getattr(effects, effect_type).from_info(**effect_fields.effect.defaults)
+        else:
+            effect_fields.close_reactions()
+            if effect_fields.effect.defaults["reaction"]:
+                update_info = True
+                effect_type = pride.objects[effect_fields.effect_type_selector].selection
+                new_effect = getattr(effects, effect_type).from_info(**effect_fields.effect.defaults)
+        if update_info:
+            effect_fields.remove_effect(effect_fields.effect)
+            ability_fields = pride.objects[effect_fields.ability_fields]
+            ability_fields.ability.remove_effect(effect_fields.effect)
+            effect_fields.effect = new_effect
+            ability_fields.ability.add_effect(new_effect)
+
+
+class Reaction_Target_Selector(pride.gui.widgetlibrary.Dropdown_Field):
+
+    defaults = {"field_name" : "Reaction target", "orientation" : "stacked",
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(target)
+                                      for target in ("reacting actor", "triggering actor")),
+                "pack_mode" : "left"}
+
+    def on_dropdown_selection(self, selection):
+        pride.objects[self.effect_fields].update_values(target=selection)
+
+
 class Element_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 
     defaults = {"field_name" : "Element", "orientation" : "stacked",
-                "entry_types" : tuple([type("{}_Selector".format(element.title()),
-                                            (pride.gui.widgetlibrary.Dropdown_Box_Entry, ),
-                                            {"defaults" : {"text" : element,
-                                                           "selection_value" : element}})
-                                       for element in elements.ELEMENTS]),
+                "entry_types" : tuple(pride.gui.widgetlibrary.Dropdown_Box_Entry.from_info(element)
+                                      for element in elements.ELEMENTS),
                 "effect_fields" : '', "pack_mode" : "left"}
     required_attributes = ("effect_fields", )
 
@@ -575,28 +529,9 @@ class Duration_Field(pride.gui.widgetlibrary.Spin_Field):
         return new_value
 
 
-class Reaction_Tab(pride.gui.widgetlibrary.Tab_Button):
-
-    defaults = {"text" : "Unnamed Reaction"}
-
-    def delete_tab(self):
-        reaction_fields = self.args[0]
-        ability_fields = pride.objects[self.target]
-        listing = ability_fields.effect_listing
-        listing.remove(effect_fields)
-        try:
-            ability_fields._view_effect(listing[-1])
-        except IndexError:
-            pass
-        _fields = pride.objects[effect_fields]
-        _fields.delete()
-        super(Effect_Tab, self).delete()
-
-
 class Effect_Fields(pride.gui.gui.Container):
 
-    defaults = {"tab" : None, "ability_fields" : ''}
-    mutable_defaults = {"reaction_listing" : list}
+    defaults = {"tab" : None, "ability_fields" : '', "reaction_row" : ''}
     required_attributes = ("ability_fields", )
 
     def __init__(self, **kwargs):
@@ -610,7 +545,8 @@ class Effect_Fields(pride.gui.gui.Container):
         row1 = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
         row1.create(Name_Field, pack_mode="left", write_field_method=self._write_name,
                     orientation="stacked")
-        row1.create(Effect_Type_Selector, effect_fields=self.reference)
+        self.effect_type_selector = row1.create(Effect_Type_Selector,
+                                                effect_fields=self.reference).reference
         self.influence_selector = row1.create(Influence_Selector_Permanent,
                                               effect_fields=self.reference).reference
         row2 = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
@@ -623,6 +559,7 @@ class Effect_Fields(pride.gui.gui.Container):
             initial_value = '0'
         self.duration_field = row2.create(Duration_Field, initial_value=initial_value,
                                           effect_fields=self.reference).reference
+        self.reaction_selector = row2.create(Reaction_Selector, effect_fields=self.reference)
 
     def update_values(self, **kwargs):
         self.effect.defaults.update(kwargs)
@@ -634,45 +571,31 @@ class Effect_Fields(pride.gui.gui.Container):
         self.pack()
 
     def open_reactions(self):
-        reaction_bar = self.create(pride.gui.gui.Container, pack_mode="top",
-                                   h_range=(0, 40))
-        reaction_bar.create(pride.gui.gui.Container, pack_mode="left",
-                            text="reactions", scale_to_text=True)
-        self.tabs = reaction_bar.create(pride.gui.widgetlibrary.Tab_Bar, pack_mode="left",
-                                        target=self.reference, method="new_reaction")
-
-    def new_reaction(self):
-        for reaction_reference in self.reaction_listing:
-            pride.objects[reaction_reference].hide()
-
-        reaction_fields = self.create(Effect_Fields, character=self.character,
-                                    ability_fields=self.ability_fields)
-        tab = self.tabs.create(Reaction_Tab,
-                               target=self.reference, text="Unnamed reaction",
-                               method="_view_reaction", args=(reaction_fields.reference, ))
-        reaction_fields.tab = tab.reference
-        self.reaction_listing.append(reaction_fields.reference)
-        self.pack()
-
-    def _view_effect(self, reaction_field):
-        reaction_object = pride.objects[reaction_field]
-        if reaction_object.hidden:
-            reaction_object.show()
-            for reaction_reference in self.reaction_listing:
-                if reaction_reference != reaction_field:
-                    pride.objects[reaction_reference].hide()
+        if self.reaction_row:
+            pride.objects[self.reaction_row].show()
+        else:
+            reaction_row = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
+            self.reaction_row = reaction_row.reference
+            reaction_row.create(Trigger_Selector, effect_fields=self.reference)
+            reaction_row.create(Reaction_Target_Selector, effect_fields=self.reference)
+            #reaction_row.create(Reaction_Type_Selector, effect_fields=self.reference)
             self.pack()
 
+    def close_reactions(self):
+        if self.reaction_row:
+            pride.objects[self.reaction_row].hide()
+
     def add_effect(self, effect_type):
-        self.effect.defaults["reactions"] += (effect_type, )
+        self.effect.defaults["effect"] = effect_type
+
+    def remove_effect(self, effect_type):
+        if "effect" in self.effect.defaults:
+            del self.effect.defaults["effect"]
 
 
 class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed effect", "effect_window" : ''}
-
-    #def delete_tab(self):
-    #    raise NotImplementedError()
 
 
 class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
@@ -688,66 +611,20 @@ class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
         super(Effect_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
 
 
-class Reaction_Fields(pride.gui.gui.Container):
-
-    defaults = {"tab" : None, "effect_fields" : ''}
-    required_attributes = ("effect_fields", )
-
-    def __init__(self, **kwargs):
-        super(Reaction_Fields, self).__init__(**kwargs)
-
-        effect = self.effect = effects.Damage.from_info(magnitude=1)
-        pride.objects[self.effect_fields].add_effect(effect)
-
-        row1 = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
-        row1.create(Name_Field, pack_mode="left", write_field_method=self._write_name,
-                    orientation="stacked")
-        row1.create(Effect_Type_Selector, effect_fields=self.reference)
-        self.influence_selector = row1.create(Influence_Selector_Permanent,
-                                              effect_fields=self.reference).reference
-        row2 = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
-        self.row2 = row2.reference
-        self.element_selector = row2.create(Element_Selector, effect_fields=self.reference).reference
-        self.magnitude_field = row2.create(Magnitude_Field, effect_fields=self.reference).reference
-        self.duration_field = row2.create(Duration_Field, effect_fields=self.reference).reference
-
-    def update_values(self, **kwargs):
-        self.effect.defaults.update(kwargs)
-        pride.objects[self.ability_fields].update_costs()
-
-    def _write_name(self, field_name, value):
-        self.effect.name = value
-        pride.objects[self.tab].set_text(value)
-        self.pack()
-
-
 class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability", "ability_window" : ''}
-
-    #def delete_tab(self):
-    #    ability_fields = self.args[0]
-    #    window = pride.objects[self.ability_window]
-    #    listing = window.ability_listing
-    #    listing.remove(ability_fields)
-    #    try:
-    #        window.parent._view_ability(listing[-1])
-    #    except IndexError:
-    #        pass
-    #    pride.objects[ability_fields].delete()
-    #    super(Ability_Tab, self).delete()
 
 
 class Ability_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
     defaults = {"tab_type" : Ability_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Abilities", "window_type" : Ability_Fields,
-                "character" : ''}
-    mutable_defaults = {"ability_listing" : list}
-    required_attributes = ("character", )
+                "character" : '', "character_screen" : ''}
+    required_attributes = ("character", "character_screen")
 
     def new_tab(self):
-        window_kwargs = {"character" : self.character}
+        window_kwargs = {"character" : self.character, "character_screen" : self.character_screen}
         tab_kwargs = {"text" : "Unnamed ability"}
         super(Ability_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
 
@@ -760,13 +637,6 @@ class View_Stats_Tab(pride.gui.widgetlibrary.Tab_Button):
 class View_Abilities_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "View abilities", "include_delete_button" : False}
-
-
-#        switcher_bar.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-#                            method="view_stat_screen", pack_mode="left", text="View stats")
-#        switcher_bar.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-#                            method="view_abilities_screen", pack_mode="left",
-#                            text="View abilities")
 
 
 class Stat_Window(pride.gui.gui.Window):
@@ -886,6 +756,11 @@ class Character_Creation_Screen(pride.gui.gui.Window):
     def _write_affinity(self, affinity, value):
         setattr(self.character.affinities, affinity, int(value))
 
+    def _modify_xp(self, adjustment):
+        assert self.xp == int(self.xp_indicator.text), (self.xp, self.xp_indicator.text)
+        self.xp += adjustment
+        self.xp_indicator.text = str(self.xp)
+
     def increment_xp(self, current_level):
         current_level = int(current_level)
         if current_level > 0:
@@ -911,7 +786,8 @@ class Character_Creation_Screen(pride.gui.gui.Window):
 
 class Game_Window(pride.gui.gui.Application):
 
-    defaults = {"character_creation_screen_type" : Character_Creation_Screen}
+    defaults = {"character_creation_screen_type" : Character_Creation_Screen,
+                "startup_components" : tuple()} # removes task bar from top
     mutable_defaults = {"_splash_screen_items" : list}
 
     def __init__(self, **kwargs):
