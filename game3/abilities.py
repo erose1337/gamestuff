@@ -55,25 +55,23 @@ class Ability(pride.components.base.Base):
         defaults.update(info)
         return type(name.title(), (cls, ), {"defaults" : defaults})
 
-    @classmethod
-    def add_effect(cls, effect):
-        cls.defaults["effects"] += (effect, )
+    def add_effect(self, effect):
+        self.effects += (effect, )
         if effect.defaults["reaction"]:
             _effect = effect(target=True) # effect is never applied, but target can't be Falsey
         else:
             _effect = effect()
-        cls.defaults["_effects"] += (_effect, )
+        self._effects += (_effect, )
 
-    @classmethod
-    def remove_effect(cls, effect):
-        effects = list(cls.defaults["effects"])
+    def remove_effect(self, effect):
+        effects = list(self.effects)
         index = effects.index(effect)
         del effects[index]
-        _effects = list(cls.defaults["_effects"])
+        _effects = list(self._effects)
         assert isinstance(_effects[index], effect)
         del _effects[index]
-        cls.defaults["effects"] = tuple(effects)
-        cls.defaults["_effects"] = tuple(_effects)
+        self.effects = tuple(effects)
+        self._effects = tuple(_effects)
 
     def activate(self, source, targets):
         effective_cost = self.calculate_ability_cost(source, targets)
@@ -166,10 +164,6 @@ class Ability_Tree(pride.components.base.Base):
                      "mutable_defaults" : _abilities})
 
 
-class Misc_Tree(Ability_Tree):
-
-    abilities = ("rest", "move")
-    mutable_defaults = {"rest" : Rest, "move" : Move}
 
 
 class Regeneration(Passive_Ability):
@@ -189,12 +183,19 @@ class Recuperation(Passive_Ability):
                 "name" : "recuperation"}
 
 
-class Restoration_Tree(Ability_Tree):
+class Misc_Tree(Ability_Tree):
 
-    abilities = ("regeneration", "recovery", "recuperation")
-    mutable_defaults = {"regeneration" : Regeneration,
-                        "recovery" : Recovery,
-                        "recuperation" : Recuperation}
+    abilities = ("rest", "move", "regeneration", "recovery", "recuperation")
+    mutable_defaults = {"rest" : Rest, "move" : Move, "regeneration" : Regeneration,
+                        "recovery" : Recovery, "recuperation" : Recuperation}
+
+
+#class Restoration_Tree(Ability_Tree):
+#
+#    abilities = ("regeneration", "recovery", "recuperation")
+#    mutable_defaults = {"regeneration" : Regeneration,
+#                        "recovery" : Recovery,
+#                        "recuperation" : Recuperation}
 
 
 class Abilities(pride.components.base.Base):
@@ -251,7 +252,7 @@ class Abilities(pride.components.base.Base):
 
     @classmethod
     def from_info(cls, **trees):
-        trees.setdefault("Restoration", Restoration_Tree)
+    #    trees.setdefault("Restoration", Restoration_Tree)
         trees.setdefault("Misc", Misc_Tree)
         return type("Abilities", (cls, ), {"ability_trees" : trees.keys(),
                                            "mutable_defaults" : trees})()

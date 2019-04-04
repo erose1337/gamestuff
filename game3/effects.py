@@ -11,14 +11,13 @@ NEW_EFFECT_QUEUE = lambda: ([], [], []) # for character.mutable_defaults
 
 class Effect(pride.components.base.Base):
 
-    defaults = {"influence" : '', "element" : '', "magnitude" : 0,
+    defaults = {"influence" : "health", "element" : '', "magnitude" : 1,
                 "duration" : 0, "positive" : True, "do_process_reactions" : True,
                 "queue_number" : STANDARD_QUEUE, "name" : '', "element" : "null",
                 "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
                 "trigger" : '', "target" : '', "reaction" : False}
 
     predefaults = {"_name" : ''}
-    required_attributes = ("influence", "magnitude")
 
     def _get_name(self):
         return self._name or self.type_name

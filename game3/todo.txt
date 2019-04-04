@@ -1,6 +1,7 @@
 to do:
 ----
 
+"done" button on character screen
 implement aoe for passives?
 add energy source drop-down box for abilities?
 remove homing option?
@@ -15,8 +16,8 @@ implement summon effects
 fix format_attributes to display nicely spaced entries
 
 
-auto-pack
 break long text lines into multiple lines
+
 
 
 Known Issues

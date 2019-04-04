@@ -134,7 +134,8 @@ class Character(pride.components.base.Base):
                    "_base_energy" : 10, "_movement" : 0, "_base_movement" : 1,
                    "_movement_scalar" : 1}
     mutable_defaults = {"effect_queue" : effects.NEW_EFFECT_QUEUE,
-                        "reaction_effects" : list}
+                        "reaction_effects" : list,
+                        "xp" : rules.RULES["character creation"]["starting_xp_amount"]}
     required_attributes = ("attributes", "affinities", "abilities")
     post_initializer = "initialize"
 
