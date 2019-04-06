@@ -15,8 +15,27 @@ class Ability(pride.components.base.Base):
 
     defaults = {"range" : "self", "name" : '', "effects" : tuple(), # effects holds effect types
                 "no_cost" : False, "energy_source" : "energy", "homing" : False,
-                "aoe" : 1, "_effects" : tuple(),} # _effects holds instances of effects
+                "aoe" : 0, "_effects" : tuple()} # _effects holds instances of effects
+    predefaults = {"_name" : ''}
     required_attributes = ("effects", "name", )
+
+    def to_info(self):
+        if not isinstance(self, Passive_Ability):
+            info = dict((key, getattr(self, key)) for key in ("range", "homing", "aoe")
+                         if getattr(self, key))
+            for key, value in info.items():
+                info[key] = str(value)
+            passive = False
+        else:
+            info = {"passive" : "True"}
+            passive = True
+        if len(self.effects) > 1:
+            for index, effect_type in enumerate(self.effects):
+                info["effect{}".format(index + 1)] = {effect_type.__name__ : effect_type.to_info(passive)}
+        else:
+            effect_type = self.effects[0]
+            info["effect"] = {effect_type.__name__ : effect_type.to_info(passive)}
+        return info
 
     @classmethod
     def from_info(cls, name, **info):
@@ -53,7 +72,7 @@ class Ability(pride.components.base.Base):
 
         defaults = cls.defaults.copy()
         defaults.update(info)
-        return type(name.title(), (cls, ), {"defaults" : defaults})
+        return type(name.title(), (cls, ), {"defaults" : defaults})()
 
     def add_effect(self, effect):
         self.effects += (effect, )
@@ -107,10 +126,15 @@ class Ability(pride.components.base.Base):
     def calculate_ability_cost(self, source, targets):
         return rules.calculate_ability_cost(source, self)
 
+    def delete(self):
+        for _effect in self._effects:
+            _effect.delete()
+        super(Ability, self).delete()
+
 
 class Active_Ability(Ability):
 
-    defaults = {"aoe" : 1, "target_count" : 1}
+    defaults = {"aoe" : 0, "target_count" : 1}
 
 
 class Passive_Ability(Ability):
@@ -149,21 +173,40 @@ class Move(Active_Ability):
 
 class Ability_Tree(pride.components.base.Base):
 
-    abilities = tuple()
+    defaults = {"name" : ''}
+    mutable_defaults = {"abilities" : list}
+    required_attributes = ("name", )
 
     def __iter__(self):
         return iter(self.abilities)
 
     def __len__(self):
-        return len(self.abilities)
+        return len(self.abilities) or True # uses __len__ when evaluating bool(ability_tree)
 
     @classmethod
     def from_info(cls, tree_name, _abilities):
-        return type(tree_name.title(), (cls, ),
-                    {"abilities" : _abilities.keys(),
-                     "mutable_defaults" : _abilities})
+        return cls(name=tree_name, abilities=_abilities.keys(), **_abilities)
 
+    def to_info(self):
+        return dict((name, getattr(self, name).to_info()) for name in self.abilities)
 
+    def add_ability(self, ability):
+        ability_name = ability.name
+        assert ability_name not in self.abilities
+        self.abilities.append(ability_name)
+        setattr(self, ability_name, ability)
+
+    def delete_ability(self, ability):
+        ability_name = ability.name
+        self.abilities.remove(ability_name)
+        delattr(self, ability_name)
+        ability.delete()
+
+    def delete(self):
+        for name in self.abilities:
+            ability = getattr(self, name)
+            ability.delete()
+        super(Ability_Tree, self).delete()
 
 
 class Regeneration(Passive_Ability):
@@ -185,22 +228,16 @@ class Recuperation(Passive_Ability):
 
 class Misc_Tree(Ability_Tree):
 
-    abilities = ("rest", "move", "regeneration", "recovery", "recuperation")
+    defaults = {"name" : "Misc", "abilities" : ("rest", "move", "regeneration",
+                                                "recovery", "recuperation")}
     mutable_defaults = {"rest" : Rest, "move" : Move, "regeneration" : Regeneration,
                         "recovery" : Recovery, "recuperation" : Recuperation}
 
 
-#class Restoration_Tree(Ability_Tree):
-#
-#    abilities = ("regeneration", "recovery", "recuperation")
-#    mutable_defaults = {"regeneration" : Regeneration,
-#                        "recovery" : Recovery,
-#                        "recuperation" : Recuperation}
-
-
 class Abilities(pride.components.base.Base):
 
-    ability_trees = tuple()
+    mutable_defaults = {"ability_trees" : list}
+
     description = "Abilities are things your character can do.\n"\
                   "Abilities can be active or passive.\n"\
                   "   - Active abilities require energy and an action to use\n"\
@@ -250,9 +287,36 @@ class Abilities(pride.components.base.Base):
                     output.append(ability)
         return output
 
+    def delete_tree(self, tree):
+        tree_name = tree.name
+        self.ability_trees.remove(tree_name)
+        delattr(self, tree_name)
+        tree.delete()
+
+    def add_tree(self, tree):
+        tree_name = tree.name
+        assert tree_name not in self.ability_trees
+        self.ability_trees.append(tree_name)
+        setattr(self, tree_name, tree)
+
+    def delete(self):
+        for tree_name in self.ability_trees:
+            self.delete_tree(getattr(self, tree_name))
+        super(Abilities, self).delete()
+
     @classmethod
     def from_info(cls, **trees):
-    #    trees.setdefault("Restoration", Restoration_Tree)
-        trees.setdefault("Misc", Misc_Tree)
-        return type("Abilities", (cls, ), {"ability_trees" : trees.keys(),
-                                           "mutable_defaults" : trees})()
+        trees["Misc"] = Misc_Tree()
+        ability_trees = trees.keys()
+        for key in trees:
+            assert ' ' not in key
+        return cls(ability_trees=ability_trees, **trees)
+
+    def to_info(self):
+        info = dict()
+        for tree_name in self.ability_trees:
+            tree = getattr(self, tree_name)
+            info[tree_name] = tree.to_info()
+        if "Misc" in info:
+            del info["Misc"]
+        return info

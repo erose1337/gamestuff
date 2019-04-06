@@ -22,6 +22,7 @@ def parse_character(filename, ability_disallow=ABILITY_DISALLOW,
                                  effect_disallow=effect_disallow)
 
     return {"name" : character_info["Basic Info"]["name"],
+            "xp" : int(character_info["Basic Info"].get("xp", 0)),
             "attributes" : _attributes, "affinities" : _affinities,
             "abilities" : _abilities}
 
@@ -44,6 +45,7 @@ def parse_abilities(info, ability_disallow=ABILITY_DISALLOW,
         tree_name = tree_name.replace(' ', '_')
         ability_objects = dict()
         for ability_name, ability_info in ability_listing.items():
+            ability_name = ability_name.replace(' ', '_')
             ability_objects[ability_name] = parse_ability(ability_name, ability_info,
                                                           ability_disallow,
                                                           effect_disallow)

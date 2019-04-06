@@ -11,12 +11,6 @@ import effects
 import elements
 import abilities
 
-def get_input(prompt):
-    output = ''
-    while not output:
-        output = raw_input(prompt)
-    return output
-
 def format_effect_queue(effect_queue):
     applied_effects = []
     counts = [] # uses two lists instead of dict to preserve order
@@ -36,99 +30,12 @@ def format_effect_queue(effect_queue):
         effect_strs.append(effect_str)
     return "\nEffects: {}".format(', '.join(effect_strs))
 
-def guided_attribute_selection(creation_info):
-    while True:
-        attribute_points = creation_info["attribute_points_count"]()
-        _attributes = attributes.Attributes()
-        attribute_list = _attributes.attributes
-        print("\nAttribute explanation\n" + ('-' * 79))
-        print(_attributes.format_descriptions())
-        print('-' * 79)
-        while attribute_points:
-            print(_attributes.format_attributes())
-            print("Remaining points: {}".format(attribute_points))
-            selection = get_selection("Select an attribute to increase: ",
-                                      attribute_list)
-            setattr(_attributes, selection, getattr(_attributes, selection) + 1)
-            attribute_points -= 1
-        print('-' * 79)
-        print(_attributes.format_attributes())
-        affirmative = get_selection("Keep these attributes?: ", bool)
-        if affirmative:
-            return _attributes
-
-def guided_affinity_selection(creation_info):
-    while True:
-        affinity_points = creation_info["affinity_points_count"]()
-        _affinities = affinities.Affinities()
-        affinity_list = _affinities.affinities
-        print("\nAffinities explanation\n" + ('-' * 79))
-        print(_affinities.description)
-        print('-' * 79)
-        while affinity_points:
-            print(_affinities.format_affinities())
-            print("Remaining points: {}".format(affinity_points))
-            selection = get_selection("Select an affinity to increase: ",
-                                      affinity_list)
-            setattr(_affinities, selection, getattr(_affinities, selection) + 1)
-            affinity_points -= 1
-        print('-' * 79)
-        print(_affinities.format_affinities())
-        affirmative = get_selection("Keep these affinities?: ", bool)
-        if affirmative:
-            return _affinities
-
-def guided_ability_creation(creation_info):
-    _abilities = abilities.Abilities()
-    ability_count = creation_info["active_ability_points_count"]()
-    potency_limit = creation_info["ability_potency_limit"]()
-    effect_types = effects.EFFECT_TYPES
-    element_types = elements.ELEMENTS
-    stat_influences = ("health", "energy", "movement")
-    attribute_influences = attributes.Attributes.attributes
-    print(_abilities.description)
-    print('-' * 79)
-    print("Create {} active abilities".format(ability_count))
-    print('-' * 79)
-    _abilities = dict()
-    for count in range(1):
-        name = get_input("Ability name: ")
-        while True:
-            print("Effect types: {}".format(', '.join(effect_types)))
-            effect_type = get_selection("Select an effect type: ", effect_types)
-            if effect_type == "damage":
-                print("Element types: {}".format(', '.join(element_types)))
-                element = get_selection("Select an element: ", element_types)
-            else:
-                element = "null"
-            if effect_type in ("damage", "heal"):
-                print("Influence types: {}".format(', '.join(stat_influences)))
-                influence = get_selection("Select an influence: ", stat_influences)
-            elif effect_type in ("buff", "debuff"):
-                print("Influence types: {}".format(', '.join(attribute_influences)))
-                influence = get_selection("Select an influence", attribute_influences)
-            while True:
-                try:
-                    _range = int(get_input("Range: "))
-                    target_count = int(get_input("Target count: "))
-                    aoe = int(get_input("Aoe: "))
-                    magnitude = int(get_input("Magnitude: "))
-                    duration = int(get_input("Duration: "))
-                except ValueError:
-                    continue
-                else:
-                    break
-            break
-        info = {"name" : name, "range" : _range, "target_count" : target_count,
-                "aoe" : aoe, "effects" : {effect_type.title(): {"element" : element, "influence" : influence,
-                                                                "magnitude" : magnitude, "duration" : duration}}}
-        _abilities[name] = parsing.parse_ability(name, info)
-    return abilities.Abilities.from_info({"basic" : abilities.Ability_Tree.from_info("Basic", _abilities)})
 
 class Character(pride.components.base.Base):
 
     defaults = {"name" : '', "is_npc" : True, "position" : (0, 0),
-                "attributes" : None, "affinities" : None, "abilities" : None}
+                "attributes" : None, "affinities" : None, "abilities" : None,
+                "_character_file" : ''}
     predefaults = {"_health" : 0, "_energy" : 0, "_health_scalar" : 10,
                    "_energy_scalar" : 10, "_base_health" : 10,
                    "_base_energy" : 10, "_movement" : 0, "_base_movement" : 1,
@@ -220,59 +127,53 @@ class Character(pride.components.base.Base):
         return output
 
     @classmethod
-    def guided_character_creation(cls):
-        print("Character creation")
-        name = get_input("Enter name: ")
-        creation_info = rules.RULES["character creation"]
-        #_attributes = guided_attribute_selection(creation_info)
-        #_affinities = guided_affinity_selection(creation_info)
-        _abilities = guided_ability_creation(creation_info)
-
-    @classmethod
     def from_sheet(cls, sheet_filename):
         info = parsing.parse_character(sheet_filename)
+        info["_character_file"] = sheet_filename
         return cls(is_npc=False, **info)
 
     def to_sheet(self, sheet_filename):
-        category_indicator = ('=' * 79) + "\n\n"
-        entry_indicator = ('-' * 79) + '\n'
         with open(sheet_filename, 'w') as _file:
             _file.write("Character Info\n")
-            _file.write(category_indicator)
+            _file.write('=' * len("Character Info") + "\n\n")
             _file.write("Basic Info\n")
-            _file.write(entry_indicator)
-            _file.write("- name: {}\n\n".format(self.name))
+            _file.write('-' * len("Basic Info") + '\n')
+            _file.write("- name: {}\n".format(self.name))
+            _file.write("- xp: {}\n\n".format(self.xp))
             _file.write("Attributes\n")
-            _file.write(entry_indicator)
-            _file.write('\n'.join("- {}: {}".format(attribute, value) for attribute, value in
-                                                    sorted(self.attributes.items())))
-            _file.write("\n\n")
-            _file.write("Resists\n")
-            _file.write(entry_indicator)
+            _file.write('-' * len("Attributes") + '\n')
+            for attribute in ("toughness", "regeneration", "soak",
+                              "willpower", "recovery", "grace",
+                              "mobility", "recuperation", "conditioning"):
+                _file.write("- {}: {}\n".format(attribute, getattr(self.attributes, attribute)))
+            #_file.write('\n'.join("- {}: {}".format(attribute, value) for attribute, value in
+            #                                        sorted(self.attributes.items())))
+            _file.write("\n")
+            _file.write("Affinities\n")
+            _file.write('-' * len("Affinities") + '\n')
             _file.write('\n'.join("- {}: {}".format(element, value) for element, value in
-                                                    sorted(self.resists.items())))
+                                                    sorted(self.affinities.items())))
             _file.write("\n\n")
             _file.write("Abilities\n")
-            _file.write(category_indicator)
-            for category, entries in self.abilities.items():
-                _file.write("    {}\n".format(category))
-                _file.write("    {}".format(category_indicator[4:]))
-                for entry, fields in entries.items():
-                    _file.write("    {}\n".format(entry))
-                    _file.write("    {}".format(entry_indicator[4:]))
+            _file.write('=' * len("Abilities") + "\n\n")
+            for ability_tree, _abilities in self.abilities.to_info().items():
+                _file.write("   {}\n".format(ability_tree))
+                _file.write("   {}".format('=' * len(ability_tree) + "\n\n"))
+                for ability_name, fields in _abilities.items():
+                    _file.write("   {}\n".format(ability_name))
+                    _file.write("   {}".format('-' * len(ability_name) + '\n'))
+                    for field, value in sorted(fields.items()):
+                        if field[:6] != "effect":
+                            _file.write("   - {}: {}\n".format(field, value))
                     for field, value in sorted(fields.items()):
                         if field[:6] == "effect":
-                            _file.write("    - {}:\n".format(field))
+                            _file.write("   - {}:\n\n".format(field))
                             for _entry, _fields in value.items():
-                                _file.write("        {}\n".format(_entry))
-                                _file.write("        {}".format(entry_indicator[8:]))
+                                _file.write("      {}\n".format(_entry))
+                                _file.write("      {}".format('-' * len(_entry) + '\n'))
                                 for _field, _value in _fields.items():
                                     _file.write("        - {}: {}\n".format(_field, _value))
-                                #_file.write('\n')
-                            _file.write('\n')
-                        else:
-                            _file.write("    - {}: {}\n".format(field, value))
-                    _file.write('\n')
+                            _file.write('\n\n')
 
     def format_health_stats(self):
         attributes = self.attributes

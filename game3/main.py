@@ -13,7 +13,8 @@ def main():
     #battle.test_battle()
 
     #import character
-    #char = character.Character.guided_character_creation()
+    #char = character.Character.from_sheet("demochar3.cef")
+    #char.to_sheet("demochar4.cef")
 
     import pride.gui
     import gui

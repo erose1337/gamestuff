@@ -1,14 +1,31 @@
 to do:
 ----
 
-"done" button on character screen
-implement aoe for passives?
-add energy source drop-down box for abilities?
-remove homing option?
+name abilities/trees/effect in sequence so that there are no name collisions with set/get/del attr
+
 theme designer applet
 
 
+add energy source drop-down box for abilities?
+remove homing option?
+    - defining a fair cost seems difficult
+    - completely negates ability to dodge, assuming target is within range
+    - no reason not to take it if it's cheap
+    - still worth taking if it's expensive?
 
+
+determine how aoe works
+    - aoe=0 means hits only target
+    - aoe=1 hits all entities on targets position
+    - aoe=2 hits all entities < 2 squares away
+
+    or
+    - aoe=target hits only target
+    - aoe=0 hits all entities on targets position
+    - aoe=1 hits all entities <= 1 square away
+    - aoe=2 hits all entities <= 2 squares away
+
+implement aoe for passives?
 figure out movement effects
 implement summon effects
 

@@ -11,9 +11,9 @@ NEW_EFFECT_QUEUE = lambda: ([], [], []) # for character.mutable_defaults
 
 class Effect(pride.components.base.Base):
 
-    defaults = {"influence" : "health", "element" : '', "magnitude" : 1,
+    defaults = {"influence" : "health", "element" : "blunt", "magnitude" : 1,
                 "duration" : 0, "positive" : True, "do_process_reactions" : True,
-                "queue_number" : STANDARD_QUEUE, "name" : '', "element" : "null",
+                "queue_number" : STANDARD_QUEUE, "name" : "Unnamed Effect",
                 "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
                 "trigger" : '', "target" : '', "reaction" : False}
 
@@ -72,6 +72,25 @@ class Effect(pride.components.base.Base):
         defaults = cls.defaults.copy()
         defaults.update(info)
         return type(cls.__name__, (cls, ), {"defaults" : defaults})
+
+    @classmethod
+    def to_info(cls, _passive=False):
+        info = dict((key, cls.defaults[key]) for key in ("influence", "magnitude",
+                                                         "duration", "name")
+                    if cls.defaults[key])
+        if _passive:
+            assert "duration" not in info
+            #del info["duration"]
+        if issubclass(cls, Damage):
+            info["element"] = cls.defaults["element"]
+        if cls.defaults["reaction"]:
+            info["reaction"] = True
+            info["trigger"] = cls.defaults["trigger"]
+            info["target"] = cls.defaults["target"]
+        for key, value in info.items():
+            info[key] = str(value)
+        return info
+        #return {info.pop("name") : info}
 
 
 class Permanent_Effect(Effect):

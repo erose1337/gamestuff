@@ -225,12 +225,12 @@ class Target_Count_Field(pride.gui.widgetlibrary.Spin_Field):
 class Ability_Fields(pride.gui.gui.Container):
 
     defaults = {"tab" : '', "character" : None, "active_or_passive" : "Active",
-                "character_screen" : '', "_old_xp_cost" : 0}
-    mutable_defaults = {"ability" : lambda: abilities.Active_Ability.from_info(name="Unnamed Ability",
-                                                                               effects=[effects.Damage, ],
-                                                                               target_count=1, range=0,
-                                                                               aoe=1)()}
-    required_attributes = ("character", "character_screen")
+                "character_screen" : '', "_old_xp_cost" : 0, "ability" : None}
+    #mutable_defaults = {"ability" : lambda: abilities.Active_Ability.from_info(name="Unnamed Ability",
+    #                                                                           effects=[effects.Damage, ],
+    #                                                                           target_count=1, range=0,
+    #                                                                           aoe=1)()}
+    required_attributes = ("character", "character_screen", "ability")
 
     def __init__(self, **kwargs):
         super(Ability_Fields, self).__init__(**kwargs)
@@ -544,7 +544,7 @@ class Effect_Fields(pride.gui.gui.Container):
         super(Effect_Fields, self).__init__(**kwargs)
 
         if self.effect is None:
-            self.effect = effect = effects.Damage.from_info(magnitude=1)
+            self.effect = effect = effects.Damage.from_info(magnitude=1, element="blunt")
             pride.objects[self.ability_fields].ability.add_effect(effect)
         else:
             effect = self.effect
@@ -582,7 +582,7 @@ class Effect_Fields(pride.gui.gui.Container):
                                           effect_fields=self.reference).reference
         self.reaction_selector = row2.create(Reaction_Selector, initial_value=info["reaction"],
                                              effect_fields=self.reference)
-        
+
     def update_values(self, **kwargs):
         self.effect.defaults.update(kwargs)
         ability = pride.objects[self.ability_fields]
@@ -615,10 +615,21 @@ class Effect_Fields(pride.gui.gui.Container):
         if "effect" in self.effect.defaults:
             del self.effect.defaults["effect"]
 
+    def delete(self):
+        del self.effect
+        super(Effect_Fields, self).delete()
+
 
 class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed effect"}
+
+    def delete_tab(self):
+        window = pride.objects[self.window]
+        effect = window.effect
+        ability = window.parent.ability
+        ability.remove_effect(effect)
+        super(Effect_Tab, self).delete_tab()
 
 
 class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
@@ -639,7 +650,7 @@ class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
         try:
             window_kwargs.update({"ability_fields" : self.ability_fields})
         except AttributeError:
-            if window_args is not None:
+            if window_kwargs is not None:
                 raise
             window_kwargs = {"ability_fields" : self.ability_fields}
         super(Effect_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
@@ -649,25 +660,40 @@ class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability"}
 
+    def delete_tab(self):
+        window = pride.objects[self.window]
+        ability = window.ability
+        tree = window.parent.tree.delete_ability(ability)
+        assert ability.deleted
+        #del window.ability # already happens when window is deleted
+        super(Ability_Tab, self).delete_tab()
+
 
 class Ability_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
     defaults = {"tab_type" : Ability_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Abilities", "window_type" : Ability_Fields,
-                "character" : '', "character_screen" : '', "tree_name" : ''}
-    required_attributes = ("character", "character_screen")
+                "character" : '', "character_screen" : '', "tree" : ''}
+    required_attributes = ("character", "character_screen", "tree")
 
     def __init__(self, **kwargs):
         super(Ability_Selection_Window, self).__init__(**kwargs)
-        if self.tree_name:
-            _abilities = self.character.abilities
-            tree = getattr(_abilities, self.tree_name)
-            for ability_name in tree.abilities:
-                tab_kwargs = {"text" : ability_name}
-                window_kwargs = {"ability" : getattr(tree, ability_name)}
-                self.new_tab(window_kwargs, tab_kwargs)
+        tree = self.tree
+        for ability_name in tree.abilities:
+            tab_kwargs = {"text" : ability_name}
+            window_kwargs = {"ability" : getattr(tree, ability_name)}
+            self.new_tab(window_kwargs, tab_kwargs)
 
     def new_tab(self, window_kwargs=None, tab_kwargs=None):
+        if window_kwargs is None:
+            ability = abilities.Active_Ability.from_info(name="Unnamed Ability",
+                                                         effects=[effects.Damage, ],
+                                                         target_count=1, range=0,
+                                                         aoe=1)
+            window_kwargs = {"ability" : ability}
+            self.tree.add_ability(ability)
+        else:
+            assert window_kwargs["ability"].name in self.tree.abilities, (window_kwargs["ability"].name, self.tree.abilities)
         try:
             window_kwargs.update({"character" : self.character, "character_screen" : self.character_screen})
         except AttributeError:
@@ -681,6 +707,12 @@ class Ability_Tree_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability Tree", "editable" : True}
 
+    def delete_tab(self):
+        window = pride.objects[self.window]
+        character = window.character
+        character.abilities.delete_tree(window.tree)
+        super(Ability_Tree_Tab, self).delete_tab()
+
 
 class Ability_Tree_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
@@ -691,14 +723,21 @@ class Ability_Tree_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
     def __init__(self, **kwargs):
         super(Ability_Tree_Window, self).__init__(**kwargs)
-        for ability_tree in self.character.abilities.ability_trees:
+        _abilities = self.character.abilities
+        for ability_tree in _abilities.ability_trees:
             if ability_tree == "Misc":
                 continue
             tab_kwargs = {"text" : ability_tree}
-            window_kwargs = {"tree_name" : ability_tree}
+            window_kwargs = {"tree" : getattr(_abilities, ability_tree)}
             self.new_tab(window_kwargs, tab_kwargs)
 
     def new_tab(self, window_kwargs=None, tab_kwargs=None):
+        if window_kwargs is None:
+            tree = abilities.Ability_Tree(name="Unnamed Ability Tree")
+            window_kwargs = {"tree" : tree}
+            self.character.abilities.add_tree(tree)
+        else:
+            assert window_kwargs["tree"].name in self.character.abilities
         try:
             window_kwargs.update({"character" : self.character, "character_screen" : self.character_screen})
         except AttributeError:
@@ -758,7 +797,9 @@ class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
                                      character_screen=character_screen,
                                      character=self.character)
         ability_window.hide()
-        pride.objects[stat_tab].window = stat_window.reference
+        stat_tab = pride.objects[stat_tab]
+        stat_tab.window = stat_window.reference
+        pride.objects[stat_tab.indicator].enable_indicator()
         pride.objects[ability_tab].window = ability_window.reference
 
 
@@ -791,8 +832,9 @@ class Status_Indicator(pride.gui.gui.Container):
 
 class Character_Screen(pride.gui.gui.Window):
 
-    defaults = {"stat_window" : None, "ability_window" : None, "character" : None}
-    required_attributes = ("character", "xp")
+    defaults = {"stat_window" : None, "ability_window" : None, "character" : None,
+                "_file_selector" : None}
+    required_attributes = ("character", )
 
     def _get_xp(self):
         return self.character.xp
@@ -808,7 +850,9 @@ class Character_Screen(pride.gui.gui.Window):
         xp_segment = top.create("pride.gui.gui.Container", pack_mode="left", w_range=(0, 200))
         xp_segment.create("pride.gui.gui.Container", text="XP points remaining", pack_mode="top")
         self.xp_indicator = xp_segment.create("pride.gui.gui.Container", text=str(self.xp), pack_mode="top")
-
+        top.create("pride.gui.widgetlibrary.Method_Button", text="done",
+                   target=self.reference, method="save_character",
+                   pack_mode="right", background_color=(225, 225, 225, 200))
         _character = self.character
         self.status_indicator = self.create(Status_Indicator,
                                             character=_character.reference).reference
@@ -866,10 +910,30 @@ class Character_Screen(pride.gui.gui.Window):
         else:
             return current_level
 
+    def save_character(self):
+        if self.character._character_file:
+            status = self.create("pride.gui.gui.Container", text="Saving...",
+                                 h_range=(0, 80), pack_mode="bottom")
+            pride.objects[self.sdl_window].run()
+            self.character.to_sheet(self.character._character_file)
+            status.delete()
+        else:
+            assert self._file_selector is None
+            self._file_selector = self.parent.create(Character_File_Selector,
+                                                     write_field_method=self._write_character_filename).reference
+            self.hide()
+
+    def _write_character_filename(self, field_name, value):
+        self.character._character_file = value
+        pride.objects[self._file_selector].delete()
+        self.show()
+        self.save_character()
+
 
 class Character_File_Selector(pride.gui.widgetlibrary.Field):
 
-    defaults = {"field_name" : "filename", "initial_value" : ''}
+    defaults = {"field_name" : "filename", "initial_value" : '',
+                "h_range" : (0, 80)}
 
 
 class Game_Window(pride.gui.gui.Application):
@@ -911,7 +975,11 @@ class Game_Window(pride.gui.gui.Application):
     def _load_character(self, field_name, value):
         if os.path.exists(value):
             pride.objects[self.file_selector].delete()
+            status = self.create("pride.gui.gui.Container", text="Loading character...",
+                                 h_range=(0, 80), pack_mode="bottom")
+            pride.objects[self.sdl_window].run()
             _character = character.Character.from_sheet(value)
+            status.delete()
             self.application_window.create(self.character_creation_screen_type,
                                            character=_character)
 

@@ -33,90 +33,98 @@ Affinities
 Abilities
 =====
 
-    Offense
-    ======
 
-    melee
-    -----
-    - range: 1
-    - effect1:
-        Damage
-        -----
-        - name: melee
-        - magnitude: 5
-        - element: blunt
-        - influence: health
+   Offense
+   ======
 
-    - effect2:
-        Damage
-        -----
-        - name: bruise
-        - magnitude: 1
-        - element: blunt
-        - influence: health
-        - duration: 3
 
-    weaken
-    ----
-    - range: 1
-    - effect:
+   melee
+   -----
+   - range: 1
+   - effect1:
+       Damage
+       -----
+       - name: melee
+       - magnitude: 5
+       - element: blunt
+       - influence: health
 
-        Debuff
-        ----
-        - name: weaken
-        - magnitude: 1
-        - influence: attributes.toughness
-        - duration: 2
 
-    Defense
-    =====
+   - effect2:
+       Damage
+       -----
+       - name: bruise
+       - magnitude: 1
+       - element: blunt
+       - influence: health
+       - duration: 3
 
-    defend
-    ------
-    - range: self
-    - effect:
 
-        Buff
-        -----
-        - name: defend
-        - magnitude: 4
-        - influence: attributes.soak
-        - duration: 1
+   weaken
+   ----
+   - range: 1
+   - effect:
 
-    heal
-    -----
-    - range: self
-    - effect:
+       Debuff
+       ----
+       - name: weaken
+       - magnitude: 1
+       - influence: attributes.toughness
+       - duration: 2
 
-        Heal
-        -----
-        - name: heal
-        - magnitude: 1
-        - influence: health
-        - duration: 5
+   Defense
+   =====
 
-    active defense
-    -----
-    - passive: True
-    - effect1:
 
-        Heal
-        ----
-        - name: active regen
-        - reaction: True
-        - trigger: damage
-        - target: reacting actor
-        - magnitude: 1
-        - influence: health
+   defend
+   ------
+   - range: self
+   - effect:
 
-    - effect2:
+       Buff
+       -----
+       - name: defend
+       - magnitude: 4
+       - influence: attributes.soak
+       - duration: 1
 
-        Damage
-        ----
-        - name: reflect
-        - reaction: True
-        - trigger: damage
-        - target: triggering actor
-        - magnitude: 1
-        - influence: health
-        - element: blunt
+
+   heal
+   -----
+   - range: self
+   - effect:
+
+       Heal
+       -----
+       - name: heal
+       - magnitude: 1
+       - influence: health
+       - duration: 5
+
+
+   active defense
+   -----
+   - passive: True
+   - effect1:
+
+       Heal
+       ----
+       - name: active regen
+       - reaction: True
+       - trigger: damage
+       - target: reacting actor
+       - magnitude: 1
+       - influence: health
+
+
+   - effect2:
+
+       Damage
+       ----
+       - name: reflect
+       - reaction: True
+       - trigger: damage
+       - target: triggering actor
+       - magnitude: 1
+       - influence: health
+       - element: blunt
