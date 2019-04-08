@@ -18,9 +18,11 @@ def parse_character(filename, ability_disallow=ABILITY_DISALLOW,
     character_info = info["Character Info"]
     _attributes = parse_attributes(character_info)
     _affinities = parse_affinities(character_info)
-    _abilities = parse_abilities(info, ability_disallow=ability_disallow,
-                                 effect_disallow=effect_disallow)
-
+    if "Abilities" in info:
+        _abilities = parse_abilities(info, ability_disallow=ability_disallow,
+                                    effect_disallow=effect_disallow)
+    else:
+        _abilities = abilities.Abilities()
     return {"name" : character_info["Basic Info"]["name"],
             "xp" : int(character_info["Basic Info"].get("xp", 0)),
             "attributes" : _attributes, "affinities" : _affinities,
@@ -42,10 +44,10 @@ def parse_abilities(info, ability_disallow=ABILITY_DISALLOW,
                     effect_disallow=EFFECT_DISALLOW):
     trees = dict()
     for tree_name, ability_listing in info["Abilities"].items():
-        tree_name = tree_name.replace(' ', '_')
+        #tree_name = tree_name.replace(' ', '_')
         ability_objects = dict()
         for ability_name, ability_info in ability_listing.items():
-            ability_name = ability_name.replace(' ', '_')
+            #ability_name = ability_name.replace(' ', '_')
             ability_objects[ability_name] = parse_ability(ability_name, ability_info,
                                                           ability_disallow,
                                                           effect_disallow)
@@ -63,7 +65,7 @@ def parse_ability(ability_name, ability_info, ability_disallow=ABILITY_DISALLOW,
             for forbidden in effect_disallow:
                 if forbidden in _values:
                     raise InvalidEffectInfo("Cannot set {} on effect {}.{} (file {})".format(forbidden, ability_name, key, filename))
-    ability_name = ability_name.replace(' ', '_')
+    #ability_name = ability_name.replace(' ', '_')
     if ability_info.get("passive", "False").lower() == "true":
         ability_type = abilities.Passive_Ability
     else:

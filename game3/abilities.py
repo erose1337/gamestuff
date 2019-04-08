@@ -15,13 +15,14 @@ class Ability(pride.components.base.Base):
 
     defaults = {"range" : "self", "name" : '', "effects" : tuple(), # effects holds effect types
                 "no_cost" : False, "energy_source" : "energy", "homing" : False,
-                "aoe" : 0, "_effects" : tuple()} # _effects holds instances of effects
+                "target_count" : 1, "aoe" : 0, "_effects" : tuple()} # _effects holds instances of effects
     predefaults = {"_name" : ''}
     required_attributes = ("effects", "name", )
 
     def to_info(self):
         if not isinstance(self, Passive_Ability):
-            info = dict((key, getattr(self, key)) for key in ("range", "homing", "aoe")
+            info = dict((key, getattr(self, key)) for key in ("range", "homing",
+                                                              "aoe", "target_count")
                          if getattr(self, key))
             for key, value in info.items():
                 info[key] = str(value)
@@ -132,9 +133,7 @@ class Ability(pride.components.base.Base):
         super(Ability, self).delete()
 
 
-class Active_Ability(Ability):
-
-    defaults = {"aoe" : 0, "target_count" : 1}
+class Active_Ability(Ability): pass
 
 
 class Passive_Ability(Ability):
@@ -192,14 +191,18 @@ class Ability_Tree(pride.components.base.Base):
 
     def add_ability(self, ability):
         ability_name = ability.name
-        assert ability_name not in self.abilities
+        if ability_name in self.abilities:
+            raise ValueError("Ability '{}' already in tree '{}'".format(ability_name, self.name))
         self.abilities.append(ability_name)
         setattr(self, ability_name, ability)
 
-    def delete_ability(self, ability):
+    def remove_ability(self, ability):
         ability_name = ability.name
         self.abilities.remove(ability_name)
         delattr(self, ability_name)
+
+    def delete_ability(self, ability):
+        self.remove_ability(ability)
         ability.delete()
 
     def delete(self):
@@ -288,14 +291,18 @@ class Abilities(pride.components.base.Base):
         return output
 
     def delete_tree(self, tree):
+        self.remove_tree(tree)
+        tree.delete()
+
+    def remove_tree(self, tree):
         tree_name = tree.name
         self.ability_trees.remove(tree_name)
         delattr(self, tree_name)
-        tree.delete()
 
     def add_tree(self, tree):
         tree_name = tree.name
-        assert tree_name not in self.ability_trees
+        if tree_name in self.ability_trees:
+            raise ValueError("'{}' Tree already in ability trees".format(tree_name))
         self.ability_trees.append(tree_name)
         setattr(self, tree_name, tree)
 
@@ -308,8 +315,8 @@ class Abilities(pride.components.base.Base):
     def from_info(cls, **trees):
         trees["Misc"] = Misc_Tree()
         ability_trees = trees.keys()
-        for key in trees:
-            assert ' ' not in key
+        #for key in trees:
+        #    assert ' ' not in key
         return cls(ability_trees=ability_trees, **trees)
 
     def to_info(self):

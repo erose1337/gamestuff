@@ -1,6 +1,8 @@
 to do:
 ----
 
+
+refactor gui code into separate modules
 name abilities/trees/effect in sequence so that there are no name collisions with set/get/del attr
 
 theme designer applet

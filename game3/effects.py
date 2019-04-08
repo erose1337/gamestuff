@@ -87,6 +87,9 @@ class Effect(pride.components.base.Base):
             info["reaction"] = True
             info["trigger"] = cls.defaults["trigger"]
             info["target"] = cls.defaults["target"]
+        #else:
+        #    assert not cls.defaults["trigger"]
+        #    assert not cls.defaults["target"]
         for key, value in info.items():
             info[key] = str(value)
         return info

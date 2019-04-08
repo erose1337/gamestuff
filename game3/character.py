@@ -33,7 +33,7 @@ def format_effect_queue(effect_queue):
 
 class Character(pride.components.base.Base):
 
-    defaults = {"name" : '', "is_npc" : True, "position" : (0, 0),
+    defaults = {"name" : "Unnamed Character", "is_npc" : True, "position" : (0, 0),
                 "attributes" : None, "affinities" : None, "abilities" : None,
                 "_character_file" : ''}
     predefaults = {"_health" : 0, "_energy" : 0, "_health_scalar" : 10,
@@ -154,6 +154,8 @@ class Character(pride.components.base.Base):
             _file.write('\n'.join("- {}: {}".format(element, value) for element, value in
                                                     sorted(self.affinities.items())))
             _file.write("\n\n")
+            if not len(self.abilities.ability_trees):
+                return # don't write abilities category if there are no abilities
             _file.write("Abilities\n")
             _file.write('=' * len("Abilities") + "\n\n")
             for ability_tree, _abilities in self.abilities.to_info().items():
