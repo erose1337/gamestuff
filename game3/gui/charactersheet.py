@@ -1,17 +1,13 @@
-import os
-
 import pride.gui.gui
 import pride.gui.widgetlibrary
 from pride.functions.utilities import slide
 
-import character
 import attributes
 import affinities
 import abilities
 import effects
 import elements
 import rules
-
 
 class Name_Field(pride.gui.widgetlibrary.Field):
 
@@ -878,14 +874,38 @@ class Stat_Window(pride.gui.gui.Window):
                     character=self.character)
 
 
+class Options_Window(pride.gui.gui.Window):
+
+    defaults = {"pack_mode" : "main"}
+
+    def __init__(self, **kwargs):
+        super(Options_Window, self).__init__(**kwargs)
+        self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
+                    method="create_color_options", h_range=(0, .10), text="Options",
+                    scale_to_text=False)
+
+    def create_color_options(self):
+        bar = self.create("pride.gui.gui.Container", h_range=(0, .05), pack_mode="top")
+        bar.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
+                   method="delete_color_options", text='x', pack_mode="right")
+        self.bar = bar.reference
+        self.theme_customizer = self.create("pride.gui.themecustomizer.Theme_Customizer",
+                                            target_theme=self.theme.__class__).reference
+
+    def delete_color_options(self):
+        pride.objects[self.bar].delete()
+        pride.objects[self.theme_customizer].delete()
+
+
 class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
 
-    defaults = {"tab_types" : (View_Stats_Tab, View_Abilities_Tab),
-                "window_types" : (Stat_Window, Ability_Tree_Window),
+    defaults = {"tab_types" : tuple(pride.gui.widgetlibrary.Tab_Button.from_info(text=text, include_delete_button=False)
+                                    for text in ("View Stats", "View Abilities", "View Options")),
+                "window_types" : (Stat_Window, Ability_Tree_Window, Options_Window),
                 "character_screen" : '', "character" : ''}
 
     def create_windows(self):
-        stat_tab, ability_tab = self.tab_bar.tabs
+        stat_tab, ability_tab, options_tab = self.tab_bar.tabs
         character_screen = self.character_screen
         stat_window = self.create(self.window_types[0], tab=stat_tab,
                                   character_screen=character_screen,
@@ -893,11 +913,14 @@ class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
         ability_window = self.create(self.window_types[1], tab=ability_tab,
                                      character_screen=character_screen,
                                      character=self.character)
+        options_window = self.create(self.window_types[2], tab=options_tab)
         ability_window.hide()
+        options_window.hide()
         stat_tab = pride.objects[stat_tab]
         stat_tab.window = stat_window.reference
         pride.objects[stat_tab.indicator].enable_indicator()
         pride.objects[ability_tab].window = ability_window.reference
+        pride.objects[options_tab].window = options_window.reference
 
 
 class Status_Indicator(pride.gui.gui.Container):
@@ -1019,7 +1042,7 @@ class Character_Screen(pride.gui.gui.Window):
             status.delete()
         else:
             assert self._file_selector is None
-            self._file_selector = self.parent.create(Character_File_Selector,
+            self._file_selector = self.parent.create("game3.gui.window.Character_File_Selector",
                                                      write_field_method=self._write_character_filename).reference
             self.hide()
 
@@ -1028,66 +1051,3 @@ class Character_Screen(pride.gui.gui.Window):
         pride.objects[self._file_selector].delete()
         self.show()
         self.save_character()
-
-
-class Character_File_Selector(pride.gui.widgetlibrary.Field):
-
-    defaults = {"field_name" : "filename", "initial_value" : '',
-                "h_range" : (0, 80)}
-
-
-class Game_Window(pride.gui.gui.Application):
-
-    defaults = {"character_creation_screen_type" : Character_Screen,
-                "startup_components" : tuple()} # removes task bar from top
-    mutable_defaults = {"_splash_screen_items" : list}
-
-    def __init__(self, **kwargs):
-        super(Game_Window, self).__init__(**kwargs)
-        self.splash_screen()
-
-    def splash_screen(self):
-        window = self.application_window
-        image = window.create("pride.gui.images.Image", filename="./injuredcomic.bmp", pack_mode="top", color=(255, 125, 125, 255))
-        bar = window.create("pride.gui.gui.Container", pack_mode="bottom", h_range=(0, 100), color=(255, 255, 255, 255))
-        bar.create("pride.gui.widgetlibrary.Method_Button", text="Create character",
-                   target=self.reference, method="create_character_screen",
-                   pack_mode="left", scale_to_text=False)
-        bar.create("pride.gui.widgetlibrary.Method_Button", text="Load character",
-                   target=self.reference, method="load_character_screen",
-                   pack_mode="left", scale_to_text=False)
-        self._splash_screen_items = [image, bar]
-
-    def create_character_screen(self):
-        for item in self._splash_screen_items:
-            item.delete()
-        _character= character.Character(attributes=attributes.Attributes(),
-                                        affinities=affinities.Affinities(),
-                                        abilities=abilities.Abilities())
-        self.character_screen = self.application_window.create(self.character_creation_screen_type,
-                                                               character=_character).reference
-
-    def load_character_screen(self):
-        for item in self._splash_screen_items:
-            item.delete()
-        self.file_selector = self.application_window.create(Character_File_Selector,
-                                                            write_field_method=self._load_character).reference
-
-    def _load_character(self, field_name, value):
-        if os.path.exists(value):
-            pride.objects[self.file_selector].delete()
-            status = self.create("pride.gui.gui.Container", text="Loading character...",
-                                 h_range=(0, 80), pack_mode="bottom")
-            pride.objects[self.sdl_window].run()
-            _character = character.Character.from_sheet(value)
-            status.delete()
-            self.character_screen = self.application_window.create(self.character_creation_screen_type,
-                                                                   character=_character).reference
-
-    def _close_character_screen(self):
-        pride.objects[self.character_screen].delete()
-        self.splash_screen()
-
-    def delete(self):
-        super(Game_Window, self).delete()
-        raise SystemExit()

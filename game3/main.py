@@ -17,9 +17,9 @@ def main():
     #char.to_sheet("demochar4.cef")
 
     import pride.gui
-    import gui
+    import game3.gui.window
     window = pride.gui.enable()
-    game = pride.objects[window].create(gui.Game_Window)
+    game = pride.objects[window].create(game3.gui.window.Game_Window)
 
 if __name__ == "__main__":
     main()

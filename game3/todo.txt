@@ -1,9 +1,8 @@
 to do:
 ----
 
-
-refactor gui code into separate modules
-name abilities/trees/effect in sequence so that there are no name collisions with set/get/del attr
+options tab for save/exit/options/etc
+change color on hover for interactive window elements
 
 theme designer applet
 
