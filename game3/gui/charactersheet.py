@@ -881,7 +881,7 @@ class Options_Window(pride.gui.gui.Window):
     def __init__(self, **kwargs):
         super(Options_Window, self).__init__(**kwargs)
         self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                    method="create_color_options", h_range=(0, .10), text="Options",
+                    method="create_color_options", h_range=(0, .10), text="Color Options",
                     scale_to_text=False)
 
     def create_color_options(self):
@@ -972,10 +972,10 @@ class Character_Screen(pride.gui.gui.Window):
         self.xp_indicator = xp_segment.create("pride.gui.gui.Container", text=str(self.xp), pack_mode="top")
         top.create("pride.gui.widgetlibrary.Method_Button", text="save",
                    target=self.reference, method="save_character",
-                   pack_mode="left", background_color=(225, 225, 225, 200))
+                   pack_mode="left")#, background_color=(225, 225, 225, 200))
         top.create("pride.gui.widgetlibrary.Method_Button", text="exit",
                    target=self.parent_application.reference, method="_close_character_screen",
-                   pack_mode="left", background_color=(225, 225, 225, 200))
+                   pack_mode="left")#, background_color=(225, 225, 225, 200))
         _character = self.character
         self.status_indicator = self.create(Status_Indicator,
                                             character=_character.reference).reference
