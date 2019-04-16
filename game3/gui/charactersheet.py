@@ -74,8 +74,8 @@ class XP_Cost_Indicator(pride.gui.gui.Container):
 
     def __init__(self, **kwargs):
         super(XP_Cost_Indicator, self).__init__(**kwargs)
-        self.create("pride.gui.gui.Button", text="XP cost")
-        self.display = self.create("pride.gui.gui.Button", text='0').reference
+        self.create("pride.gui.gui.Container", text="XP cost")
+        self.display = self.create("pride.gui.gui.Container", text='0').reference
 
 
 class Energy_Cost_Indicator(pride.gui.gui.Container):
@@ -84,8 +84,8 @@ class Energy_Cost_Indicator(pride.gui.gui.Container):
 
     def __init__(self, **kwargs):
         super(Energy_Cost_Indicator, self).__init__(**kwargs)
-        self.create("pride.gui.gui.Button", text="energy cost")
-        self.displayer = self.create("pride.gui.gui.Button", text='0').reference
+        self.create("pride.gui.gui.Container", text="energy cost")
+        self.displayer = self.create("pride.gui.gui.Container", text='0').reference
 
 
 class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
@@ -874,38 +874,15 @@ class Stat_Window(pride.gui.gui.Window):
                     character=self.character)
 
 
-class Options_Window(pride.gui.gui.Window):
-
-    defaults = {"pack_mode" : "main"}
-
-    def __init__(self, **kwargs):
-        super(Options_Window, self).__init__(**kwargs)
-        self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                    method="create_color_options", h_range=(0, .10), text="Color Options",
-                    scale_to_text=False)
-
-    def create_color_options(self):
-        bar = self.create("pride.gui.gui.Container", h_range=(0, .05), pack_mode="top")
-        bar.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                   method="delete_color_options", text='x', pack_mode="right")
-        self.bar = bar.reference
-        self.theme_customizer = self.create("pride.gui.themecustomizer.Theme_Customizer",
-                                            target_theme=self.theme.__class__).reference
-
-    def delete_color_options(self):
-        pride.objects[self.bar].delete()
-        pride.objects[self.theme_customizer].delete()
-
-
 class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
 
     defaults = {"tab_types" : tuple(pride.gui.widgetlibrary.Tab_Button.from_info(text=text, include_delete_button=False)
                                     for text in ("View Stats", "View Abilities", "View Options")),
-                "window_types" : (Stat_Window, Ability_Tree_Window, Options_Window),
+                "window_types" : (Stat_Window, Ability_Tree_Window, "game3.gui.options.Options_Window"),
                 "character_screen" : '', "character" : ''}
 
     def create_windows(self):
-        stat_tab, ability_tab, options_tab = self.tab_bar.tabs
+        stat_tab, ability_tab, options_tab = pride.objects[self.tab_bar].tabs
         character_screen = self.character_screen
         stat_window = self.create(self.window_types[0], tab=stat_tab,
                                   character_screen=character_screen,
@@ -970,12 +947,12 @@ class Character_Screen(pride.gui.gui.Window):
         xp_segment = top.create("pride.gui.gui.Container", pack_mode="left", w_range=(0, 200))
         xp_segment.create("pride.gui.gui.Container", text="XP points remaining", pack_mode="top")
         self.xp_indicator = xp_segment.create("pride.gui.gui.Container", text=str(self.xp), pack_mode="top")
-        top.create("pride.gui.widgetlibrary.Method_Button", text="save",
-                   target=self.reference, method="save_character",
-                   pack_mode="left")#, background_color=(225, 225, 225, 200))
-        top.create("pride.gui.widgetlibrary.Method_Button", text="exit",
-                   target=self.parent_application.reference, method="_close_character_screen",
-                   pack_mode="left")#, background_color=(225, 225, 225, 200))
+        #top.create("pride.gui.widgetlibrary.Method_Button", text="save",
+        #           target=self.reference, method="save_character",
+        #           pack_mode="left")#, background_color=(225, 225, 225, 200))
+        #top.create("pride.gui.widgetlibrary.Method_Button", text="exit",
+        #           target=self.parent_application.reference, method="_close_character_screen",
+        #           pack_mode="left")#, background_color=(225, 225, 225, 200))
         _character = self.character
         self.status_indicator = self.create(Status_Indicator,
                                             character=_character.reference).reference
@@ -1035,14 +1012,12 @@ class Character_Screen(pride.gui.gui.Window):
 
     def save_character(self):
         if self.character._character_file:
-            status = self.create("pride.gui.gui.Container", text="Saving...",
-                                 h_range=(0, 80), pack_mode="bottom")
-            pride.objects[self.sdl_window].run()
+            self.show_status("Saving...")
             self.character.to_sheet(self.character._character_file)
-            status.delete()
+        #    self.hide_status()
         else:
             assert self._file_selector is None
-            self._file_selector = self.parent.create("game3.gui.window.Character_File_Selector",
+            self._file_selector = self.parent.create("game3.gui.window.File_Selector",
                                                      write_field_method=self._write_character_filename).reference
             self.hide()
 

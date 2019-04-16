@@ -1,0 +1,26 @@
+Theme Profiles
+==============
+
+default
+-------
+
+      - background: (30, 63, 106, 12)
+      - color: (110, 110, 110, 255)
+      - shadow: (31, 105, 172, 128)
+      - shadow_fade_scalar: 2
+      - shadow_thickness: 5
+      - text: (45, 91, 235, 255)
+      - text_background: (0, 0, 0, 255)
+
+
+interactive
+-----------
+
+      - background: (62, 105, 129, 55)
+      - color: (110, 110, 110, 255)
+      - shadow: (48, 111, 186, 255)
+      - shadow_fade_scalar: 2
+      - shadow_thickness: 5
+      - text: (45, 151, 236, 255)
+      - text_background: (0, 0, 0, 255)
+

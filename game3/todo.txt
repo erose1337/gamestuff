@@ -1,7 +1,7 @@
 to do:
 ----
 
-options tab for save/exit/options/etc
+list recently used files in filename screen
 change color on hover for interactive window elements
 
 theme designer applet
