@@ -9,8 +9,8 @@ def main():
     rules_filename = args.rules or "rules.cef"
     rules.set_rules(rules_filename)
 
-    #import battle
-    #battle.test_battle()
+    #import events
+    #events.test_battle()
 
     #import character
     #char = character.Character.from_sheet("demochar3.cef")

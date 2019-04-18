@@ -166,8 +166,10 @@ class Move(Active_Ability):
     defaults = {"effects" : (effects.Movement, ), "name" : "move",
                 "energy_source" : "movement", "range" : "move"} # range determined by character.movement
 
-    def calculate_ability_cost(self, source, targets):
-        return rules.calculate_move_cost(source, targets[0])
+    #def calculate_ability_cost(self, source, target):
+    #    return rules.calculate_move_cost(source, target)
+#    def calculate_ability_cost(self, source, targets):
+#        return rules.calculate_move_cost(source, targets[0])
 
 
 class Ability_Tree(pride.components.base.Base):

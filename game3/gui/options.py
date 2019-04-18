@@ -62,13 +62,26 @@ class Options_Window(pride.gui.gui.Window):
 
     def export_color_options(self):
         self._file_selector = self.parent.create("game3.gui.window.File_Selector",
-                                                 write_field_method=self._write_color_filename_export).reference
+                                                 write_field_method=self._write_color_filename_export,
+                                                 file_category="color",
+                                                 delete_callback=self.close_file_selector).reference
         self.hide()
 
-    def _write_color_filename_export(self, field_name, value):
-        self.color_options_file = value
-        pride.objects[self._file_selector].delete()
+    def close_file_selector(self):
+        try:
+            selector = pride.objects[self._file_selector]
+        except KeyError: # must be deleted already
+            assert self._file_selector is not None
+        else:
+            assert not selector.deleted
+            selector.delete()
+        self._file_selector = None
         self.show()
+
+    def _write_color_filename_export(self, field_name, value):
+        self.parent_application.update_recent_files(value, "color")
+        self.color_options_file = value
+        self.close_file_selector()
         self._export_color_options()
 
     def _export_color_options(self):
@@ -95,12 +108,15 @@ class Options_Window(pride.gui.gui.Window):
 
     def import_color_options(self):
         self._file_selector = self.parent.create("game3.gui.window.File_Selector",
-                                                 write_field_method=self._write_color_filename_import).reference
+                                                 write_field_method=self._write_color_filename_import,
+                                                 file_category="color",
+                                                 delete_callback=self.close_file_selector).reference
         self.hide()
 
     def _write_color_filename_import(self, field_name, value):
         if not os.path.exists(value):
             return
+        self.parent_application.update_recent_files(value, "color")
         self.color_options_file = value
         pride.objects[self._file_selector].delete()
         self.show()

@@ -185,3 +185,65 @@ Affinities
 
     + x soak against element_type damage effects
     - y cost when using element_type abilities
+
+
+
+
+
+
+
+Quests/battles/world map/etc
+=====
+
+Time
+====
+
+Actions
+-------
+- Smallest unit of game activity
+- Action typically implies selecting an option from those that are available
+
+
+Events
+-----
+- Medium unit of game activity
+- Consists of a sequence of Actions
+- Events conclude with an Outcome
+- Events can be one of the following types:
+
+   - battles
+   - collect resources
+      - collect items
+      - build something
+   - obtain equipment
+   - visit destination
+      - interact with other characters
+   - learn about/enable a new quest
+
+
+Outcome
+-------
+- Reward stage that proceeds an Event
+- Reward varies depending on Event type and outcome type
+    - outcome type could be e.g. win/draw/lose
+
+
+Quests
+------
+- Large unit of game activity
+- Consists of a sequence of events
+
+
+Space
+=====
+
+Place
+-----------
+- Namespace for events to occur in
+    - may include quests
+- A unit must be at a place to participate in the events in it
+
+
+World
+---------
+- Consists of a graph of places and the links between them

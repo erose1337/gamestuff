@@ -1,10 +1,17 @@
 to do:
 ----
 
-list recently used files in filename screen
-change color on hover for interactive window elements
+break long text lines into multiple lines
 
-theme designer applet
+
+add battles to gui
+    - make a grid
+    - place characters in a given region in the grid
+    - collect input from players
+    - process
+    - display effects in gui
+    - outcome
+
 
 
 add energy source drop-down box for abilities?
@@ -34,8 +41,8 @@ implement summon effects
 fix format_attributes to display nicely spaced entries
 
 
-break long text lines into multiple lines
 
+theme designer applet
 
 
 Known Issues

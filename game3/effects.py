@@ -4,9 +4,9 @@ import rules
 import attributes
 
 EFFECT_TYPES = ("damage", "heal", "rest", "buff", "debuff", "move")#, "summon")
-POST_QUEUE = 2
-DAMAGE_QUEUE = 1
 STANDARD_QUEUE = 0
+DAMAGE_QUEUE = 1
+POST_QUEUE = 2
 NEW_EFFECT_QUEUE = lambda: ([], [], []) # for character.mutable_defaults
 
 class Effect(pride.components.base.Base):

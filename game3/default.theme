@@ -13,6 +13,18 @@ default
       - text_background: (0, 0, 0, 255)
 
 
+hover
+-----
+
+      - background: (87, 126, 158, 40)
+      - color: (110, 110, 110, 255)
+      - shadow: (88, 146, 195, 255)
+      - shadow_fade_scalar: 2
+      - shadow_thickness: 5
+      - text: (45, 203, 232, 255)
+      - text_background: (0, 0, 0, 255)
+
+
 interactive
 -----------
 

@@ -34,7 +34,7 @@ def format_effect_queue(effect_queue):
 class Character(pride.components.base.Base):
 
     defaults = {"name" : "Unnamed Character", "is_npc" : True, "position" : (0, 0),
-                "attributes" : None, "affinities" : None, "abilities" : None,
+            #    "attributes" : None, "affinities" : None, "abilities" : None,
                 "_character_file" : ''}
     predefaults = {"_health" : 0, "_energy" : 0, "_health_scalar" : 10,
                    "_energy_scalar" : 10, "_base_health" : 10,
@@ -42,8 +42,11 @@ class Character(pride.components.base.Base):
                    "_movement_scalar" : 1}
     mutable_defaults = {"effect_queue" : effects.NEW_EFFECT_QUEUE,
                         "reaction_effects" : list,
-                        "xp" : rules.RULES["character creation"]["starting_xp_amount"]}
-    required_attributes = ("attributes", "affinities", "abilities")
+                        "xp" : rules.RULES["character creation"]["starting_xp_amount"],
+                        "attributes" : attributes.Attributes,
+                        "affinities" : affinities.Affinities,
+                        "abilities"  : abilities.Abilities}
+    #required_attributes = ("attributes", "affinities", "abilities")
     post_initializer = "initialize"
 
     def _get_health(self):

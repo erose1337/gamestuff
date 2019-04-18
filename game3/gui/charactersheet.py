@@ -594,7 +594,6 @@ class Effect_Fields(pride.gui.gui.Container):
                                              effect_fields=self.reference)
 
     def update_values(self, **kwargs):
-        print kwargs
         self.effect.defaults.update(kwargs)
         ability = pride.objects[self.ability_fields]
         ability.remove_effect(self.effect)
@@ -1014,15 +1013,30 @@ class Character_Screen(pride.gui.gui.Window):
         if self.character._character_file:
             self.show_status("Saving...")
             self.character.to_sheet(self.character._character_file)
+            self.character._character_file = ''
         #    self.hide_status()
         else:
             assert self._file_selector is None
             self._file_selector = self.parent.create("game3.gui.window.File_Selector",
-                                                     write_field_method=self._write_character_filename).reference
+                                                     write_field_method=self._write_character_filename,
+                                                     file_category="character",
+                                                     delete_callback=self.close_file_selector).reference
             self.hide()
 
-    def _write_character_filename(self, field_name, value):
-        self.character._character_file = value
-        pride.objects[self._file_selector].delete()
+    def close_file_selector(self):
+        try:
+            selector = pride.objects[self._file_selector]
+        except KeyError:
+            pass
+        else:
+            assert not selector.deleted
+            selector.delete_callback = None
+            selector.delete()
+        self._file_selector = None
         self.show()
+
+    def _write_character_filename(self, field_name, value):
+        self.parent_application.update_recent_files(value, "character")
+        self.character._character_file = value
+        self.close_file_selector()
         self.save_character()
