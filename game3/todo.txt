@@ -1,10 +1,10 @@
 to do:
 ----
 
-make indicator light toggle on theme editor
+change menus to nested/recursive menus
+update sliders to use discrete controls/indicators
 
 
-'x' on tabs is too far right
 
 make tab bars scrollable if excess tabs are present
 change back to grid
