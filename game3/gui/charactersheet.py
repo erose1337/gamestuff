@@ -560,7 +560,8 @@ class Effect_Fields(pride.gui.gui.Container):
             effect = self.effect
         info = effect.defaults
         # name   effect type   influence
-        # element   Magnitude   duration
+        # element   Magnitude   duration  reaction
+        # triggered     reaction targets
         row1 = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
         row1.create(Name_Field, pack_mode="left", write_field_method=self._write_name,
                     orientation="stacked", initial_value=info["name"])

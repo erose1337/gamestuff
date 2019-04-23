@@ -1,8 +1,13 @@
 to do:
 ----
 
-break long text lines into multiple lines
+make indicator light toggle on theme editor
 
+
+'x' on tabs is too far right
+
+make tab bars scrollable if excess tabs are present
+change back to grid
 
 add battles to gui
     - make a grid

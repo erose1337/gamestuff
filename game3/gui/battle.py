@@ -133,32 +133,6 @@ class Ability_Selector(pride.gui.widgetlibrary.Page_Switching_Window):
         self.initialize_pages()
 
 
-#class Actions_Menu(pride.gui.gui.Container):
-#
-#    def __init__(self, **kwargs):
-#        super(Actions_Menu, self).__init__(**kwargs)
-#        buttons = self.create("pride.gui.gui.Container")
-#        buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-#                       method="use_ability", text="Use Ability", pack_mode="left",
-#                       scale_to_text=False)
-#        buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-#                       method="ability_sheet", text="Ability Sheet", pack_mode="left",
-#                       scale_to_text=False)
-#        buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-#                       method="status", text="View Status", pack_mode="left",
-#                       scale_to_text=False)
-#        self.buttons = buttons.reference
-#
-#    def use_ability(self):
-#        self.parent_application.create_abilities_menu()
-#
-#    def ability_sheet(self):
-#        self.parent_application.create_ability_sheet()
-
-
-# make Actions Menu a tab-switched window
-
-
 class Battle_Window(pride.gui.gui.Application):
 
     defaults = {"event" : None, "character" : None, "ability_selector" : None}
@@ -168,18 +142,20 @@ class Battle_Window(pride.gui.gui.Application):
     def __init__(self, **kwargs):
         super(Battle_Window, self).__init__(**kwargs)
         window = self.application_window
+        self.field = window.create("pride.gui.gui.Container", pack_mode="left").reference
         for team in self.teams.keys():
             self.setup_team(team)
 
-        self.actions_menu = window.create("game3.gui.actionmenu.Action_Menu", character=self.character)
-        #self.status_box = window.create(Status_Box, h_range=(0, .20)).reference
+        self.actions_menu = window.create("game3.gui.actionmenu.Action_Menu",
+                                          character=self.character,
+                                          pack_mode="left")
+
         processor = self.processor = self.create(Battle_Processor, event=self.event)
         self._children.remove(processor)
         self.processor.run()
 
     def setup_team(self, team_name):
-        self.alert("Setting up team {}".format(team_name))
-        team = self.application_window.create(Team, h_range=(0, .10))
+        team = pride.objects[self.field].create(Team, h_range=(0, .10))
         setattr(self, "team_{}".format(team_name), team.reference)
         for character in self.teams[team_name]:
             team.add_character(character)
@@ -207,3 +183,8 @@ class Battle_Window(pride.gui.gui.Application):
     def create_ability_sheet(self):
         if self.ability_sheet is None:
             pass
+
+    def delete(self):
+        self._children.append(self.processor)
+        self.processor = None
+        super(Battle_Window, self).delete()

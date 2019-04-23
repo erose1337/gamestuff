@@ -16,24 +16,12 @@ default
 hover
 -----
 
-      - background: (87, 126, 158, 69)
+      - background: (87, 126, 158, 40)
       - color: (110, 110, 110, 255)
       - shadow: (88, 146, 195, 255)
       - shadow_fade_scalar: 2
       - shadow_thickness: 5
-      - text: (175, 203, 232, 255)
-      - text_background: (0, 0, 0, 255)
-
-
-indicator
----------
-
-      - background: (122, 255, 255, 157)
-      - color: (110, 110, 110, 255)
-      - shadow: (0, 0, 0, 255)
-      - shadow_fade_scalar: 2
-      - shadow_thickness: 5
-      - text: (45, 45, 45, 255)
+      - text: (133, 203, 232, 255)
       - text_background: (0, 0, 0, 255)
 
 
@@ -52,7 +40,7 @@ interactive
 placeholder
 -----------
 
-      - background: (0, 0, 0, 0)
+      - background: (180, 180, 180, 200)
       - color: (110, 110, 110, 255)
       - shadow: (0, 0, 0, 255)
       - shadow_fade_scalar: 2

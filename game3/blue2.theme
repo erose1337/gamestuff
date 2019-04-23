@@ -4,55 +4,43 @@ Theme Profiles
 default
 -------
 
-      - background: (34, 63, 106, 12)
+      - background: (30, 63, 106, 12)
       - color: (110, 110, 110, 255)
       - shadow: (31, 105, 172, 128)
       - shadow_fade_scalar: 2
       - shadow_thickness: 5
-      - text: (146, 169, 235, 255)
+      - text: (45, 91, 235, 255)
       - text_background: (0, 0, 0, 255)
 
 
 hover
 -----
 
-      - background: (87, 126, 158, 69)
+      - background: (87, 126, 158, 52)
       - color: (110, 110, 110, 255)
       - shadow: (88, 146, 195, 255)
       - shadow_fade_scalar: 2
       - shadow_thickness: 5
-      - text: (175, 203, 232, 255)
-      - text_background: (0, 0, 0, 255)
-
-
-indicator
----------
-
-      - background: (122, 255, 255, 157)
-      - color: (110, 110, 110, 255)
-      - shadow: (0, 0, 0, 255)
-      - shadow_fade_scalar: 2
-      - shadow_thickness: 5
-      - text: (45, 45, 45, 255)
+      - text: (45, 203, 232, 255)
       - text_background: (0, 0, 0, 255)
 
 
 interactive
 -----------
 
-      - background: (62, 105, 129, 55)
+      - background: (68, 126, 176, 30)
       - color: (110, 110, 110, 255)
       - shadow: (48, 111, 186, 255)
       - shadow_fade_scalar: 2
       - shadow_thickness: 5
-      - text: (112, 147, 236, 255)
+      - text: (79, 132, 236, 255)
       - text_background: (0, 0, 0, 255)
 
 
 placeholder
 -----------
 
-      - background: (0, 0, 0, 0)
+      - background: (180, 180, 180, 200)
       - color: (110, 110, 110, 255)
       - shadow: (0, 0, 0, 255)
       - shadow_fade_scalar: 2

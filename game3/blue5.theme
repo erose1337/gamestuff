@@ -28,7 +28,7 @@ hover
 indicator
 ---------
 
-      - background: (122, 255, 255, 157)
+      - background: (73, 201, 101, 177)
       - color: (110, 110, 110, 255)
       - shadow: (0, 0, 0, 255)
       - shadow_fade_scalar: 2
