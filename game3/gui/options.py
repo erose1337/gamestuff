@@ -9,11 +9,12 @@ class Options_Window(pride.gui.gui.Window):
 
     defaults = {"pack_mode" : "main", "delete_callback" : None,
                 "theme_customizer" : None}
+    autoreferences = ("bar", "theme_customizer", "_file_selector", "save_button")
 
     def __init__(self, **kwargs):
         super(Options_Window, self).__init__(**kwargs)
         buttons = self.create("pride.gui.gui.Container", pack_mode="top")
-        self.buttons = buttons.reference
+        self.buttons = buttons
         buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
                        method="create_color_options", h_range=(0, .10), text="Color Options",
                        scale_to_text=False)
@@ -23,9 +24,9 @@ class Options_Window(pride.gui.gui.Window):
         #self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
         #            method="load_state", h_range=(0, .10), text="Load game state",
         #            scale_to_text=False)
-        buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                       method="save_character", h_range=(0, .10), text="Save character",
-                       scale_to_text=False)
+        self.save_button = buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
+                                          method="save_character", h_range=(0, .10), text="Save character",
+                                          scale_to_text=False) 
         buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
                        method="exit_to_title", h_range=(0, .10), text="Exit to title",
                        scale_to_text=False)
@@ -34,13 +35,8 @@ class Options_Window(pride.gui.gui.Window):
         self.parent_application._close_to_title()
 
     def save_character(self):
-        try:
-            screen = pride.objects[self.parent_application.character_screen]
-        except AttributeError as e:
-            pass
-        except KeyError:
-            pass # show status?
-        else:
+        screen = self.parent_application.character_screen
+        if screen is not None:
             screen.save_character()
 
     def create_color_options(self):
@@ -55,27 +51,23 @@ class Options_Window(pride.gui.gui.Window):
         bar.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
                    method="import_color_options", text="Import color options",
                    pack_mode="right")
-        self.bar = bar.reference
+        self.bar = bar
         self.theme_customizer = self.create("pride.gui.themecustomizer.Theme_Customizer",
-                                            target_theme=self.theme.__class__).reference
-        pride.objects[self.buttons].hide()
+                                            target_theme=self.theme.__class__)
+        self.buttons.hide()
 
     def export_color_options(self):
         self._file_selector = self.parent.create("game3.gui.window.File_Selector",
                                                  write_field_method=self._write_color_filename_export,
                                                  file_category="color",
-                                                 delete_callback=self.close_file_selector).reference
+                                                 delete_callback=self.close_file_selector)
         self.hide()
 
     def close_file_selector(self):
-        try:
-            selector = pride.objects[self._file_selector]
-        except KeyError: # must be deleted already
-            assert self._file_selector is not None
-        else:
-            assert not selector.deleted
+        if self._file_selector is not None:
+            assert not self._file_selector.deleted
             selector.delete()
-        self._file_selector = None
+            self._file_selector = None
         self.show()
 
     def _write_color_filename_export(self, field_name, value):
@@ -110,7 +102,7 @@ class Options_Window(pride.gui.gui.Window):
         self._file_selector = self.parent.create("game3.gui.window.File_Selector",
                                                  write_field_method=self._write_color_filename_import,
                                                  file_category="color",
-                                                 delete_callback=self.close_file_selector).reference
+                                                 delete_callback=self.close_file_selector)
         self.hide()
 
     def _write_color_filename_import(self, field_name, value):
@@ -118,21 +110,21 @@ class Options_Window(pride.gui.gui.Window):
             return
         self.parent_application.update_recent_files(value, "color")
         self.color_options_file = value
-        pride.objects[self._file_selector].delete()
+        self._file_selector.delete()
         self.show()
         self._import_color_options()
 
     def _import_color_options(self):
         game3.gui.misc.set_theme_colors(self, self.color_options_file)
-        pride.objects[self.theme_customizer].readjust_sliders()
+        self.theme_customizer.readjust_sliders()
 
     def delete_color_options(self):
-        pride.objects[self.bar].delete()
-        pride.objects[self.theme_customizer].delete()
+        self.bar.delete()
+        self.theme_customizer.delete()
         self.bar = self.theme_customizer = None
         if self.delete_callback is not None:
             self.delete_callback()
-        pride.objects[self.buttons].show()
+        self.buttons.show()
 
     #def save_state(self):
     #    self.file_selector = self.create("game3.gui.window.File_Selector",

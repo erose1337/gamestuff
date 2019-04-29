@@ -136,13 +136,14 @@ class Ability_Selector(pride.gui.widgetlibrary.Page_Switching_Window):
 class Battle_Window(pride.gui.gui.Application):
 
     defaults = {"event" : None, "character" : None, "ability_selector" : None}
-    mutable_defaults = {"teams" : dict, "_targets" : list}
+    mutable_defaults = {"teams" : dict, "_targets" : list, "_teams" : dict}
     required_attributes = ("teams", )
+    autoreferences = ("field", )
 
     def __init__(self, **kwargs):
         super(Battle_Window, self).__init__(**kwargs)
         window = self.application_window
-        self.field = window.create("pride.gui.gui.Container", pack_mode="left").reference
+        self.field = window.create("pride.gui.gui.Container", pack_mode="left")
         for team in self.teams.keys():
             self.setup_team(team)
 
@@ -155,8 +156,8 @@ class Battle_Window(pride.gui.gui.Application):
         self.processor.run()
 
     def setup_team(self, team_name):
-        team = pride.objects[self.field].create(Team, h_range=(0, .10))
-        setattr(self, "team_{}".format(team_name), team.reference)
+        team = self.field.create(Team, h_range=(0, .10))
+        self._teams[team_name] = team
         for character in self.teams[team_name]:
             team.add_character(character)
 
@@ -172,12 +173,9 @@ class Battle_Window(pride.gui.gui.Application):
     def create_abilities_menu(self):
         if self.ability_selector is None:
             self.ability_selector = self.application_window.create(Ability_Selector,
-                                                                   character=self.character).reference
+                                                                   character=self.character)
         else:
-            try:
-                pride.objects[self.ability_sheet].hide()
-            except KeyError:
-                pass
+            self.ability_sheet.hide()
             self.ability_selector.show()
 
     def create_ability_sheet(self):

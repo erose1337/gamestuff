@@ -12,8 +12,8 @@ class Displayer(pride.gui.gui.Container):
     def __init__(self, **kwargs):
         super(Displayer, self).__init__(**kwargs)
         attribute = self.attribute
-        self.create("pride.gui.gui.Container", text=attribute, pack_mode="top",
-                    scale_to_text=False)
+        self.create("pride.gui.gui.Container", text=attribute.replace('_', ' '),
+                    pack_mode="top", scale_to_text=False)
         self.create("pride.gui.gui.Button", text=str(getattr(self._object, attribute)),
                     pack_mode="bottom")
 
@@ -84,6 +84,7 @@ class Ability_Fields(pride.gui.gui.Container):
 
     defaults = {"tab" : '', "character" : None, "ability" : None}
     required_attributes = ("character", "ability")
+    autoreferences = ("effects_window", )
 
     def _get_active_or_passive(self):
         if isinstance(self.ability, game3.abilities.Active_Ability):
@@ -111,7 +112,7 @@ class Ability_Fields(pride.gui.gui.Container):
         row2.create(Displayer, attribute="energy_cost", _object=self)
         row2.create(Displayer, attribute="active_or_passive", _object=self)
 
-        self.effects_window = self.create(Effect_Selection_Window, ability=ability).reference
+        self.effects_window = self.create(Effect_Selection_Window, ability=ability)
 
 
 class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
@@ -176,7 +177,8 @@ class Abilities_Viewer(pride.gui.widgetlibrary.Tab_Switching_Window):
             window_types = []
             window_type = self.window_type
             for ability_tree in tree_names:
-                tab_bar.new_tab(scale_to_text=False, text=ability_tree)
+                tab_bar.new_tab(scale_to_text=False, text=ability_tree,
+                                include_delete_button=False)
                 window_types.append(window_type)
             self.window_types = window_types
             self.create_windows()
@@ -233,8 +235,8 @@ class Attributes_Displayer(pride.gui.gui.Container):
                         pack_mode="top", h_range=(0, 40))
         for attribute in column_attributes:
             initial_value = str(getattr(_object, attribute))
-            column.create(Displayer, attribute=attribute, _object=_object,
-                          pack_mode="top")
+            column.create(Displayer, attribute=attribute.replace('_', ' '),
+                          _object=_object, pack_mode="top")
 
 
 class Attributes_Viewer(Attributes_Displayer):
@@ -264,10 +266,11 @@ class Action_Menu(pride.gui.widgetlibrary.Tab_Switching_Window):
                 "window_types" : (Abilities_Viewer, Attributes_Viewer,
                                   Affinities_Viewer, Status_Window),
                 "character" : ''}
+    autoreferences = ("status_indicator", )
 
     def initialize_tabs_and_windows(self):
         self.status_indicator = self.create("game3.gui.charactersheet.Status_Indicator",
-                                            character=self.character.reference).reference
+                                            character=self.character)
         super(Action_Menu, self).initialize_tabs_and_windows()
 
     def create_windows(self):

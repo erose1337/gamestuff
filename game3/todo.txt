@@ -1,7 +1,24 @@
 to do:
 ----
 
-change menus to nested/recursive menus
+finish converting autoreferences:
+    - do tabs/window
+    - do sdl_window
+
+rules editor
+move save character from options to character screen
+
+
+add tip bar
+    on hover, set tip bar message
+    hover end, clear tip bar message
+
+indicate unusable buttons as being unusable (e.g. grey-out)
+fade-out effects for hide/show
+hide/show buttons
+    - mouseover to left/right/top/bottom to see hide/show buttons
+
+change menus to nested/recursive menus where appropriate
 update sliders to use discrete controls/indicators
 
 
