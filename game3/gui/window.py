@@ -14,7 +14,7 @@ import game3.gui.battle
 class File_Selector(pride.gui.gui.Application):
 
     defaults = {"initial_value" : '', "file_category" : "misc",
-                "delete_callback" : None}
+                "delete_callback" : None, "tip_bar_enabled" : False}
     required_attributes = ("delete_callback", )
     autoreferences = ("selector", )
 
@@ -41,11 +41,32 @@ class File_Selector(pride.gui.gui.Application):
         self.delete_callback = None
 
 
-class Battle_Button(pride.gui.gui.Button):
+class Battle_Button(pride.gui.widgetlibrary.Method_Button):
 
     defaults = {"text" : "Battle", "method" : "create_battle_screen",
                 "pack_mode" : "left", "scale_to_text" : False,
                 "tip_bar_text" : "Start a battle"}
+
+
+class Create_Character_Button(pride.gui.widgetlibrary.Method_Button):
+
+    defaults = {"text" : "Create character", "method" : "create_character_screen",
+                "pack_mode" : "left", "scale_to_text" : False,
+                "tip_bar_text" : "Create a new character"}
+
+
+class Load_Character_Button(pride.gui.widgetlibrary.Method_Button):
+
+    defaults = {"text" : "Load Character", "method" : "load_character_screen",
+                "pack_mode" : "left", "scale_to_text" : False,
+                "tip_bar_text" : "Load an existing character"}
+
+
+class Options_Button(pride.gui.widgetlibrary.Method_Button):
+
+    defaults = {"text" : "options", "method" : "load_options_screen",
+                "pack_mode" : "left", "scale_to_text" : False,
+                "tip_bar_text" : "Modify game settings"}
 
 
 class Game_Window(pride.gui.gui.Application):
@@ -82,17 +103,9 @@ class Game_Window(pride.gui.gui.Application):
         image = window.create("pride.gui.gui.Container", text="Title Screen", pack_mode="top")
         bar = window.create("pride.gui.gui.Container", pack_mode="bottom", h_range=(0, 100))#, color=(255, 255, 255, 255))
         bar.create(Battle_Button, target=self.reference)
-        bar.create("pride.gui.widgetlibrary.Method_Button", text="Create character",
-                   target=self.reference, method="create_character_screen",
-                   pack_mode="left", scale_to_text=False,
-                   tip_bar_text="Create a new character")
-        bar.create("pride.gui.widgetlibrary.Method_Button", text="Load character",
-                   target=self.reference, method="load_character_screen",
-                   pack_mode="left", scale_to_text=False)
-        bar.create("pride.gui.widgetlibrary.Method_Button", text="options",
-                   target=self.reference, method="load_options_screen",
-                   pack_mode="left", scale_to_text=False,
-                   tip_bar_text="Modify game settings")
+        bar.create(Create_Character_Button, target=self.reference)
+        bar.create(Load_Character_Button, target=self.reference)
+        bar.create(Options_Button, target=self.reference)
         self._splash_screen_items = [image, bar]
 
     def clear_splash_screen(self):
@@ -109,8 +122,8 @@ class Game_Window(pride.gui.gui.Application):
             event = game3.gui.battle.Battle_Event(characters=[self.character, character2])
             self.battle_window = self.background.create(game3.gui.battle.Battle_Window, event=event,
                                                         character=self.character,
-                                                        teams={'a' : [self.character],
-                                                               'b' : [character2]})
+                                                        participants=(self.character,
+                                                                      character2))
 
     def create_character_screen(self):
         self.clear_splash_screen()

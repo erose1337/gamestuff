@@ -158,7 +158,8 @@ class Ability_Selection_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
 class Ability_Tree_Tab(pride.gui.widgetlibrary.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability Tree", "editable" : False,
-                "include_delete_button" : False}
+                "include_delete_button" : False,
+                "tip_bar_text" : "View ability information"}
 
 
 class Abilities_Viewer(pride.gui.widgetlibrary.Tab_Switching_Window):
@@ -261,11 +262,18 @@ class Affinities_Viewer(Attributes_Displayer):
 
 class Action_Menu(pride.gui.widgetlibrary.Tab_Switching_Window):
 
-    defaults = {"tab_types" : tuple(pride.gui.widgetlibrary.Tab_Button.from_info(text=text, include_delete_button=False)
-                                    for text in ("Abilities", "Attributes", "Affinities", "Status")),
+    generator = (pride.gui.widgetlibrary.Tab_Button.from_info(text=text,
+                                                              include_delete_button=False,
+                                                              tip_bar_text=tip)
+                 for text, tip in (("Abilities", "Examine and select an ability"),
+                                   ("Attributes", "Examine attributes"),
+                                   ("Affinities", "Examine affinities"),
+                                   ("Status", "A transcript of past actions and current state")))
+    defaults = {"tab_types" : tuple(generator),
                 "window_types" : (Abilities_Viewer, Attributes_Viewer,
                                   Affinities_Viewer, Status_Window),
                 "character" : ''}
+    del generator
     autoreferences = ("status_indicator", )
 
     def initialize_tabs_and_windows(self):

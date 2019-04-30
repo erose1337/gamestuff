@@ -1,4 +1,6 @@
 import pride.gui.gui
+import pride.gui.grid
+
 
 import game3.events
 
@@ -133,19 +135,48 @@ class Ability_Selector(pride.gui.widgetlibrary.Page_Switching_Window):
         self.initialize_pages()
 
 
+class Grid_Cell(pride.gui.gui.Container):
+
+    def __init__(self, **kwargs):
+        super(Grid_Cell, self).__init__(**kwargs)
+        #display = self.create("pride.gui.gui.Container", text=str(self.grid_position),
+        #                      pack_mode="bottom", h_range=(0, .05))
+        self.tip_bar_text = str(self.grid_position)
+
+
+class Battle_Grid(pride.gui.grid.Grid):
+
+    defaults = {"grid_size" : (4, 4), "pack_mode" : "left",
+                "column_button_type" : Grid_Cell}
+
+
+class Character_Icon(pride.gui.gui.Button):
+
+    defaults = {"pack_mode" : "left", "character" : None}
+    autoreferences = ("character", )
+    required_attributes = ("character", )
+
+    def __init__(self, **kwargs):
+        super(Character_Icon, self).__init__(**kwargs)
+        self.tip_bar_text = "Character: {}".format(self.character.name)
+
+
 class Battle_Window(pride.gui.gui.Application):
 
-    defaults = {"event" : None, "character" : None, "ability_selector" : None}
-    mutable_defaults = {"teams" : dict, "_targets" : list, "_teams" : dict}
-    required_attributes = ("teams", )
-    autoreferences = ("field", )
+    defaults = {"event" : None, "character" : None, "ability_selector" : None,
+                "tip_bar_enabled" : False}
+    mutable_defaults = {"participants" : dict}
+    required_attributes = ("participants", )
+    autoreferences = ("battle_grid", )
 
     def __init__(self, **kwargs):
         super(Battle_Window, self).__init__(**kwargs)
         window = self.application_window
-        self.field = window.create("pride.gui.gui.Container", pack_mode="left")
-        for team in self.teams.keys():
-            self.setup_team(team)
+        grid = self.battle_grid = window.create(Battle_Grid, grid_size=(4, 4))
+        # just put all characters along the diagonal
+        for index, participant in enumerate(self.participants):
+            grid[index][index].create(Character_Icon, character=participant,
+                                      text=participant.name, center_text=False)
 
         self.actions_menu = window.create("game3.gui.actionmenu.Action_Menu",
                                           character=self.character,

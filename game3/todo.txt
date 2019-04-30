@@ -1,30 +1,12 @@
 to do:
 ----
 
-finish converting autoreferences:
-    - do tabs/window
-    - do sdl_window
+add tip text to action menu tabs
 
-rules editor
-move save character from options to character screen
-
-
-add tip bar
-    on hover, set tip bar message
-    hover end, clear tip bar message
-
-indicate unusable buttons as being unusable (e.g. grey-out)
-fade-out effects for hide/show
-hide/show buttons
-    - mouseover to left/right/top/bottom to see hide/show buttons
-
-change menus to nested/recursive menus where appropriate
-update sliders to use discrete controls/indicators
-
-
+make grid cell text toggle-able
 
 make tab bars scrollable if excess tabs are present
-change back to grid
+
 
 add battles to gui
     - make a grid
@@ -33,6 +15,32 @@ add battles to gui
     - process
     - display effects in gui
     - outcome
+
+put increment costs on tip bar text for -/+ buttons in attributes/affinities
+
+
+finish converting autoreferences:
+    - do tabs/window
+    - do sdl_window
+
+rules editor
+move save character from options to character screen
+
+
+
+indicate unusable buttons as being unusable (e.g. grey-out)
+update sliders to use discrete controls/indicators
+
+fade-out effects for hide/show
+hide/show buttons
+    - mouseover to left/right/top/bottom to see hide/show buttons
+
+change menus to nested/recursive menus where appropriate
+
+
+
+change back to grid
+
 
 
 

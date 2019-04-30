@@ -1,8 +1,30 @@
 import os
 
 import pride.gui.gui
+import pride.gui.widgetlibrary
 
 import game3.gui.misc
+
+
+class Color_Options_Button(pride.gui.widgetlibrary.Method_Button):
+
+    defaults = {"method" : "create_color_options", "h_range" : (0, .10),
+                "text" : "Color Options", "scale_to_text" : False,
+                "tip_bar_text" : "Customize color and design themes"}
+
+
+class Save_Button(pride.gui.widgetlibrary.Method_Button):
+
+    defaults = {"method" : "save_character", "h_range" : (0, .10),
+                "text" : "Save character", "scale_to_text" : False,
+                "tip_bar_text" : "Save the current character to a file"}
+
+
+class Exit_To_Title_Button(pride.gui.widgetlibrary.Method_Button):
+
+    defaults = {"method" : "exit_to_title", "h_range" : (0, .10),
+                "text" : "Exit to title", "scale_to_text" : False,
+                "tip_bar_text" : "Exit back to the title screen"}
 
 
 class Options_Window(pride.gui.gui.Window):
@@ -15,21 +37,15 @@ class Options_Window(pride.gui.gui.Window):
         super(Options_Window, self).__init__(**kwargs)
         buttons = self.create("pride.gui.gui.Container", pack_mode="top")
         self.buttons = buttons
-        buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                       method="create_color_options", h_range=(0, .10), text="Color Options",
-                       scale_to_text=False)
+        buttons.create(Color_Options_Button, target=self.reference)
         #self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
         #            method="save_state", h_range=(0, .10), text="Save game state",
         #            scale_to_text=False)
         #self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
         #            method="load_state", h_range=(0, .10), text="Load game state",
         #            scale_to_text=False)
-        self.save_button = buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                                          method="save_character", h_range=(0, .10), text="Save character",
-                                          scale_to_text=False) 
-        buttons.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
-                       method="exit_to_title", h_range=(0, .10), text="Exit to title",
-                       scale_to_text=False)
+        self.save_button = buttons.create(Save_Button, target=self.reference)
+        buttons.create(Exit_To_Title_Button, target=self.reference)
 
     def exit_to_title(self):
         self.parent_application._close_to_title()
@@ -66,7 +82,7 @@ class Options_Window(pride.gui.gui.Window):
     def close_file_selector(self):
         if self._file_selector is not None:
             assert not self._file_selector.deleted
-            selector.delete()
+            self._file_selector.delete()
             self._file_selector = None
         self.show()
 

@@ -11,7 +11,8 @@ import rules
 
 class Name_Field(pride.gui.widgetlibrary.Field):
 
-    defaults = {"field_name" : "Name", "initial_value" : ''}
+    defaults = {"field_name" : "Name", "initial_value" : '',
+                "tip_bar_text" : "Enter a name here"}
 
 
 class Attribute_Fields(pride.gui.gui.Container):
@@ -43,7 +44,9 @@ class Attribute_Fields(pride.gui.gui.Container):
                 _write_attribute(attribute, value)
             field_kwargs["initial_value"] = str(getattr(_attributes, attribute))
             column.create(pride.gui.widgetlibrary.Spin_Field, field_name=attribute,
-                          write_field_method=callback, **field_kwargs)
+                          write_field_method=callback,
+                          tip_bar_text=attributes.Attributes.description[attribute],
+                          **field_kwargs)
 
 
 class Affinity_Fields(pride.gui.gui.Container):
@@ -657,7 +660,7 @@ class Effect_Fields(pride.gui.gui.Container):
 
 class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
 
-    defaults = {"text" : "Unnamed effect"}
+    defaults = {"text" : "Unnamed effect", "delete_tip" : "Delete this effect"}
 
     def delete_tab(self):
         window = pride.objects[self.window]
@@ -671,7 +674,8 @@ class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
     defaults = {"tab_type" : Effect_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Effects", "window_type" : Effect_Fields,
-                "ability_fields" : '', "ability" : None}
+                "ability_fields" : '', "ability" : None,
+                "new_button_tip" : "Create a new effect for this ability"}
     required_attributes = ("ability_fields", )
 
     def __init__(self, **kwargs):
@@ -693,7 +697,7 @@ class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
 class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
 
-    defaults = {"text" : "Unnamed Ability"}
+    defaults = {"text" : "Unnamed Ability", "delete_tip" : "Delete this ability"}
 
     def deselect(self, mouse, next_active_object):
         super(Ability_Tab, self).deselect(mouse, next_active_object)
@@ -742,7 +746,8 @@ class Ability_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
     defaults = {"tab_type" : Ability_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Abilities", "window_type" : Ability_Fields,
-                "character" : '', "character_screen" : '', "tree" : ''}
+                "character" : '', "character_screen" : '', "tree" : '',
+                "new_button_tip" : "Create a new ability in this tree"}
     required_attributes = ("character", "character_screen", "tree")
 
     def __init__(self, **kwargs):
@@ -782,7 +787,8 @@ class Ability_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
 class Ability_Tree_Tab(pride.gui.widgetlibrary.Tab_Button):
 
-    defaults = {"text" : "Unnamed Ability Tree", "editable" : True}
+    defaults = {"text" : "Unnamed Ability Tree", "editable" : True,
+                "delete_tip" : "Delete this tree and all abilities in it"}
 
     def deselect(self, mouse, next_active_object):
         super(Ability_Tree_Tab, self).deselect(mouse, next_active_object)
@@ -827,7 +833,8 @@ class Ability_Tree_Window(pride.gui.widgetlibrary.Tabbed_Window):
 
     defaults = {"tab_type" : Ability_Tree_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Ability Trees", "window_type" : Ability_Selection_Window,
-                "character" : '', "character_screen" : ''}
+                "character" : '', "character_screen" : '',
+                "new_button_tip" : "Create a new ability tree"}
     required_attributes = ("character", "character_screen")
 
     def __init__(self, **kwargs):
@@ -888,8 +895,11 @@ class Stat_Window(pride.gui.gui.Window):
                     increment_xp=character_screen.increment_xp,
                     write_field_method=character_screen._write_attribute,
                     character=self.character)
+        tip_bar_text = "Affinity for a given element provides an energy discount when using damage effects with that element, "\
+                       "and decreases incoming damage from damage effects of that element"
         self.create("pride.gui.gui.Container", text="Affinities",
-                    pack_mode="top", h_range=(0, 40))
+                    pack_mode="top", h_range=(0, 40),
+                    tip_bar_text=tip_bar_text)
         self.create(Affinity_Fields, pack_mode="top",
                     increment_xp=character_screen.increment_xp,
                     decrement_xp=character_screen.decrement_xp,
@@ -899,10 +909,16 @@ class Stat_Window(pride.gui.gui.Window):
 
 class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
 
-    defaults = {"tab_types" : tuple(pride.gui.widgetlibrary.Tab_Button.from_info(text=text, include_delete_button=False)
-                                    for text in ("View Stats", "View Abilities", "View Options")),
+    _info = (("View Stats", "View attributes, affinities, and current status"),
+             ("View Abilities", "View ability information and effect details"),
+             ("View Options", "Modify settings and save the game"))
+    _info = (pride.gui.widgetlibrary.Tab_Button.from_info(text=text, include_delete_button=False,
+                                                          tip_bar_text=tip)
+             for text, tip in _info)
+    defaults = {"tab_types" : tuple(_info),
                 "window_types" : (Stat_Window, Ability_Tree_Window, "game3.gui.options.Options_Window"),
                 "character_screen" : '', "character" : ''}
+    del _info
 
     def create_windows(self):
         stat_tab, ability_tab, options_tab = pride.objects[self.tab_bar].tabs
@@ -934,22 +950,31 @@ class Status_Indicator(pride.gui.gui.Container):
         super(Status_Indicator, self).__init__(**kwargs)
         _character = self.character
         health_segment = self.create("pride.gui.gui.Container", pack_mode="left")
-        health_segment.create("pride.gui.gui.Container", text="Health", pack_mode="top")
+        health_segment.create("pride.gui.gui.Container", text="Health",
+                              pack_mode="top",
+                              tip_bar_text="Health decreases as you take damage")
         self.health_indicator = health_segment.create("pride.gui.gui.Container",
                                                       text=_character.format_health_stats(),
-                                                      pack_mode="top")
+                                                      pack_mode="top",
+                                                      tip_bar_text="current/max health, + health restored, - incoming damage decreased")
 
         energy_segment = self.create("pride.gui.gui.Container", pack_mode="left")
-        energy_segment.create("pride.gui.gui.Container", text="Energy", pack_mode="top")
+        energy_segment.create("pride.gui.gui.Container", text="Energy",
+                              pack_mode="top",
+                              tip_bar_text="Energy enables you to use abilities")
         self.energy_indicator = energy_segment.create("pride.gui.gui.Container",
                                                       text=_character.format_energy_stats(),
-                                                      pack_mode="top")
+                                                      pack_mode="top",
+                                                      tip_bar_text="current/max energy, + energy restored, - to energy costs")
 
         movement_segment = self.create("pride.gui.gui.Container", pack_mode="left")
-        movement_segment.create("pride.gui.gui.Container", pack_mode="top", text="Movement")
+        movement_segment.create("pride.gui.gui.Container", pack_mode="top",
+                                text="Movement",
+                                tip_bar_text="Movement determines how far and how frequently you can move")
         self.movement_indicator = movement_segment.create("pride.gui.gui.Container",
                                                           pack_mode="top",
-                                                          text=_character.format_movement_stats())
+                                                          text=_character.format_movement_stats(),
+                                                          tip_bar_text="current/max movement, + movement restored, - to movement costs")
 
 
 class Character_Screen(pride.gui.gui.Window):
