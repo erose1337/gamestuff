@@ -1,6 +1,6 @@
 import pride.components.base
 
-import rules
+import game3.rules
 import effects
 
 # Abilities composed out of target(s) and effect(s), and a name
@@ -114,7 +114,7 @@ class Ability(pride.components.base.Base):
                 else:
                     print(message.format(source.name, self.name))
 
-                distance = rules.distance_between(source.position, target.position)
+                distance = game3.rules.distance_between(source.position, target.position)
                 if (source != target and (not self.homing) and
                     distance > (self.range + max(0, (self.aoe - 1)))):
                     print("{} dodged {}'s {}".format(source.name, target.name, self.name))
@@ -125,7 +125,7 @@ class Ability(pride.components.base.Base):
         setattr(source, energy_source, current_energy - effective_cost)
 
     def calculate_ability_cost(self, source, targets):
-        return rules.calculate_ability_cost(source, self)
+        return game3.rules.calculate_ability_cost(source, self)
 
     def delete(self):
         for _effect in self._effects:
@@ -167,9 +167,9 @@ class Move(Active_Ability):
                 "energy_source" : "movement", "range" : "move"} # range determined by character.movement
 
     #def calculate_ability_cost(self, source, target):
-    #    return rules.calculate_move_cost(source, target)
+    #    return game3.rules.calculate_move_cost(source, target)
 #    def calculate_ability_cost(self, source, targets):
-#        return rules.calculate_move_cost(source, targets[0])
+#        return game3.rules.calculate_move_cost(source, targets[0])
 
 
 class Ability_Tree(pride.components.base.Base):

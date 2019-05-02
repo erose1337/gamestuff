@@ -4,7 +4,7 @@ Character Info
 Basic Info
 ----------
 - name: Unnamed Character
-- xp: 54
+- xp: 55
 
 Attributes
 ----------
@@ -29,24 +29,4 @@ Affinities
 - magic: 0
 - pierce: 0
 - slash: 0
-
-Abilities
-=========
-
-   Unnamed Ability Tree
-   ====================
-
-   Unnamed Ability
-   ---------------
-   - aoe: 1
-   - target_count: 1
-   - effect:
-
-      Damage
-      ------
-        - magnitude: 1
-        - influence: health
-        - name: Unnamed Effect
-        - element: blunt
-
 

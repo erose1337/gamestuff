@@ -7,7 +7,7 @@ import affinities
 import abilities
 import effects
 import elements
-import rules
+import game3.rules
 
 class Name_Field(pride.gui.widgetlibrary.Field):
 
@@ -299,7 +299,7 @@ class Ability_Fields(pride.gui.gui.Container):
         self.energy_cost_indicator.display.text = str(energy_cost)
 
         character_screen = self.character_screen
-        xp_cost = rules.calculate_ability_acquisition_cost(self.character, ability)
+        xp_cost = game3.rules.calculate_ability_acquisition_cost(self.character, ability)
         character_screen._modify_xp(self._old_xp_cost)
         character_screen._modify_xp(-xp_cost)
         self._old_xp_cost = xp_cost
@@ -1035,7 +1035,7 @@ class Character_Screen(pride.gui.gui.Window):
     def increment_xp(self, current_level):
         current_level = int(current_level)
         if current_level > 0:
-            cost = rules.calculate_acquisition_cost(current_level)
+            cost = game3.rules.calculate_acquisition_cost(current_level)
             self.xp += cost
             indicator = self.xp_indicator
             indicator.text = str(int(indicator.text) + cost)
@@ -1045,7 +1045,7 @@ class Character_Screen(pride.gui.gui.Window):
 
     def decrement_xp(self, current_level):
         current_level = int(current_level)
-        cost = rules.calculate_acquisition_cost(current_level + 1)
+        cost = game3.rules.calculate_acquisition_cost(current_level + 1)
         if self.xp >= cost:
             self.xp -= cost
             indicator = self.xp_indicator

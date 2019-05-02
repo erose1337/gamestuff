@@ -120,6 +120,10 @@ class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
     defaults = {"text" : "Unnamed Ability", "editable" : False,
                 "include_delete_button" : False}
 
+    def select(self, mouse):
+        super(Ability_Tab, self).select(mouse)
+        self.parent_application.select_ability(pride.objects[self.window].ability)
+
 
 class Ability_Selection_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
 
@@ -260,6 +264,15 @@ class Affinities_Viewer(Attributes_Displayer):
         super(Affinities_Viewer, self).create_attribute_fields()
 
 
+class Accept_Button(pride.gui.gui.Button):
+
+    defaults = {"text" : "Accept", "scale_to_text" : True,
+                "tip_bar_text" : "Accept the current action and proceed with the turn"}
+
+    def left_click(self, mouse):
+        self.parent_application.accept_action()
+
+
 class Action_Menu(pride.gui.widgetlibrary.Tab_Switching_Window):
 
     generator = (pride.gui.widgetlibrary.Tab_Button.from_info(text=text,
@@ -277,9 +290,14 @@ class Action_Menu(pride.gui.widgetlibrary.Tab_Switching_Window):
     autoreferences = ("status_indicator", )
 
     def initialize_tabs_and_windows(self):
+        print("Creating tabs and window")
+        bar = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
+        self.tab_bar = bar.create(self.tab_bar_type, label=self.tab_bar_label,
+                                   tab_types=self.tab_types, pack_mode="left").reference
+        bar.create(Accept_Button, pack_mode="left")
         self.status_indicator = self.create("game3.gui.charactersheet.Status_Indicator",
                                             character=self.character)
-        super(Action_Menu, self).initialize_tabs_and_windows()
+        self.create_windows()
 
     def create_windows(self):
         abilities_tab, attributes_tab, affinities_tab, status_tab = pride.objects[self.tab_bar].tabs

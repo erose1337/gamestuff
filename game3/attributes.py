@@ -1,6 +1,4 @@
 import pride.components.base
-
-import game3.rules
     
 
 class Attributes(pride.components.base.Base):

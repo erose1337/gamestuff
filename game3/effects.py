@@ -1,6 +1,6 @@
 import pride.components.base
 
-import rules
+import game3.rules
 import attributes
 
 EFFECT_TYPES = ("damage", "heal", "rest", "buff", "debuff", "move")#, "summon")
@@ -30,7 +30,7 @@ class Effect(pride.components.base.Base):
     type_name = property(_get_type_name)
 
     def _get_calulation_rule(self):
-        return rules.calculate_effect_potency(self.type_name)
+        return game3.rules.calculate_effect_potency(self.type_name)
     calculation_rule = property(_get_calulation_rule)
 
     def enqueue(self, source, target):

@@ -3,6 +3,8 @@ import pride.gui.grid
 
 
 import game3.events
+import game3.actions
+
 
 class Battle_Event(game3.events.Battle):
 
@@ -143,6 +145,9 @@ class Grid_Cell(pride.gui.gui.Container):
         #                      pack_mode="bottom", h_range=(0, .05))
         self.tip_bar_text = str(self.grid_position)
 
+    def left_click(self, mouse):
+        self.parent_application.select_target_place(self.grid_position)
+
 
 class Battle_Grid(pride.gui.grid.Grid):
 
@@ -160,12 +165,17 @@ class Character_Icon(pride.gui.gui.Button):
         super(Character_Icon, self).__init__(**kwargs)
         self.tip_bar_text = "Character: {}".format(self.character.name)
 
+    def left_click(self, mouse):
+        self.parent_application.select_target(self.character)
+
 
 class Battle_Window(pride.gui.gui.Application):
 
     defaults = {"event" : None, "character" : None, "ability_selector" : None,
-                "tip_bar_enabled" : False}
-    mutable_defaults = {"participants" : dict}
+                "tip_bar_enabled" : False, "_selected_ability" : None,
+                "processor" : None, "waiting" : False}
+    mutable_defaults = {"participants" : dict, "_targets" : list,
+                        "ready_queue" : list}
     required_attributes = ("participants", )
     autoreferences = ("battle_grid", )
 
@@ -175,16 +185,33 @@ class Battle_Window(pride.gui.gui.Application):
         grid = self.battle_grid = window.create(Battle_Grid, grid_size=(4, 4))
         # just put all characters along the diagonal
         for index, participant in enumerate(self.participants):
+            participant_name = participant.name
             grid[index][index].create(Character_Icon, character=participant,
-                                      text=participant.name, center_text=False)
+                                      text=participant_name, center_text=False)
+    #        setattr(readiness_status, participant_name, False)
+        #self.targets = window.create("pride.
 
         self.actions_menu = window.create("game3.gui.actionmenu.Action_Menu",
                                           character=self.character,
                                           pack_mode="left")
-
         processor = self.processor = self.create(Battle_Processor, event=self.event)
         self._children.remove(processor)
         self.processor.run()
+
+    def accept_action(self):
+        if self.waiting:
+            return
+        action = game3.actions.Action(source=self.character, targets=self._targets,
+                                      ability=self._selected_ability, priority=1) # not finished: priority needs to be 0 for movement ability
+        self._selected_ability = None
+        del self._targets[:]
+        self.waiting = True
+        self.event.add_action(action)
+
+    def select_ability(self, ability):
+        self._selected_ability = ability
+        del self._targets[:]
+        self.parent_application.set_tip_bar_text("{}: Select {} targets".format(ability.name, ability.target_count))
 
     def setup_team(self, team_name):
         team = self.field.create(Team, h_range=(0, .10))
@@ -193,13 +220,31 @@ class Battle_Window(pride.gui.gui.Application):
             team.add_character(character)
 
     def select_target(self, character):
+        if self._selected_ability is None:
+            return
+
         self._targets.append(character)
-        if len(self._targets) == self._target_count:
+        _targets_len = len(self._targets)
+        target_count = self._selected_ability.target_count
+        if _targets_len == target_count:
             action = game3.actions.Action(source=self.character,
                                           targets=self._targets[:],
-                                          ability=ability)
+                                          ability=self._selected_ability)
             self.event.add_action(action)
-            del self._targets[:]
+        self.parent_application.set_tip_bar_text("Current target(s): ({}/{}) {}".format(_targets_len,
+                                                                                        target_count,
+                                                                                        ', '.join(str(target) for target in self._targets)))
+
+    def select_target_place(self, grid_position):
+        if self._selected_ability is None:
+            return
+        self._move_target = grid_position
+        #self._targets.append(grid_position)
+        #if len(self._targets) == self._selected_ability.target_count:
+        action = game3.actions.Action(source=self.character,
+                                      targets=(grid_position, ),
+                                      ability=self._selected_ability)# to do
+        self.parent_application.set_tip_bar_text("Current target: " + str(self._move_target))
 
     def create_abilities_menu(self):
         if self.ability_selector is None:

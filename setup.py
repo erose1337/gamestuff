@@ -8,5 +8,5 @@ options = {"name" : "game",
            "author" : "Ella Rose",
            "author_email" : "python_pride@protonmail.com",
            "packages" : ["game", "game.items", "game.items.magic", "game.items.melee", "game.items.range",
-                         "game.skills", "game.gui", "game2", "game2.gui", "game3", "game3.gui"]}
+                         "game.skills", "game.gui", "game2", "game2.gui", "game3", "game3.gui", "game3.engine"]}
 setup(**options)

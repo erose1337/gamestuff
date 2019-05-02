@@ -3,6 +3,7 @@ import parsing
 RULES = dict() # populated via parsing.parse_rules in main
 
 def set_rules(rules_filename="rules.cef"):
+    print("Setting rules to {}".format(rules_filename))
     RULES.clear()
     RULES.update(parsing.parse_rules(rules_filename))
 
@@ -18,7 +19,7 @@ def calculate_ability_cost(character, ability):
                                     affinity_discount=affinity_f(level=0 if effect.element == "null" else
                                                                        getattr(character.affinities, effect.element)))
                       for effect in ability._effects)
-    
+
     range = ability.range if isinstance(ability.range, int) else 1
     grace_value = RULES["attributes"]["grace_value"](level=character.attributes.grace)
     homing_cost = RULES["abilities"]["homing_cost"](value=int(ability.homing))

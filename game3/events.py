@@ -65,13 +65,19 @@ class Event(pride.components.base.Base):
 class Battle(Event):
 
     defaults = {"effect_queue_count" : 3}
+    mutable_defaults = {"action_queue" : list}
 
     def display_state(self):
         return (_character.format_stats() for _character in self.characters)
 
+    def add_action(self, action):
+        self.action_queue.append(action)
+        if len(self.action_queue) == len(self.characters):
+            pass
+            # do stuff
+
     def get_actions(self):
-        characters = self.characters
-        return [character.select_action(characters) for character in characters]
+        return self.action_queue
 
     def determine_outcome(self):
         living_characters = [character for character in self.characters if not character.is_dead]

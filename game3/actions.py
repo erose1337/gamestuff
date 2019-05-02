@@ -6,7 +6,7 @@ get_selection = pride.components.shell.get_selection
 
 import abilities
 import ai
-import rules
+import game3.rules
 
 def present_action_menu(acting_character, characters):
     ability_set = acting_character.abilities.active_abilities()
@@ -68,18 +68,18 @@ def use_ability(acting_character, characters, ability_set):
                         print("Invalid y coordinate")
                     else:
                         targets = ((x, y), )
-                        if rules.distance_between(acting_character.position, targets[0]) > acting_character.movement:
+                        if game3.rules.distance_between(acting_character.position, targets[0]) > acting_character.movement:
                             print("Cannot move that far; Movement points: {}".format(acting_character.movement))
                         else:
                             priority = 0
                             break
             break
         else:
-            max_distance = rules.determine_range(ability.range)
+            max_distance = game3.rules.determine_range(ability.range)
             position = acting_character.position
             available_targets = []
             for character in characters:
-                if rules.distance_between(position, character.position) <= max_distance:
+                if game3.rules.distance_between(position, character.position) <= max_distance:
                     available_targets.append(character)
             if not available_targets:
                 print("No targets within {} for {}".format(max_distance, ability))
@@ -108,7 +108,7 @@ def use_ability(acting_character, characters, ability_set):
                     for target in targets:
                         _targets += [character for character in characters if
                                      character != target and
-                                     rules.distance_between(target.position,
+                                     game3.rules.distance_between(target.position,
                                                             character.position) <= ability.aoe]
                     targets += _targets
         break

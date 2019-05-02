@@ -1,7 +1,9 @@
 to do:
 ----
 
-add tip text to action menu tabs
+gui password screen
+
+consider moving aoe to effects rather than abilities
 
 make grid cell text toggle-able
 
@@ -9,9 +11,14 @@ make tab bars scrollable if excess tabs are present
 
 
 add battles to gui
-    - make a grid
-    - place characters in a given region in the grid
+    - make a grid - done
+    - place characters in a given region in the grid - done
     - collect input from players
+        - select an ability
+            - use the selection from the abilities viewer to select an ability
+            - left click on grid to select target(s)
+        - click accept button to submit action to queue
+
     - process
     - display effects in gui
     - outcome

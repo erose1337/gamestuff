@@ -87,7 +87,7 @@ class Options_Window(pride.gui.gui.Window):
         self.show()
 
     def _write_color_filename_export(self, field_name, value):
-        self.parent_application.update_recent_files(value, "color")
+        self._file_selector.update_recent_files(value, "color")
         self.color_options_file = value
         self.close_file_selector()
         self._export_color_options()
@@ -124,7 +124,7 @@ class Options_Window(pride.gui.gui.Window):
     def _write_color_filename_import(self, field_name, value):
         if not os.path.exists(value):
             return
-        self.parent_application.update_recent_files(value, "color")
+        self._file_selector.update_recent_files(value, "color")
         self.color_options_file = value
         self._file_selector.delete()
         self.show()

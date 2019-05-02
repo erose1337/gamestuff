@@ -29,7 +29,6 @@
 #           heal/regenerate
 
 import abilities
-import rules
 
 def determine_action(actor, opponent):
     high_health = determine_health(actor, opponent)

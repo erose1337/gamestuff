@@ -4,7 +4,7 @@ from pride.components.shell import get_selection
 import actions
 import parsing
 import effects
-import rules
+import game3.rules
 import attributes
 import affinities
 import effects
@@ -40,9 +40,10 @@ class Character(pride.components.base.Base):
                    "_energy_scalar" : 10, "_base_health" : 10,
                    "_base_energy" : 10, "_movement" : 0, "_base_movement" : 1,
                    "_movement_scalar" : 1}
+    
     mutable_defaults = {"effect_queue" : effects.NEW_EFFECT_QUEUE,
                         "reaction_effects" : list,
-                        "xp" : rules.RULES["character creation"]["starting_xp_amount"],
+                        "xp" : game3.rules.RULES["character creation"]["starting_xp_amount"],
                         "attributes" : attributes.Attributes,
                         "affinities" : affinities.Affinities,
                         "abilities"  : abilities.Abilities}
@@ -56,7 +57,7 @@ class Character(pride.components.base.Base):
     health = property(_get_health, _set_health)
 
     def _get_max_health(self):
-        return rules.calculate_max_health(self.attributes.toughness)
+        return game3.rules.calculate_max_health(self.attributes.toughness)
     max_health = property(_get_max_health)
 
     def _get_energy(self):
@@ -66,7 +67,7 @@ class Character(pride.components.base.Base):
     energy = property(_get_energy, _set_energy)
 
     def _get_max_energy(self):
-        return rules.calculate_max_energy(self.attributes.willpower)
+        return game3.rules.calculate_max_energy(self.attributes.willpower)
     max_energy = property(_get_max_energy)
 
     def _get_is_dead(self):
@@ -80,7 +81,7 @@ class Character(pride.components.base.Base):
     movement = property(_get_movement, _set_movement)
 
     def _get_max_movement(self):
-        return rules.calculate_max_movement(self.attributes.mobility)
+        return game3.rules.calculate_max_movement(self.attributes.mobility)
     max_movement = property(_get_max_movement)
 
     def initialize(self):
@@ -133,7 +134,11 @@ class Character(pride.components.base.Base):
     def from_sheet(cls, sheet_filename):
         info = parsing.parse_character(sheet_filename)
         info["_character_file"] = sheet_filename
-        return cls(is_npc=False, **info)
+        return cls(**info)
+
+    @classmethod
+    def from_sheet_info(cls, info):
+        return cls(**info)
 
     def to_sheet(self, sheet_filename):
         with open(sheet_filename, 'w') as _file:
@@ -182,21 +187,21 @@ class Character(pride.components.base.Base):
 
     def format_health_stats(self):
         attributes = self.attributes
-        regen_value = rules.calculate_attribute_value("regeneration", attributes.regeneration)
-        soak_value = rules.calculate_attribute_value("soak", attributes.soak)
+        regen_value = game3.rules.calculate_attribute_value("regeneration", attributes.regeneration)
+        soak_value = game3.rules.calculate_attribute_value("soak", attributes.soak)
         return "{}/{}, +{}, -{}".format(self.health, self.max_health,
                                         regen_value, soak_value)
 
     def format_energy_stats(self):
         attributes = self.attributes
-        recovery_value = rules.calculate_attribute_value("recovery", attributes.recovery)
-        grace_value = rules.calculate_attribute_value("grace", attributes.grace)
+        recovery_value = game3.rules.calculate_attribute_value("recovery", attributes.recovery)
+        grace_value = game3.rules.calculate_attribute_value("grace", attributes.grace)
         return "{}/{}, +{}, -{}".format(self.energy, self.max_energy,
                                         recovery_value, grace_value)
 
     def format_movement_stats(self):
         attributes = self.attributes
-        recup_value = rules.calculate_attribute_value("recuperation", attributes.recuperation)
-        conditioning_value = rules.calculate_attribute_value("conditioning", attributes.conditioning)
+        recup_value = game3.rules.calculate_attribute_value("recuperation", attributes.recuperation)
+        conditioning_value = game3.rules.calculate_attribute_value("conditioning", attributes.conditioning)
         return "{}/{}, +{}, -{}".format(self.movement, self.max_movement,
                                         recup_value, conditioning_value)
