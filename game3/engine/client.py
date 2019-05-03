@@ -7,6 +7,7 @@ class Game_Client(pride.components.authentication3.Authenticated_Client):
 
     defaults = {"sdl_window" : None, "target_service" : "/Python/Game_Server",
                 "game_window_type" : "game3.gui.window2.Game_Window"}
+    verbosity = {"login_success" : "vv", "login_failure" : "vv", "login" : "vv"}
     autoreferences = ("sdl_window", )
     required_attributes = ("sdl_window", )
 

@@ -1,7 +1,7 @@
 to do:
 ----
 
-gui password screen
+hide password characters as they're typed
 
 consider moving aoe to effects rather than abilities
 

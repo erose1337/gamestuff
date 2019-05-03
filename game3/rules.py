@@ -3,7 +3,6 @@ import parsing
 RULES = dict() # populated via parsing.parse_rules in main
 
 def set_rules(rules_filename="rules.cef"):
-    print("Setting rules to {}".format(rules_filename))
     RULES.clear()
     RULES.update(parsing.parse_rules(rules_filename))
 
