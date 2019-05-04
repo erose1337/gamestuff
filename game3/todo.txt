@@ -1,7 +1,32 @@
 to do:
 ----
 
-hide password characters as they're typed
+slider field position still not accurate
+    - discrete controls would be much more accurate
+
+subclass user and extend handle_not_registered to work with gui
+
+implement fade-out and colors in tip bar text?
+make auto-register control auto-register flag
+change Tab_Buttons to be Toggles
+
+
+re-organize theme profiles in the color editor
+    - scrollable tab bar?
+    - scrollable pull-out drawer?
+
+
+re-do menus
+    - create character
+    - load character
+        - select world
+        - select place
+        - select event
+    - options
+        - color options
+        - exit from the options menu
+            - save character when exiting
+
 
 consider moving aoe to effects rather than abilities
 

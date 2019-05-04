@@ -20,12 +20,19 @@ class Save_Button(pride.gui.widgetlibrary.Method_Button):
                 "tip_bar_text" : "Save the current character to a file"}
 
 
-class Exit_To_Title_Button(pride.gui.widgetlibrary.Method_Button):
+class Save_Character_Button(pride.gui.widgetlibrary.Method_Button):
 
-    defaults = {"method" : "exit_to_title", "h_range" : (0, .10),
-                "text" : "Exit to title", "scale_to_text" : False,
+    defaults = {"method" : "save_and_exit", "h_range" : (0, .10),
+                "text" : "Save and exit editor", "scale_to_text" : False,
                 "tip_bar_text" : "Exit back to the title screen"}
+    autoreferences = ("game_client", )
 
+    #def left_click(self, mouse):
+    #    super(Save_Character_Button, self).left_click(mouse)
+        #self.game_client.save_character()
+        # pass game_client in via kwargs in create
+        #   must change ancestor of all objects :(
+        #       - or, could change what Button/Container/etc inherit from
 
 class Options_Window(pride.gui.gui.Window):
 
@@ -44,16 +51,11 @@ class Options_Window(pride.gui.gui.Window):
         #self.create("pride.gui.widgetlibrary.Method_Button", target=self.reference,
         #            method="load_state", h_range=(0, .10), text="Load game state",
         #            scale_to_text=False)
-        self.save_button = buttons.create(Save_Button, target=self.reference)
-        buttons.create(Exit_To_Title_Button, target=self.reference)
+        #self.save_button = buttons.create(Save_Button, target=self.reference)
+        buttons.create(Save_Character_Button, target=self.reference)
 
-    def exit_to_title(self):
-        self.parent_application._close_to_title()
-
-    def save_character(self):
-        screen = self.parent_application.character_screen
-        if screen is not None:
-            screen.save_character()
+    def save_and_exit(self):
+        self.parent_application.save_character()
 
     def create_color_options(self):
         if self.theme_customizer is not None:

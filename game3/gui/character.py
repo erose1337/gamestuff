@@ -14,7 +14,8 @@ class Character_Icon(pride.gui.gui.Button):
 
 class New_Character_Icon(pride.gui.gui.Button):
 
-    defaults = {"text" : "New Character"}
+    defaults = {"text" : "New Character",
+                "tip_bar_text" : "Design and create a new character"}
 
     def left_click(self, mouse):
         self.parent_application.create_new_character()
@@ -28,7 +29,7 @@ class New_Character_Icon(pride.gui.gui.Button):
 class Character_Selection_Screen(pride.gui.gui.Application):
 
     defaults = {"grid_type" : "pride.gui.grid.Grid", "characters" : tuple,
-                "column_button_type" : Character_Icon,
+                "column_button_type" : "pride.gui.gui.Container",
                 "info_viewer_type" : "game3.gui.actionmenu.Action_Menu",
                 "startup_components" : tuple(), "tip_bar_enabled" : False,
                 "character_editor_screen_type" : "game3.gui.charactersheet.Character_Screen"}
@@ -47,13 +48,14 @@ class Character_Selection_Screen(pride.gui.gui.Application):
         self.grid = grid
         for row_no, _characters in enumerate(slide(characters, size)):
             for column_no, character in enumerate(_characters):
-                grid[row_no].create(Character_Icon, character=character)
+                grid[row_no][column_no].create(Character_Icon, character=character)
         if characters and column_no - 1 == size:
             row_number += 1
             column_no = 0
         else:
             row_no = column_no = 0
         grid[row_no][column_no].create(New_Character_Icon)
+        self.viewer = self.application_window.create("pride.gui.gui.Container", pack_mode="left")
 
     def view_character(self, character):
         if self.viewer is not None:
@@ -66,7 +68,13 @@ class Character_Selection_Screen(pride.gui.gui.Application):
             self.viewer.delete()
         if self.grid is not None:
             self.grid.hide()
-        character = game3.character.Character()
+        character = self.character = game3.character.Character()
         create = self.application_window.create
         self.character_editing_screen = create(self.character_editor_screen_type,
                                                character=character)
+
+    def save_character(self):
+        window = self.parent_application
+        window.game_client.save_character(self.character.name, self.character.to_info())
+        window.game_client.get_character_info()
+        self.delete()

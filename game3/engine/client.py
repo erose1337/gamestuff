@@ -13,7 +13,8 @@ class Game_Client(pride.components.authentication3.Authenticated_Client):
 
     def __init__(self, **kwargs):
         super(Game_Client, self).__init__(**kwargs)
-        window = self.game_window = self.sdl_window.create(self.game_window_type)
+        window = self.game_window = self.sdl_window.create(self.game_window_type,
+                                                           game_client=self)
         window.show_status("Connecting...", fade_out=False)
 
     def login_success(self, login_message):
@@ -27,7 +28,8 @@ class Game_Client(pride.components.authentication3.Authenticated_Client):
     def show_character_screen(self, character_info):
         window = self.game_window
         window.hide_status()#set_status("Drawing characters...", fade_out=False)
-        characters = [game3.character.Character.from_info(info) for info in character_info]
+        #print type(character_info), character_info
+        characters = [game3.character.Character.from_bytes(info) for info in character_info]
         window.load_character_selection_screen(characters)
 
         # when to call window.clear_status ?
@@ -36,8 +38,8 @@ class Game_Client(pride.components.authentication3.Authenticated_Client):
     @remote_procedure_call(callback_name="character_selected")
     def select_character(self, name): pass
 
+    @remote_procedure_call(callback_name="save_character_result")
+    def save_character(self, name, character_sheet): pass
 
-
-
-# character selection screen
-# show available characters in a grid, with abilities/attributes/etc
+    def save_character_result(self, result):
+        self.alert("Save character result: {}".format(result))

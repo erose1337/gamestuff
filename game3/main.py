@@ -14,7 +14,7 @@ class Launcher(pride.gui.main.Gui):
         pride.objects["/Python"].create("game3.engine.server.Game_Server")
         client = self.user.create("game3.engine.client.Game_Client",
                                   sdl_window=pride.objects[self.sdl_window],
-                                  username=username)
+                                  username=username, auto_register=True)
         self.delete()
 
 def main():

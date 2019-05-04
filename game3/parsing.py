@@ -1,3 +1,8 @@
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
+
 import cefparser
 
 import expreval
@@ -12,9 +17,24 @@ class InvalidEffectInfo(Exception): pass
 ABILITY_DISALLOW = ("no_cost", )
 EFFECT_DISALLOW = ("queue_number", "_adjustment")
 
-def parse_character(filename, ability_disallow=ABILITY_DISALLOW,
+def parse_filename(filename, ability_disallow=ABILITY_DISALLOW,
                     effect_disallow=EFFECT_DISALLOW):
     info = cefparser.parse_filename(filename)
+    return parse_info(info, ability_disallow, effect_disallow)
+
+def parse_file(_file, ability_disallow=ABILITY_DISALLOW,
+               effect_disallow=EFFECT_DISALLOW):
+    info = cefparser.parse(_file)
+    return parse_info(info, ability_disallow, effect_disallow)
+
+def parse_bytes(_file_bytes, ability_disallow=ABILITY_DISALLOW,
+                effect_disallow=EFFECT_DISALLOW):
+    _file = StringIO.StringIO(_file_bytes)
+    _file.seek(0)
+    return parse_file(_file, ability_disallow, effect_disallow)
+
+def parse_info(info, ability_disallow=ABILITY_DISALLOW,
+               effect_disallow=EFFECT_DISALLOW):
     character_info = info["Character Info"]
     _attributes = parse_attributes(character_info)
     _affinities = parse_affinities(character_info)
@@ -95,7 +115,7 @@ def parse_rules(filename):
     return output
 
 if __name__ == "__main__":
-    character_info = parse_character("demochar.cef")
+    character_info = parse_filename("demochar.cef")
     rules = parse_rules("rules.cef")
     print rules["abilities"]["abilities_energy_cost"](range=1, aoe=1, targets=1, effect_cost=1, grace=1)
     print rules["attributes"]["max_health_value"](level=10)

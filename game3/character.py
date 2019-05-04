@@ -1,3 +1,8 @@
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
+
 import pride.components.base
 from pride.components.shell import get_selection
 
@@ -40,7 +45,7 @@ class Character(pride.components.base.Base):
                    "_energy_scalar" : 10, "_base_health" : 10,
                    "_base_energy" : 10, "_movement" : 0, "_base_movement" : 1,
                    "_movement_scalar" : 1}
-    
+
     mutable_defaults = {"effect_queue" : effects.NEW_EFFECT_QUEUE,
                         "reaction_effects" : list,
                         "xp" : game3.rules.RULES["character creation"]["starting_xp_amount"],
@@ -140,50 +145,63 @@ class Character(pride.components.base.Base):
     def from_sheet_info(cls, info):
         return cls(**info)
 
+    @classmethod
+    def from_bytes(cls, saved_info):
+        return cls(**parsing.parse_bytes(saved_info))
+
     def to_sheet(self, sheet_filename):
         with open(sheet_filename, 'w') as _file:
-            _file.write("Character Info\n")
-            _file.write('=' * len("Character Info") + "\n\n")
-            _file.write("Basic Info\n")
-            _file.write('-' * len("Basic Info") + '\n')
-            _file.write("- name: {}\n".format(self.name))
-            _file.write("- xp: {}\n\n".format(self.xp))
-            _file.write("Attributes\n")
-            _file.write('-' * len("Attributes") + '\n')
-            for attribute in ("toughness", "regeneration", "soak",
-                              "willpower", "recovery", "grace",
-                              "mobility", "recuperation", "conditioning"):
-                _file.write("- {}: {}\n".format(attribute, getattr(self.attributes, attribute)))
-            #_file.write('\n'.join("- {}: {}".format(attribute, value) for attribute, value in
-            #                                        sorted(self.attributes.items())))
-            _file.write("\n")
-            _file.write("Affinities\n")
-            _file.write('-' * len("Affinities") + '\n')
-            _file.write('\n'.join("- {}: {}".format(element, value) for element, value in
-                                                    sorted(self.affinities.items())))
-            _file.write("\n\n")
-            if not len(self.abilities.ability_trees):
-                return # don't write abilities category if there are no abilities
-            _file.write("Abilities\n")
-            _file.write('=' * len("Abilities") + "\n\n")
-            for ability_tree, _abilities in self.abilities.to_info().items():
-                _file.write("   {}\n".format(ability_tree))
-                _file.write("   {}".format('=' * len(ability_tree) + "\n\n"))
-                for ability_name, fields in _abilities.items():
-                    _file.write("   {}\n".format(ability_name))
-                    _file.write("   {}".format('-' * len(ability_name) + '\n'))
-                    for field, value in sorted(fields.items()):
-                        if field[:6] != "effect":
-                            _file.write("   - {}: {}\n".format(field, value))
-                    for field, value in sorted(fields.items()):
-                        if field[:6] == "effect":
-                            _file.write("   - {}:\n\n".format(field))
-                            for _entry, _fields in value.items():
-                                _file.write("      {}\n".format(_entry))
-                                _file.write("      {}".format('-' * len(_entry) + '\n'))
-                                for _field, _value in _fields.items():
-                                    _file.write("        - {}: {}\n".format(_field, _value))
-                            _file.write('\n\n')
+            self.to_file(_file)
+
+    def to_info(self):
+        stringio = StringIO.StringIO()
+        self.to_file(stringio)
+        stringio.seek(0)
+        return stringio.read()
+
+    def to_file(self, _file):
+        _file.write("Character Info\n")
+        _file.write('=' * len("Character Info") + "\n\n")
+        _file.write("Basic Info\n")
+        _file.write('-' * len("Basic Info") + '\n')
+        _file.write("- name: {}\n".format(self.name))
+        _file.write("- xp: {}\n\n".format(self.xp))
+        _file.write("Attributes\n")
+        _file.write('-' * len("Attributes") + '\n')
+        for attribute in ("toughness", "regeneration", "soak",
+                          "willpower", "recovery", "grace",
+                          "mobility", "recuperation", "conditioning"):
+            _file.write("- {}: {}\n".format(attribute, getattr(self.attributes, attribute)))
+        #_file.write('\n'.join("- {}: {}".format(attribute, value) for attribute, value in
+        #                                        sorted(self.attributes.items())))
+        _file.write("\n")
+        _file.write("Affinities\n")
+        _file.write('-' * len("Affinities") + '\n')
+        _file.write('\n'.join("- {}: {}".format(element, value) for element, value in
+                                                sorted(self.affinities.items())))
+        _file.write("\n\n")
+        if not len(self.abilities.ability_trees):
+            return # don't write abilities category if there are no abilities
+        _file.write("Abilities\n")
+        _file.write('=' * len("Abilities") + "\n\n")
+        for ability_tree, _abilities in self.abilities.to_info().items():
+            _file.write("   {}\n".format(ability_tree))
+            _file.write("   {}".format('=' * len(ability_tree) + "\n\n"))
+            for ability_name, fields in _abilities.items():
+                _file.write("   {}\n".format(ability_name))
+                _file.write("   {}".format('-' * len(ability_name) + '\n'))
+                for field, value in sorted(fields.items()):
+                    if field[:6] != "effect":
+                        _file.write("   - {}: {}\n".format(field, value))
+                for field, value in sorted(fields.items()):
+                    if field[:6] == "effect":
+                        _file.write("   - {}:\n\n".format(field))
+                        for _entry, _fields in value.items():
+                            _file.write("      {}\n".format(_entry))
+                            _file.write("      {}".format('-' * len(_entry) + '\n'))
+                            for _field, _value in _fields.items():
+                                _file.write("        - {}: {}\n".format(_field, _value))
+                        _file.write('\n\n')
 
     def format_health_stats(self):
         attributes = self.attributes
