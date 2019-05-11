@@ -75,7 +75,7 @@ class Options_Window(pride.gui.gui.Window):
         self.buttons.hide()
 
     def export_color_options(self):
-        self._file_selector = self.parent.create("game3.gui.window.File_Selector",
+        self._file_selector = self.parent.create("game3.gui.window2.File_Selector",
                                                  write_field_method=self._write_color_filename_export,
                                                  file_category="color",
                                                  delete_callback=self.close_file_selector)
@@ -117,7 +117,7 @@ class Options_Window(pride.gui.gui.Window):
     #    self.hide_status()
 
     def import_color_options(self):
-        self._file_selector = self.parent.create("game3.gui.window.File_Selector",
+        self._file_selector = self.parent.create("game3.gui.window2.File_Selector",
                                                  write_field_method=self._write_color_filename_import,
                                                  file_category="color",
                                                  delete_callback=self.close_file_selector)
@@ -125,6 +125,7 @@ class Options_Window(pride.gui.gui.Window):
 
     def _write_color_filename_import(self, field_name, value):
         if not os.path.exists(value):
+            self.show_status("File does not exist")
             return
         self._file_selector.update_recent_files(value, "color")
         self.color_options_file = value

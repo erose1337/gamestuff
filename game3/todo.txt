@@ -1,13 +1,18 @@
 to do:
 ----
+optimize rendering process
 
-slider field position still not accurate
-    - discrete controls would be much more accurate
+make proper file selector with directory viewer
 
-subclass user and extend handle_not_registered to work with gui
 
+discrete controls/indicator for slider
+    - too slow, too many things to draw
+
+
+set timeout on tip bar text?
 implement fade-out and colors in tip bar text?
-make auto-register control auto-register flag
+
+
 change Tab_Buttons to be Toggles
 
 
@@ -61,7 +66,6 @@ move save character from options to character screen
 
 
 indicate unusable buttons as being unusable (e.g. grey-out)
-update sliders to use discrete controls/indicators
 
 fade-out effects for hide/show
 hide/show buttons
@@ -110,6 +114,10 @@ theme designer applet
 Known Issues
 ------
 Expressions such as 2 ^ (2 ^ 128) in the rules can cause the program to hang
+
+text_background_color causes sdl2.ext.font to hiccup. The following change to sdl2.ext.font "fixes" it (but still doesn't display text background color)
+
+    - had to install not yet accepted patch https://github.com/marcusva/py-sdl2/pull/134
 
 
 

@@ -17,6 +17,7 @@ class File_Selector(pride.gui.gui.Window):
         self.selector = window.create(pride.gui.widgetlibrary.Field,
                                       field_name="filename", initial_value=self.initial_value,
                                       h_range=(0, .10), write_field_method=self.write_field_method)
+        self.selector.select(None) # auto-select file entry box so it doesn't have to be clicked on
         bottom = window.create("pride.gui.gui.Container", pack_mode="bottom")
         recent_files = self.recent_files.setdefault(self.file_category, [])
         file_count = len(recent_files)
