@@ -80,7 +80,7 @@ class Game_Window(pride.gui.gui.Application):
     def initialize_tip_bar(self):
         self.application_window = self.application_window.create("game3.gui.stars.Star_Background",
                                                                  pack_mode="main", star_count=256,
-                                                                 animate=False)
+                                                                 animate=True)
         if self.tip_bar_enabled:
             self.tip_bar = self.application_window.create(self.tip_bar_type, h_range=(0, .05),
                                                           pack_mode="bottom", text="tip bar")

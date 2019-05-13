@@ -7,7 +7,8 @@ ARGPARSER.add_argument("-r", "--rules", help="Specify a custom rule set file")
 
 import game3.rules
 
-class Test_User(pride.components.user.User):
+class Test_User(pride.gui.main.User):
+    # auto-register is controlled by a button on the lock screen
     # possible to make a `@not_in_production` decorator?
     defaults = {"kdf_iterations" : 1}
 
