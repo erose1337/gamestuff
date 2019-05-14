@@ -1,24 +1,20 @@
 to do:
 ----
-optimize rendering process
+
+Convert Fields to autoreferences
+
+
+
+point perspective
+different colors/sizes of stars, add tails
+
 
 make proper file selector with directory viewer
 
 
-discrete controls/indicator for slider
-    - too slow, too many things to draw
-
-
+wire alerts into tip bar text?
 set timeout on tip bar text?
 implement fade-out and colors in tip bar text?
-
-
-change Tab_Buttons to be Toggles
-
-
-re-organize theme profiles in the color editor
-    - scrollable tab bar?
-    - scrollable pull-out drawer?
 
 
 re-do menus
@@ -37,7 +33,6 @@ consider moving aoe to effects rather than abilities
 
 make grid cell text toggle-able
 
-make tab bars scrollable if excess tabs are present
 
 
 add battles to gui

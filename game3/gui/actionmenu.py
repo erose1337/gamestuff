@@ -1,5 +1,5 @@
 import pride.gui.gui
-import pride.gui.widgetlibrary
+import pride.gui.widgets.tabs
 
 import game3.abilities
 import game3.elements
@@ -44,13 +44,13 @@ class Effect_Fields(pride.gui.gui.Container):
                 row3.create(Displayer, attribute=attribute, _object=effect)
 
 
-class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Effect_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Effect", "editable" : False,
                 "include_delete_button" : False}
 
 
-class Effect_Selection_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
+class Effect_Selection_Window(pride.gui.widgets.tabs.Tab_Switching_Window):
 
     defaults = {"tab_type" : Effect_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Effects", "window_type" : Effect_Fields,
@@ -61,23 +61,22 @@ class Effect_Selection_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
         tab_type = self.tab_type.from_info
         self.tab_types = [tab_type(text=effect.defaults["name"]) for effect in self.ability.effects]
         self.tab_bar = self.create(self.tab_bar_type, label=self.tab_bar_label,
-                                   tab_types=self.tab_types).reference
+                                   tab_types=self.tab_types)
         self.create_windows()
 
     def create_windows(self):
-        tabs = pride.objects[self.tab_bar].tabs
+        tabs = self.tab_bar.tabs
         window_type = self.window_type
         ability = self.ability
         _effects = ability.effects
         for index, tab in reversed(list(enumerate(tabs))):
             window = self.create(window_type, effect=_effects[index], tab=tab)
-            tab = pride.objects[tab]
-            tab.window = window.reference
+            tab.window = window
             if index:
                 window.hide()
-                pride.objects[tab.indicator].disable_indicator()
+                tab.indicator.disable_indicator()
             else:
-                pride.objects[tab.indicator].enable_indicator()
+                tab.indicator.enable_indicator()
 
 
 class Ability_Fields(pride.gui.gui.Container):
@@ -115,17 +114,17 @@ class Ability_Fields(pride.gui.gui.Container):
         self.effects_window = self.create(Effect_Selection_Window, ability=ability)
 
 
-class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Ability_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability", "editable" : False,
                 "include_delete_button" : False}
 
     def select(self, mouse):
         super(Ability_Tab, self).select(mouse)
-        self.parent_application.select_ability(pride.objects[self.window].ability)
+        self.parent_application.select_ability(self.window.ability)
 
 
-class Ability_Selection_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
+class Ability_Selection_Window(pride.gui.widgets.tabs.Tab_Switching_Window):
 
     defaults = {"tab_type" : Ability_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Abilities", "window_type" : Ability_Fields,
@@ -139,34 +138,33 @@ class Ability_Selection_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
         tab_type = self.tab_type.from_info
         self.tab_types = [tab_type(text=name) for name in ability_names]
         self.tab_bar = self.create(self.tab_bar_type, label=self.tab_bar_label,
-                                   tab_types=self.tab_types).reference
+                                   tab_types=self.tab_types)
         self.create_windows()
 
     def create_windows(self):
-        tabs = pride.objects[self.tab_bar].tabs
+        tabs = self.tab_bar.tabs
         window_type = self.window_type
         _abilities = [getattr(self.tree, name) for name in self.tree.abilities]
         _character = self.character
         for index, tab in reversed(list(enumerate(tabs))):
             window = self.create(window_type, ability=_abilities[index], tab=tab,
                                  character=_character)
-            tab = pride.objects[tab]
-            tab.window = window.reference
+            tab.window = window
             if index:
                 window.hide()
-                pride.objects[tab.indicator].disable_indicator()
+                tab.indicator.disable_indicator()
             else:
-                pride.objects[tab.indicator].enable_indicator()
+                tab.indicator.enable_indicator()
 
 
-class Ability_Tree_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Ability_Tree_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability Tree", "editable" : False,
                 "include_delete_button" : False,
                 "tip_bar_text" : "View ability information"}
 
 
-class Abilities_Viewer(pride.gui.widgetlibrary.Tab_Switching_Window):
+class Abilities_Viewer(pride.gui.widgets.tabs.Tab_Switching_Window):
 
     defaults = {"tab_type" : Ability_Tree_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Ability Trees", "window_type" : Ability_Selection_Window,
@@ -176,7 +174,7 @@ class Abilities_Viewer(pride.gui.widgetlibrary.Tab_Switching_Window):
     def initialize_tabs_and_windows(self):
         tab_bar = self.create(self.tab_bar_type, label=self.tab_bar_label,
                               tab_types=self.tab_types)
-        self.tab_bar = tab_bar.reference
+        self.tab_bar = tab_bar
         tree_names = [tree for tree in self.character.abilities]
         if tree_names:
             window_types = []
@@ -189,20 +187,20 @@ class Abilities_Viewer(pride.gui.widgetlibrary.Tab_Switching_Window):
             self.create_windows()
 
     def create_windows(self):
-        tabs = pride.objects[self.tab_bar].tabs
+        tabs = self.tab_bar.tabs
         abilities = self.character.abilities
         tree_names = list(abilities)
         for index, window_type in reversed(list(enumerate(self.window_types))):
             window = self.create(window_type, tab=tabs[index],
                                  character=self.character,
                                  tree=getattr(abilities, tree_names[index]))
-            tab = pride.objects[tabs[index]]
-            tab.window = window.reference
+            tab = tabs[index]
+            tab.window = window
             if index:
                 window.hide()
-                pride.objects[tab.indicator].disable_indicator()
+                tab.indicator.disable_indicator()
             else:
-                pride.objects[tab.indicator].enable_indicator()
+                tab.indicator.enable_indicator()
 
 
 class Status_Window(pride.gui.gui.Container):
@@ -273,9 +271,9 @@ class Accept_Button(pride.gui.gui.Button):
         self.parent_application.accept_action()
 
 
-class Action_Menu(pride.gui.widgetlibrary.Tab_Switching_Window):
+class Action_Menu(pride.gui.widgets.tabs.Tab_Switching_Window):
 
-    generator = (pride.gui.widgetlibrary.Tab_Button.from_info(text=text,
+    generator = (pride.gui.widgets.tabs.Tab_Button.from_info(text=text,
                                                               include_delete_button=False,
                                                               tip_bar_text=tip)
                  for text, tip in (("Abilities", "Examine and select an ability"),
@@ -290,24 +288,25 @@ class Action_Menu(pride.gui.widgetlibrary.Tab_Switching_Window):
     autoreferences = ("status_indicator", )
 
     def initialize_tabs_and_windows(self):
-        print("Creating tabs and window")
         bar = self.create("pride.gui.gui.Container", pack_mode="top", h_range=(0, 40))
         self.tab_bar = bar.create(self.tab_bar_type, label=self.tab_bar_label,
-                                   tab_types=self.tab_types, pack_mode="left").reference
+                                   tab_types=self.tab_types, pack_mode="left")
         bar.create(Accept_Button, pack_mode="left")
         self.status_indicator = self.create("game3.gui.charactersheet.Status_Indicator",
                                             character=self.character)
         self.create_windows()
 
     def create_windows(self):
-        abilities_tab, attributes_tab, affinities_tab, status_tab = pride.objects[self.tab_bar].tabs
         _character = self.character
-        for tab, window_type in reversed(zip(pride.objects[self.tab_bar].tabs, self.window_types)):
+        for tab, window_type in reversed(zip(self.tab_bar.tabs, self.window_types)):
             window = self.create(window_type, tab=tab, character=_character)
-            reference = window.reference
-            setattr(self, window_type.__name__.lower(), reference)
-            tab = pride.objects[tab]
-            tab.window = reference
+            setattr(self, window_type.__name__.lower(), window)
+            tab.window = window
             window.hide()
         window.show()
-        pride.objects[tab.indicator].enable_indicator()
+        tab.indicator.enable_indicator()
+
+    def delete(self):
+        for window_type in self.window_types:
+            setattr(self, window_type, None)
+        super(Action_Menu, self).delete()

@@ -1,5 +1,6 @@
 import pride.gui.gui
 import pride.gui.widgetlibrary
+import pride.gui.widgets.tabs
 from pride.functions.utilities import slide
 
 import attributes
@@ -107,11 +108,10 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
         if selection == "Active":
             if ability_fields.active_or_passive != "Active":
                 ability_fields.active_or_passive = "Active"
-                for reference in ability_fields.effects_window.window_listing:
-                    effect_fields = pride.objects[reference]
+                for effect_fields in ability_fields.effects_window.window_listing:
                     effect_fields.update_values(duration=0)
                     duration_field = effect_fields.duration_field
-                    duration_field.field.text = '0'
+                    pride.objects[duration_field.field].text = '0'
                 ability_fields.update_costs()
         else:
             assert selection == "Passive"
@@ -119,13 +119,12 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
                 ability_fields.active_or_passive = "Passive"
                 ability_fields.update_values(range="self", target_count=1)
 
-                for reference in ability_fields.effects_window.window_listing:
-                    effect_fields = pride.objects[reference]
+                for effect_fields in ability_fields.effects_window.window_listing:
                     effect_fields.update_values(duration=0)
-                    effect_fields.duration_field.field.text = "passive"
+                    pride.objects[effect_fields.duration_field.field].text = "passive"
 
-                ability_fields.range_field.field.text = "self"
-                ability_fields.target_count_field.field.text = '1'
+                pride.objects[ability_fields.range_field.field].text = "self"
+                pride.objects[ability_fields.target_count_field.field].text = '1'
 
 
 class Homing_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
@@ -145,7 +144,7 @@ class Homing_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
         self.ability_fields.update_values(homing=value)
 
 
-class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Effect_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Effect"}
 
@@ -177,7 +176,7 @@ class Range_Field(pride.gui.widgetlibrary.Spin_Field):
             if new_value == -1:
                 new_value = "self"
                 changes["target_count"] = 1
-                ability_fields.target_count_field.field.text = '1'
+                pride.objects[ability_fields.target_count_field.field].text = '1'
             changes["range"] = new_value
             ability_fields.update_values(**changes)
             return new_value
@@ -238,7 +237,7 @@ class Ability_Fields(pride.gui.gui.Container):
     autoreferences = ("xp_cost_indicator", "energy_cost_indicator",
                       "homing_selector", "active_passive_selector",
                       "range_field", "target_count_field", "effects_window",
-                      "tree", "character_screen", )
+                      "tree", "character_screen", "tab")
 
     def __init__(self, **kwargs):
         super(Ability_Fields, self).__init__(**kwargs)
@@ -306,7 +305,7 @@ class Ability_Fields(pride.gui.gui.Container):
         self.xp_cost_indicator.display.text = str(xp_cost)
 
     def _write_ability_name(self, field_name, name):
-        tab = pride.objects[self.tab]
+        tab = self.tab
         tab.text = name
         tab.deselect(None, None) # sets ability name, among other things
         self.pack() # because of scale_to_text
@@ -573,7 +572,7 @@ class Effect_Fields(pride.gui.gui.Container):
     autoreferences = ("effect_type_selector", "influence_selector", "row2",
                       "element_selector", "magnitude_field", "duration_field",
                       "reaction_selector", "reaction_row", "trigger_selector",
-                      "reaction_target_selector", "ability_fields")
+                      "reaction_target_selector", "ability_fields", "tab")
 
     def __init__(self, **kwargs):
         super(Effect_Fields, self).__init__(**kwargs)
@@ -628,7 +627,7 @@ class Effect_Fields(pride.gui.gui.Container):
 
     def _write_name(self, field_name, value):
         self.effect.defaults["name"] = value
-        pride.objects[self.tab].text = value
+        self.tab.text = value
         self.pack()
 
     def open_reactions(self):
@@ -658,19 +657,19 @@ class Effect_Fields(pride.gui.gui.Container):
         super(Effect_Fields, self).delete()
 
 
-class Effect_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Effect_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed effect", "delete_tip" : "Delete this effect"}
 
     def delete_tab(self):
-        window = pride.objects[self.window]
+        window = self.window
         effect = window.effect
         ability = window.parent.ability
         ability.remove_effect(effect)
         super(Effect_Tab, self).delete_tab()
 
 
-class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
+class Effect_Selection_Window(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"tab_type" : Effect_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Effects", "window_type" : Effect_Fields,
@@ -695,13 +694,13 @@ class Effect_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
         super(Effect_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
 
 
-class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Ability_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability", "delete_tip" : "Delete this ability"}
 
     def deselect(self, mouse, next_active_object):
         super(Ability_Tab, self).deselect(mouse, next_active_object)
-        window = pride.objects[self.window]
+        window = self.window
         ability = window.ability
         character = window.character
         ability_name = ability.name
@@ -734,7 +733,7 @@ class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
             self.text = ability.name
 
     def delete_tab(self):
-        window = pride.objects[self.window]
+        window = self.window
         ability = window.ability
         tree = window.parent.tree.delete_ability(ability)
         assert ability.deleted
@@ -742,7 +741,7 @@ class Ability_Tab(pride.gui.widgetlibrary.Tab_Button):
         super(Ability_Tab, self).delete_tab()
 
 
-class Ability_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
+class Ability_Selection_Window(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"tab_type" : Ability_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Abilities", "window_type" : Ability_Fields,
@@ -785,14 +784,14 @@ class Ability_Selection_Window(pride.gui.widgetlibrary.Tabbed_Window):
         super(Ability_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
 
 
-class Ability_Tree_Tab(pride.gui.widgetlibrary.Tab_Button):
+class Ability_Tree_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability Tree", "editable" : True,
                 "delete_tip" : "Delete this tree and all abilities in it"}
 
     def deselect(self, mouse, next_active_object):
         super(Ability_Tree_Tab, self).deselect(mouse, next_active_object)
-        window = pride.objects[self.window]
+        window = self.window
         tree = window.tree
         character = window.character
         tree_name = tree.name
@@ -824,12 +823,12 @@ class Ability_Tree_Tab(pride.gui.widgetlibrary.Tab_Button):
             self.text = tree.name
 
     def delete_tab(self):
-        window = pride.objects[self.window]
+        window = self.window
         window.character.abilities.delete_tree(window.tree)
         super(Ability_Tree_Tab, self).delete_tab()
 
 
-class Ability_Tree_Window(pride.gui.widgetlibrary.Tabbed_Window):
+class Ability_Tree_Window(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"tab_type" : Ability_Tree_Tab, "pack_mode" : "main",
                 "tab_bar_label" : "Ability Trees", "window_type" : Ability_Selection_Window,
@@ -869,12 +868,12 @@ class Ability_Tree_Window(pride.gui.widgetlibrary.Tabbed_Window):
         super(Ability_Tree_Window, self).new_tab(window_kwargs, tab_kwargs)
 
 
-class View_Stats_Tab(pride.gui.widgetlibrary.Tab_Button):
+class View_Stats_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "View stats", "include_delete_button" : False}
 
 
-class View_Abilities_Tab(pride.gui.widgetlibrary.Tab_Button):
+class View_Abilities_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "View abilities", "include_delete_button" : False}
 
@@ -907,13 +906,13 @@ class Stat_Window(pride.gui.gui.Window):
                     character=self.character)
 
 
-class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
+class Switcher_Window(pride.gui.widgets.tabs.Tab_Switching_Window):
 
     _info = (("View Stats", "View attributes, affinities, and current status"),
              ("View Abilities", "View ability information and effect details"),
              ("View Options", "Modify settings and save the game"))
-    _info = (pride.gui.widgetlibrary.Tab_Button.from_info(text=text, include_delete_button=False,
-                                                          tip_bar_text=tip)
+    _info = (pride.gui.widgets.tabs.Tab_Button.from_info(text=text, include_delete_button=False,
+                                                         tip_bar_text=tip)
              for text, tip in _info)
     defaults = {"tab_types" : tuple(_info),
                 "window_types" : (Stat_Window, Ability_Tree_Window, "game3.gui.options.Options_Window"),
@@ -921,7 +920,7 @@ class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
     del _info
 
     def create_windows(self):
-        stat_tab, ability_tab, options_tab = pride.objects[self.tab_bar].tabs
+        stat_tab, ability_tab, options_tab = self.tab_bar.tabs
         character_screen = self.character_screen
         stat_window = self.create(self.window_types[0], tab=stat_tab,
                                   character_screen=character_screen,
@@ -932,11 +931,10 @@ class Switcher_Window(pride.gui.widgetlibrary.Tab_Switching_Window):
         options_window = self.create(self.window_types[2], tab=options_tab)
         ability_window.hide()
         options_window.hide()
-        stat_tab = pride.objects[stat_tab]
-        stat_tab.window = stat_window.reference
-        pride.objects[stat_tab.indicator].enable_indicator()
-        pride.objects[ability_tab].window = ability_window.reference
-        pride.objects[options_tab].window = options_window.reference
+        stat_tab.window = stat_window
+        stat_tab.indicator.enable_indicator()
+        ability_tab.window = ability_window
+        options_tab.window = options_window
 
 
 class Status_Indicator(pride.gui.gui.Container):

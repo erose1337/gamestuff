@@ -3,6 +3,7 @@ import itertools
 import random
 
 import pride.gui.gui
+import pride.gui.color
 
 import sdl2
 
@@ -19,10 +20,15 @@ def random_position(area, randsize=2 ** 32):
         y = random.randint(0, randsize) % y_max
     return x, y
 
+_COLORS = [pride.gui.color.Color(*[random.randint(0, 255) for x in range(4)]) for
+           count in range(8)] + [pride.gui.color.Color(255, 255, 255, 255)] * 16
+
+def random_color():
+    return random.sample(_COLORS, 1)[0]
 
 class Star_Theme(pride.gui.gui.Theme):
 
-    defaults = {"angle" : 10.0, "angle_change" : -.5}
+    defaults = {"angle" : 10.0, "angle_change" : -.25}
 
     def draw_texture(self):
         x, y, w, h = area = self.area
@@ -32,8 +38,12 @@ class Star_Theme(pride.gui.gui.Theme):
         if not self.points:
             self.points = [random_position(source_rect) for count in range(self.star_count)]
             instructions = [("fill", (source_rect, ), {"color" : self.background_color})]
-            color_kwargs = {"color" : self.color}
-            point_instructions = (("point", (position, ), color_kwargs) for position in self.points)
+            point_instructions = []
+            for position in self.points:
+                _color = random_color()
+                _color.a = random.randint(0, 255)
+                color_kwargs = {"color" : _color}
+                point_instructions.append(("point", (position, ), color_kwargs))
             renderer = pride.objects[self.sdl_window].renderer
             renderer.draw(self.texture.texture, itertools.chain(instructions, point_instructions))
         source_rect = source_rect#
