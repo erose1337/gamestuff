@@ -1,12 +1,25 @@
 to do:
 ----
 
-Convert Fields to autoreferences
+give each window object a texture to cache the result of its drawing
 
+add shooting stars to background
+    - make night-from-space background
 
+optimize render
+    - batch draw rects of the same color and depth
+    - when re-drawing an object, check to see if another object with that size and profile has been drawn
+    - don't draw occluded objects
+    - if a window object creates a child and that child does not have limited size, then the window object is not visible
+        - only if the children are opaque
 
-point perspective
-different colors/sizes of stars, add tails
+2d slider pad
+
+create Animations
+    - draw each frame and cache it ahead of time
+        - must be done after component is organized
+    - copy cached frame to screen when rendering
+
 
 
 make proper file selector with directory viewer

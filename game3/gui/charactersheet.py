@@ -111,7 +111,7 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
                 for effect_fields in ability_fields.effects_window.window_listing:
                     effect_fields.update_values(duration=0)
                     duration_field = effect_fields.duration_field
-                    pride.objects[duration_field.field].text = '0'
+                    duration_field.field.text = '0'
                 ability_fields.update_costs()
         else:
             assert selection == "Passive"
@@ -121,10 +121,10 @@ class Active_Passive_Selector(pride.gui.widgetlibrary.Dropdown_Field):
 
                 for effect_fields in ability_fields.effects_window.window_listing:
                     effect_fields.update_values(duration=0)
-                    pride.objects[effect_fields.duration_field.field].text = "passive"
+                    effect_fields.duration_field.field.text = "passive"
 
-                pride.objects[ability_fields.range_field.field].text = "self"
-                pride.objects[ability_fields.target_count_field.field].text = '1'
+                ability_fields.range_field.field.text = "self"
+                ability_fields.target_count_field.field.text = '1'
 
 
 class Homing_Type_Selector(pride.gui.widgetlibrary.Dropdown_Field):
@@ -176,7 +176,7 @@ class Range_Field(pride.gui.widgetlibrary.Spin_Field):
             if new_value == -1:
                 new_value = "self"
                 changes["target_count"] = 1
-                pride.objects[ability_fields.target_count_field.field].text = '1'
+                ability_fields.target_count_field.field.text = '1'
             changes["range"] = new_value
             ability_fields.update_values(**changes)
             return new_value
@@ -691,7 +691,7 @@ class Effect_Selection_Window(pride.gui.widgets.tabs.Tabbed_Window):
             if window_kwargs is not None:
                 raise
             window_kwargs = {"ability_fields" : self.ability_fields}
-        super(Effect_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
+        return super(Effect_Selection_Window, self).new_tab(window_kwargs, tab_kwargs)
 
 
 class Ability_Tab(pride.gui.widgets.tabs.Tab_Button):
