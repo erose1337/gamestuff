@@ -1,6 +1,7 @@
 import pride.components.authentication3
 
-import game3.gui.window
+import game3.character
+
 remote_procedure_call = pride.components.authentication3.remote_procedure_call
 
 class Game_Client(pride.components.authentication3.Authenticated_Client):

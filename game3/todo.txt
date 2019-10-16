@@ -1,34 +1,9 @@
 to do:
 ----
+enforce ability/effect limits based on current XP in character sheet
 
-give each window object a texture to cache the result of its drawing
-
-add shooting stars to background
-    - make night-from-space background
-
-optimize render
-    - batch draw rects of the same color and depth
-    - when re-drawing an object, check to see if another object with that size and profile has been drawn
-    - don't draw occluded objects
-    - if a window object creates a child and that child does not have limited size, then the window object is not visible
-        - only if the children are opaque
-
-2d slider pad
-
-create Animations
-    - draw each frame and cache it ahead of time
-        - must be done after component is organized
-    - copy cached frame to screen when rendering
-
-
-
-make proper file selector with directory viewer
-
-
-wire alerts into tip bar text?
-set timeout on tip bar text?
-implement fade-out and colors in tip bar text?
-
+- add shooting stars to background
+- make night-from-space background
 
 re-do menus
     - create character
@@ -41,12 +16,9 @@ re-do menus
         - exit from the options menu
             - save character when exiting
 
-
 consider moving aoe to effects rather than abilities
 
 make grid cell text toggle-able
-
-
 
 add battles to gui
     - make a grid - done
@@ -63,30 +35,12 @@ add battles to gui
 
 put increment costs on tip bar text for -/+ buttons in attributes/affinities
 
-
-finish converting autoreferences:
-    - do tabs/window
-    - do sdl_window
-
 rules editor
 move save character from options to character screen
 
-
-
-indicate unusable buttons as being unusable (e.g. grey-out)
-
-fade-out effects for hide/show
-hide/show buttons
-    - mouseover to left/right/top/bottom to see hide/show buttons
-
 change menus to nested/recursive menus where appropriate
 
-
-
 change back to grid
-
-
-
 
 add energy source drop-down box for abilities?
 remove homing option?
@@ -94,7 +48,6 @@ remove homing option?
     - completely negates ability to dodge, assuming target is within range
     - no reason not to take it if it's cheap
     - still worth taking if it's expensive?
-
 
 determine how aoe works
     - aoe=0 means hits only target
@@ -111,13 +64,27 @@ implement aoe for passives?
 figure out movement effects
 implement summon effects
 
-
 fix format_attributes to display nicely spaced entries
 
-
-
-theme designer applet
-
+"contributor" achievement badges for users
+    - player
+        - For those that have played the game
+    - developer
+        - For those that have designed content or pushed code to the project
+    - artist
+        - For those that have generated and committed artistic resources (e.g. images, themes, sounds) to the project
+    - moderator
+        - For those that keep the activity clean and are actively helpful to others
+    - community
+        - For those that maintain and/or participate in sites and projects about the game
+            - e.g. people who create/use forums and fan sites that are dedicated to the game
+    - security
+        - For those that have contributed to the safety, security, and stability of the game
+    - benefactor
+        - For those that have contributed finances to the project
+    - exterminator
+        - For those that have helped to eliminate bugs in the design and implementation
+            - e.g. users who submit helpful bug reports
 
 Known Issues
 ------

@@ -1,8 +1,11 @@
+import os.path
+
 import parsing
 
 RULES = dict() # populated via parsing.parse_rules in main
+RULES_FILE = os.path.join(os.path.split(__file__)[0], "rules.cef")
 
-def set_rules(rules_filename="rules.cef"):
+def set_rules(rules_filename=RULES_FILE):
     RULES.clear()
     RULES.update(parsing.parse_rules(rules_filename))
 

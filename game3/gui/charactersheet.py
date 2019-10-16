@@ -1,6 +1,7 @@
 import pride.gui.gui
 import pride.gui.widgetlibrary
 import pride.gui.widgets.tabs
+import pride.gui.widgets.form
 from pride.functions.utilities import slide
 
 import attributes
@@ -10,68 +11,32 @@ import effects
 import elements
 import game3.rules
 
+
 class Name_Field(pride.gui.widgetlibrary.Field):
 
     defaults = {"field_name" : "Name", "initial_value" : '',
                 "tip_bar_text" : "Enter a name here"}
 
 
-class Attribute_Fields(pride.gui.gui.Container):
+class Attribute_Fields(pride.gui.widgets.form.Form):
 
-    defaults = {"write_field_method" : None, "decrement_xp" : None,
-                "increment_xp" : None, "character" : None}
-    required_attributes = ("write_field_method", "decrement_xp", "increment_xp",
-                           "character")
-
-    def __init__(self, **kwargs):
-        super(Attribute_Fields, self).__init__(**kwargs)
-        self.create_attribute_fields()
-
-    def create_attribute_fields(self):
-        self._create_column("health", ("toughness", "regeneration", "soak"))
-        self._create_column("energy", ("willpower", "recovery", "grace"))
-        self._create_column("movement", ("mobility", "recuperation", "conditioning"))
-
-    def _create_column(self, column_name, column_attributes):
-        field_kwargs = {"on_increment" : self.decrement_xp,
-                        "on_decrement" : self.increment_xp}
-        _attributes = self.character.attributes
-        _write_attribute = self.write_field_method
-        column = self.create("pride.gui.gui.Container", pack_mode="left")
-        column.create("pride.gui.gui.Container", text=column_name,
-                      pack_mode="top", h_range=(0, 40))
-        for attribute in column_attributes:
-            def callback(value, attribute=attribute):
-                _write_attribute(attribute, value)
-            field_kwargs["initial_value"] = str(getattr(_attributes, attribute))
-            column.create(pride.gui.widgetlibrary.Spin_Field, field_name=attribute,
-                          write_field_method=callback,
-                          tip_bar_text=attributes.Attributes.description[attribute],
-                          **field_kwargs)
+    defaults = {"form_name" : "Attributes", "include_balance_display" : False}
+    fields = []
+    for triplet in (("toughness", "willpower", "mobility"),
+                    ("regeneration", "recovery", "recuperation"),
+                    ("soak", "grace", "conditioning")):
+        description = [{"tip_bar_text" : attributes.Attributes.description[item]} for item in triplet]
+        fields.append(zip(triplet, description))
+    defaults["fields"] = fields
+    del fields
 
 
-class Affinity_Fields(pride.gui.gui.Container):
+class Affinity_Fields(pride.gui.widgets.form.Form):
 
-    defaults = {"write_field_method" : None, "decrement_xp" : None, "character" : None,
-                "increment_xp" : None, "scroll_bars_enabled" : True}
-    required_attributes = ("write_field_method", "decrement_xp", "increment_xp",
-                           "character")
-
-    def __init__(self, **kwargs):
-        super(Affinity_Fields, self).__init__(**kwargs)
-        field_kwargs = {"on_increment" : self.decrement_xp,
-                        "on_decrement" : self.increment_xp,
-                        "pack_mode" : "left"}
-        character_affinities = self.character.affinities
-        _write_affinity = self.write_field_method
-        for _affinities in slide(affinities.Affinities.affinities, 3):
-            row = self.create("pride.gui.gui.Container", pack_mode="top")
-            for affinity in _affinities:
-                def callback(value, affinity=affinity):
-                    _write_affinity(affinity, value)
-                field_kwargs["initial_value"] = str(getattr(character_affinities, affinity))
-                row.create(pride.gui.widgetlibrary.Spin_Field, field_name=affinity,
-                           write_field_method=callback, **field_kwargs)
+    defaults = {"form_name" : "Affinities", "include_balance_display" : False,
+                "fields" : [list(three_elements) for three_elements in
+                            slide(game3.elements.ELEMENTS, 3)],
+                "tip_bar_text" : game3.affinities.AFFINITY_DESCRIPTION}
 
 
 class XP_Cost_Indicator(pride.gui.gui.Container):
@@ -890,20 +855,16 @@ class Stat_Window(pride.gui.gui.Window):
         self.create("pride.gui.gui.Container", text="Attributes",
                     pack_mode="top", h_range=(0, 40))
         self.create(Attribute_Fields, pack_mode="top",
-                    decrement_xp=character_screen.decrement_xp,
-                    increment_xp=character_screen.increment_xp,
-                    write_field_method=character_screen._write_attribute,
-                    character=self.character)
+                    target_object=self.character.attributes,
+                    balance=self.character, balance_name="xp")
         tip_bar_text = "Affinity for a given element provides an energy discount when using damage effects with that element, "\
                        "and decreases incoming damage from damage effects of that element"
         self.create("pride.gui.gui.Container", text="Affinities",
                     pack_mode="top", h_range=(0, 40),
                     tip_bar_text=tip_bar_text)
         self.create(Affinity_Fields, pack_mode="top",
-                    increment_xp=character_screen.increment_xp,
-                    decrement_xp=character_screen.decrement_xp,
-                    write_field_method=character_screen._write_affinity,
-                    character=self.character)
+                    target_object=self.character.affinities,
+                    balancer=self.character, balance_name="xp")
 
 
 class Switcher_Window(pride.gui.widgets.tabs.Tab_Switching_Window):

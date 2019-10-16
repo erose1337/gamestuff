@@ -3,6 +3,9 @@ from pride.functions.utilities import slide
 
 import elements
 
+AFFINITY_DESCRIPTION = "Affinity for a given element provides an energy discount when using damage effects with that element, "\
+                       "and decreases incoming damage from damage effects of that element"
+
 class Affinities(pride.components.base.Base):
 
     affinities = elements.ELEMENTS

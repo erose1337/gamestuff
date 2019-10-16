@@ -1,4 +1,5 @@
 import pride.gui.gui
+import pride.gui.widgetlibrary
 import pride.components.user
 
 import game3.gui.character
@@ -81,11 +82,7 @@ class Game_Window(pride.gui.gui.Application):
         self.application_window = self.application_window.create("game3.gui.stars.Star_Background",
                                                                  pack_mode="main", star_count=1024,
                                                                  animate=True)
-        if self.tip_bar_enabled:
-            self.tip_bar = self.application_window.create(self.tip_bar_type, h_range=(0, .05),
-                                                          pack_mode="bottom", text="tip bar")
-        else:
-            self.tip_bar = self.parent_application.tip_bar
+        super(Game_Window, self).initialize_tip_bar()
 
     def load_character_selection_screen(self, characters):
         self.character_selection_screen = self.application_window.create(self.character_screen_type,
