@@ -1,5 +1,76 @@
 to do:
 ----
+
+How to encourage a community and creativity
+===========================================
+- "contribution" points
+    - currency acquired from making contributions to the project
+    - redeemable for game content
+        - content must not provide competitive advantage
+        - cosmetics
+        - new quests/stories/events/etc
+        - pre-designed characters
+        - a (paid) copy of the game
+
+
+Define what menus/content should be available
+=============================================
+- character viewer
+    Each window should have a grid showing the available characters
+    Selecting a character should open up a character sheet
+    - tab 1: my characters
+        - character sheet can be writable
+    - tab 2: canonical/default/built-in characters
+        - character sheet should be readable only
+    - tab 3: public character listing
+        - character sheet should be readable only
+    - back button: Goes back to top menu
+- arcade mode
+    Choose n characters for team 1
+    Choose n characters for team 2 (or randomly select them)
+    Choose an arena
+- story mode
+    Create new character
+    Select a character
+- free mode
+- options
+
+Mode 1: "Arcade mode"
+---------------------
+Select a preset character to use against another preset character
+
+- Variation: Select n preset characters to use against k preset characters
+
+This option is short and to the point. It's for people who are most interested in implementing strategy and tactics and actually "playing the game".
+Provides opportunity to introduce "canonical" characters.
+Characters span a variety of strategies and styles. All characters should have the same amount of total experience points.
+
+Mode 2: "Story mode"
+--------------------
+Design a new character and start at level 1.
+
+Work through various Events/challenges/etc to gain experience points.
+
+    - see ideas3 for the definition of and examples of Events
+
+This option is for those that like persistence and level ups.
+
+
+Mode 3: "Free mode"
+-------------------
+Design/modify characters as desired with no imposed point limits.
+Design/play custom Events
+
+This option is for people who just want to have fun. This option should hopefully keep people from feeling the need to cheat in other game modes.
+
+
+Mode 4: "Characters"
+--------------------
+View/create/modify/clone characters
+
+
+
+
 enforce ability/effect limits based on current XP in character sheet
 
 - add shooting stars to background

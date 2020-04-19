@@ -231,7 +231,8 @@ Outcome
 Quests
 ------
 - Large unit of game activity
-- Consists of a sequence of events
+- Consists of a sequence of events and outcomes
+- Concludes with an additional outcome
 
 
 Space
@@ -247,3 +248,89 @@ Place
 World
 ---------
 - Consists of a graph of places and the links between them
+
+
+
+
+
+
+
+
+
+
+
+Perception Skills
+=================
+-----------------
+
+Vision
+======
+Increases the distance (number of squares) that the character can see.
+A character can only see in front of them.
+Squares behind the character are dimmed out, and retain the last state that the character saw them in.
+
+The details (e.g. health bar) of objects that are far away are not visible.
+Objects that are occluded are not visible.
+
+X squares per point of vision
+Can see details up to X squares away
+Can see basic shapes up to XY squares away
+
+X, Y should be defined in the rules file.
+
+
+"Auspex"
+--------
+Ability to see "auras", even through obstacles.
+An "aura" indicates the presence of someone or something.
+Detailed information may/may not be available.
+
+
+"X-ray vision"
+--------------
+Ability to see through objects through one obstacle
+
+
+"Blindfold training"
+--------------------
+Ability to see immediate surroundings even when blinded (when vision = 0)
+
+
+Ability option to share senses between characters
+
+
+Hearing
+=======
+Provides indicators of "what" and "where" when something occurs nearby.
+For example:
+
+
+                A -> <- B
+                                /
+                               /
+                              C  ->  visible area for character C
+                               \
+                                \
+
+C can hear A and B, but not see them. A and B face each other, and are fighting.
+
+A and B both use attacks on each other. C's map now looks like:
+
+
+                 *clang* *pow*
+                A -> <- B
+                                /
+                               /
+                              C  ->  visible area for character C
+                               \
+                                \
+
+
+The sound effects appear on screen, in approximately the location or direction they originated from.
+C's map does not show detail of A and B, indeed they may have even moved since they were last seen.
+Hearing allows a character to have a sense of what is going on behind it.
+
+
+A character can place a sound that occurs within X squares
+A character can hear a sound that occurs within XY squares, but cannot determine the origin of the sound
+A character cannot hear actions that occur further than XY squares away.

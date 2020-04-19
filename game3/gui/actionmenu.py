@@ -119,8 +119,8 @@ class Ability_Tab(pride.gui.widgets.tabs.Tab_Button):
     defaults = {"text" : "Unnamed Ability", "editable" : False,
                 "include_delete_button" : False}
 
-    def select(self, mouse):
-        super(Ability_Tab, self).select(mouse)
+    def select(self):
+        super(Ability_Tab, self).select()
         self.parent_application.select_ability(self.window.ability)
 
 
@@ -306,7 +306,7 @@ class Action_Menu(pride.gui.widgets.tabs.Tab_Switching_Window):
         window.show()
         tab.indicator.enable_indicator()
 
-    def delete(self):
-        for window_type in self.window_types:
-            setattr(self, window_type, None)
-        super(Action_Menu, self).delete()
+    #def delete(self):
+    #    for window_type in self.window_types: # ? what was this supposed to do?
+    #        setattr(self, window_type, None)
+    #    super(Action_Menu, self).delete()

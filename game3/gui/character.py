@@ -32,8 +32,8 @@ class Character_Selection_Screen(pride.gui.gui.Application):
                 "column_button_type" : "pride.gui.gui.Container",
                 "info_viewer_type" : "game3.gui.actionmenu.Action_Menu",
                 "startup_components" : tuple(), "tip_bar_enabled" : False,
-                "character_editor_screen_type" : "game3.gui.charactersheet.Character_Screen"}
-    autoreferences = ("viewer", "grid")
+                "character_editor_screen_type" : "game3.gui.sheet.Character_Sheet"}
+    autoreferences = ("viewer", "grid", "character_editing_screen")
 
     def __init__(self, **kwargs):
         super(Character_Selection_Screen, self).__init__(**kwargs)
@@ -64,6 +64,8 @@ class Character_Selection_Screen(pride.gui.gui.Application):
                                                      pack_mode="left")
 
     def create_new_character(self):
+        if self.character_editing_screen is not None:
+            return # clicking on button twice could trigger this twice
         if self.viewer is not None:
             self.viewer.delete()
         if self.grid is not None:

@@ -1,5 +1,6 @@
 import pride.components.base
-    
+
+ATTRIBUTE_DESCRIPTION = ''
 
 class Attributes(pride.components.base.Base):
 

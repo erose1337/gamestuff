@@ -22,9 +22,9 @@ def main():
     rules_filename = args.rules or game3.rules.RULES_FILE
     game3.rules.set_rules(rules_filename)
 
-    window = pride.objects[pride.gui.enable()]
+    window = pride.objects[pride.gui.enable(x=50, y=65)]
     launcher = window.create(Launcher, user=pride.objects["/User"])
-                                            # required access: "device" 
+                                            # required access: "device"
                                             # does not require username/password
 
 if __name__ == "__main__":

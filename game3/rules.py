@@ -63,15 +63,18 @@ def calculate_move_cost(actor, position):
 def calculate_acquisition_cost(new_level):
     return RULES["character creation"]["acquisition_cost"](level=new_level)
 
-def calculate_ability_acquisition_cost(character, ability):
+def calculate_stat_acquisition_cost(name, level):
+    return RULES["attributes"]["{}_acquire_cost".format(name)](level=level)
+
+def calculate_ability_acquisition_cost(ability):
     abilities_cost = RULES["abilities"]
     effect_cost_f = abilities_cost["effects_acquire_cost"]
     affinity_f = RULES["attributes"]["affinity_resistance"]
     effect_cost = sum(effect_cost_f(magnitude=effect.magnitude,
                                     influence=abilities_cost["influence_{}_cost".format(effect.influence.replace("attributes.", ''))](level=0),
-                                    duration=effect.duration,
-                                    affinity_discount=affinity_f(level=0 if effect.element == "null" else
-                                                                       getattr(character.affinities, effect.element)))
+                                    duration=effect.duration)
+                                #    affinity_discount=affinity_f(level=0 if effect.element == "null" else
+                                #                                       getattr(character.affinities, effect.element)))
                       for effect in ability._effects)
 
     range = ability.range if isinstance(ability.range, int) else 1

@@ -64,12 +64,59 @@ class Star_Theme(pride.gui.themes.Theme):
                         instructions.append(("rect", ((position[0] - thickness, position[1] - thickness,
                                                       (3 * thickness), (3 * thickness)), ),
                                            dict(color=(r, g, b, a - int(thickness * fade_scalar)))))
-            renderer = pride.objects[self.sdl_window].renderer
+            renderer = self.sdl_window.renderer
             renderer.draw(self.texture.texture, itertools.chain(instructions, point_instructions))
+
         source_rect = source_rect#
         area = x - x_off, y - y_off, w + (2 * x_off), h + (2 * y_off)
         self.draw("copy", self.texture, source_rect, area, self.angle)
         self.angle += self.angle_change
+
+        #if not self.shooting_stars:
+        #    stars = self.shooting_stars = []
+        #    for count in range(random.randint(4, 128)):
+        #        point1 = random_position(source_rect)
+        #        direction = random.randint(-4, 4), random.randint(-4, 4)
+        #        x2 = point1[0] + direction[0]
+        #        y2 = point1[1] + direction[1]
+        #        if x2 > _w:# point wraps around
+        #            point1 = (0, point1[1])
+        #        elif x2 < 0:
+        #            point1 = (_w, point1[1])
+
+        #        if y2 > _h:
+        #            point1 = (point1[0], 0)
+        #        elif y2 < 0:
+        #            point1 = (point1[0], _h)
+        #        point2 = (x2, y2)
+        #        stars.append((point1, point2, direction))
+        #else:
+        #    new_stars = []
+        #    for point1, point2, direction in self.shooting_stars:
+        #        self.draw("line", point1 + point2, color=(255, 255, 55, 255))
+        #        x3 = point2[0] + direction[0]
+        #        y3 = point2[1] + direction[1]
+        #        if x3 > _w :#or x3 < 0: # point wraps around
+        #            print("next x too high ({})".format(x3))
+        #            point2 = (0, point2[1])
+        #        elif x3 < 0:
+        #            print("next x too low ({})".format(x3))
+        #            point2 = (_w, point2[1])
+        #            #x3 = x3 % _w#point2[0] - (direction[0] * 2)
+        #            #direction = (-direction[0], direction[1])
+        #        if y3 > _h:# or y3 < 0:
+        #            print("next y too high ({})".format(y3))
+        #            point2 = (point2[0], 0)
+        #        elif y3 < 0:
+        #            print("next y too low ({})".format(y3))
+        #            point2 = (point2[0], _h)
+        #            #y3 = y3 % _h#point2[1] - (direction[0] * 2)
+        #            #direction = (direction[0], -direction[1])
+        #        point3 = (x3 % _w, y3 % _h)
+        #        print point2, direction, point3
+        #        raw_input()
+        #        new_stars.append((point2, point3, direction))
+        #    self.shooting_stars[:] = new_stars
         #if random.randint(1, 100) > 90:
         #    (position, direction,
         #     color, life) = [(random.randint(0, w), random.randint(0, h)),
@@ -110,15 +157,15 @@ class Star_Background(pride.gui.gui.Window):
 
     def __init__(self, **kwargs):
         super(Star_Background, self).__init__(**kwargs)
-        window = pride.objects[self.sdl_window]
+        window = self.sdl_window
         window.schedule_predraw_operation(self._update_stars)
         _max = max(window.size)
         self.texture = window.create_texture((_max, _max), blendmode=sdl2.SDL_BLENDMODE_NONE)
 
     def _update_stars(self):
-        window = pride.objects[self.sdl_window]
+        window = self.sdl_window
         if self.animate:
-            window.schedule_postdraw_operation(self._update_stars)
+            window.schedule_postdraw_operation(self._update_stars, self)
             self.texture_invalid = True
         _max = max(self.texture.size)
         w, h = self.size

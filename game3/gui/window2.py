@@ -78,11 +78,11 @@ class Game_Window(pride.gui.gui.Application):
     #    kwargs.setdefault("game_client", self.game_client)
     #    return super(Game_Window, self).create(_type, *args, **kwargs)
 
-    def initialize_tip_bar(self):
+    def __init__(self, **kwargs):
+        super(Game_Window, self).__init__(**kwargs)
         self.application_window = self.application_window.create("game3.gui.stars.Star_Background",
                                                                  pack_mode="main", star_count=1024,
                                                                  animate=True)
-        super(Game_Window, self).initialize_tip_bar()
 
     def load_character_selection_screen(self, characters):
         self.character_selection_screen = self.application_window.create(self.character_screen_type,

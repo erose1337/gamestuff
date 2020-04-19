@@ -15,6 +15,7 @@ import affinities
 import effects
 import elements
 import abilities
+import game3.xppools
 
 def format_effect_queue(effect_queue):
     applied_effects = []
@@ -48,7 +49,7 @@ class Character(pride.components.base.Base):
 
     mutable_defaults = {"effect_queue" : effects.NEW_EFFECT_QUEUE,
                         "reaction_effects" : list,
-                        "xp" : game3.rules.RULES["character creation"]["starting_xp_amount"],
+                        "xp_pools" : game3.xppools.XP_Pools,
                         "attributes" : attributes.Attributes,
                         "affinities" : affinities.Affinities,
                         "abilities"  : abilities.Abilities}
@@ -88,6 +89,18 @@ class Character(pride.components.base.Base):
     def _get_max_movement(self):
         return game3.rules.calculate_max_movement(self.attributes.mobility)
     max_movement = property(_get_max_movement)
+
+    def _get__health_info(self):
+        return self.format_health_stats()
+    _health_info = property(_get__health_info)
+
+    def _get__energy_info(self):
+        return self.format_energy_stats()
+    _energy_info = property(_get__energy_info)
+
+    def _get__movement_info(self):
+        return self.format_movement_stats()
+    _movement_info = property(_get__movement_info)
 
     def initialize(self):
         self.health = self.max_health

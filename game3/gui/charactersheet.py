@@ -20,12 +20,14 @@ class Name_Field(pride.gui.widgetlibrary.Field):
 
 class Attribute_Fields(pride.gui.widgets.form.Form):
 
-    defaults = {"form_name" : "Attributes", "include_balance_display" : False}
+    defaults = {"form_name" : "Attributes", "include_balance_display" : False,
+                "tip_bar_text" : game3.attributes.ATTRIBUTE_DESCRIPTION}
     fields = []
     for triplet in (("toughness", "willpower", "mobility"),
                     ("regeneration", "recovery", "recuperation"),
                     ("soak", "grace", "conditioning")):
-        description = [{"tip_bar_text" : attributes.Attributes.description[item]} for item in triplet]
+        description = [{"tip_bar_text" : attributes.Attributes.description[item],
+                        "minimum" : 0, "maximum" : 255} for item in triplet]
         fields.append(zip(triplet, description))
     defaults["fields"] = fields
     del fields
@@ -663,8 +665,8 @@ class Ability_Tab(pride.gui.widgets.tabs.Tab_Button):
 
     defaults = {"text" : "Unnamed Ability", "delete_tip" : "Delete this ability"}
 
-    def deselect(self, mouse, next_active_object):
-        super(Ability_Tab, self).deselect(mouse, next_active_object)
+    def deselect(self, next_active_object):
+        super(Ability_Tab, self).deselect(next_active_object)
         window = self.window
         ability = window.ability
         character = window.character
@@ -754,8 +756,8 @@ class Ability_Tree_Tab(pride.gui.widgets.tabs.Tab_Button):
     defaults = {"text" : "Unnamed Ability Tree", "editable" : True,
                 "delete_tip" : "Delete this tree and all abilities in it"}
 
-    def deselect(self, mouse, next_active_object):
-        super(Ability_Tree_Tab, self).deselect(mouse, next_active_object)
+    def deselect(self, next_active_object):
+        super(Ability_Tree_Tab, self).deselect(next_active_object)
         window = self.window
         tree = window.tree
         character = window.character
@@ -852,16 +854,9 @@ class Stat_Window(pride.gui.gui.Window):
     def __init__(self, **kwargs):
         super(Stat_Window, self).__init__(**kwargs)
         character_screen = self.character_screen
-        self.create("pride.gui.gui.Container", text="Attributes",
-                    pack_mode="top", h_range=(0, 40))
         self.create(Attribute_Fields, pack_mode="top",
                     target_object=self.character.attributes,
                     balance=self.character, balance_name="xp")
-        tip_bar_text = "Affinity for a given element provides an energy discount when using damage effects with that element, "\
-                       "and decreases incoming damage from damage effects of that element"
-        self.create("pride.gui.gui.Container", text="Affinities",
-                    pack_mode="top", h_range=(0, 40),
-                    tip_bar_text=tip_bar_text)
         self.create(Affinity_Fields, pack_mode="top",
                     target_object=self.character.affinities,
                     balancer=self.character, balance_name="xp")
@@ -989,7 +984,8 @@ class Character_Screen(pride.gui.gui.Window):
     def _modify_xp(self, adjustment):
         assert self.xp == int(self.xp_indicator.text), (self.xp, self.xp_indicator.text)
         self.xp += adjustment
-        self.xp_indicator.text = str(self.xp)
+        if not self.xp_indicator.deleted:
+            self.xp_indicator.text = str(self.xp)
 
     def increment_xp(self, current_level):
         current_level = int(current_level)
