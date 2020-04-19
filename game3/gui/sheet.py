@@ -14,6 +14,12 @@ import game3.attributes
 import game3.affinities
 import game3.rules
 
+def parent_sheet(self):
+    character_sheet = self.parent
+    while not isinstance(character_sheet, Character_Sheet):
+        character_sheet = character_sheet.parent
+    return character_sheet
+
 
 class _Effect(pride.components.base.Base):
 
@@ -61,20 +67,14 @@ class _Effects_Window(pride.gui.widgets.form.Form):
     defaults = {"pack_mode" : "top", "fields" : fields, "row_h_range" : (0, .1)}
     mutable_defaults = {"target_object" : _Effect}
 
-    def _get_parent_sheet(self):
-        character_sheet = self.parent
-        while not isinstance(character_sheet, Character_Sheet):
-            character_sheet = character_sheet.parent
-        return character_sheet
-    parent_sheet = property(_get_parent_sheet)
-
     def create_subcomponents(self):
-        self.balancer = self.parent_sheet.character.xp_pools.pools[1]
+        self.balancer = parent_sheet(self).character.xp_pools.pools[1]
         self.include_balance_display = False
         super(_Effects_Window, self).create_subcomponents()
 
     def handle_value_changed(self, field, old, new):
-        self.parent_sheet.abilities_pane.children[0].displayer.entry.texture_invalid = True
+        displayer = parent_sheet(self).abilities_pane.children[0].displayer
+        displayer.entry.texture_invalid = True
         super(_Effects_Window, self).handle_value_changed(field, old, new)
 
 
@@ -107,21 +107,15 @@ class _Ability_Window(pride.gui.widgets.form.Form):
     defaults = {"pack_mode" : "top", "fields" : fields, "row_h_range" : (0, .1)}
     mutable_defaults = {"target_object" : _Ability}
 
-    def _get_parent_sheet(self):
-        character_sheet = self.parent
-        while not isinstance(character_sheet, Character_Sheet):
-            character_sheet = character_sheet.parent
-        return character_sheet
-    parent_sheet = property(_get_parent_sheet)
-
     def create_subcomponents(self):
-        self.balancer = self.parent_sheet.character.xp_pools.pools[1]
+        self.balancer = parent_sheet(self).character.xp_pools.pools[1]
         self.include_balance_display = False
         super(_Ability_Window, self).create_subcomponents()
         self.main_window.create(Effects_Window)
 
     def handle_value_changed(self, field, old, new):
-        self.parent_sheet.abilities_pane.children[0].displayer.entry.texture_invalid = True
+        displayer = parent_sheet(self).abilities_pane.children[0].displayer
+        displayer.entry.texture_invalid = True
         super(_Ability_Window, self).handle_value_changed(field, old, new)
 
 
@@ -137,12 +131,20 @@ class Ability_Tree_Window(pride.gui.widgets.tabs.Tabbed_Window):
                 "new_window_type" : Ability_Window, "pack_mode" : "top"}
 
 
+class Stats_Window(pride.gui.widgets.form.Form):
+
+    def handle_value_changed(self, field, old, new):
+        parent_sheet(self).basic_info_form.synchronize_fields()
+        super(Stats_Window, self).handle_value_changed(field, old, new)
+
+
+
 class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"character" : None, "_attributes" : "Attributes",
                 "_affinities" : "Affinities", "include_new_tab_button" : False,
                 "stat_tab_text" : "View Stats"}
-    autoreferences = ("abilities_pane", )
+    autoreferences = ("abilities_pane", "basic_info_form")
 
     def create_subcomponents(self):
         self._create_basic_info_fields()
@@ -151,11 +153,13 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
         fields = []
         fields += self._create_attribute_fields()
         fields += self._create_affinity_fields()
-        form = self.main_window.create("pride.gui.widgets.form.Form",
+        _kwargs = {"display_name" : "Stats XP"}
+        form = self.main_window.create(Stats_Window,
                                        pack_mode="top", fields=fields,
                                        target_object=character,
                                        max_rows=12, row_h_range=(0, .1),
                                        balancer=character.xp_pools.pools[0],
+                                       balance_display_kwargs=_kwargs,
                                        include_balance_display=True)
         callable = lambda: form
         callable.tab_text = self.stat_tab_text
@@ -174,7 +178,7 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
             return abilities_pane
         callable2.tab_text = "View Abilities"
 
-        self.tab_targets = [callable, callable2]
+        self.tab_targets = [callable, callable2] # should these be removed later?
         super(Character_Sheet, self).create_subcomponents()
 
     def _create_basic_info_fields(self):
@@ -191,9 +195,10 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
                      tip_bar_text=text) for stat, text in
          zip( ("_health_info", "_energy_info", "_movement_info"), tiptext)]
          ]
-        self.create("pride.gui.widgets.form.Form", pack_mode="top",
-                                fields=fields, target_object=self.character,
-                                h_range=(0, .15))
+        form = self.create("pride.gui.widgets.form.Form", pack_mode="top",
+                           fields=fields, target_object=self.character,
+                           h_range=(0, .15))
+        self.basic_info_form = form
 
     def _create_xp_pool_fields(self):
         fields = [\
@@ -232,7 +237,8 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
                                            "hoverable" : False})]]
         affinities = self.character.affinities
         for triplet in slide(game3.elements.ELEMENTS, 3):
-            row = [field_info(element, target_object=affinities) for
+            row = [field_info(element, target_object=affinities,
+                              minimum=0, maximum=255) for
                    element in triplet]
             fields.append(row)
         return fields
