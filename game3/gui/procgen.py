@@ -21,7 +21,8 @@ VONNEUMANN = [         (0, 1),
                        (0, -1)       ]
 
 NEIGHBORHOOD = MOORE
-N = 32
+N = 48
+K = 32
 UP_ARROW = 1073741906
 DOWN_ARROW = 1073741905
 RIGHT_ARROW = 1073741903
@@ -46,10 +47,10 @@ class Place_Theme(pride.gui.themes.Minimal_Theme):
         self.draw("set_blendmode", sdl2.SDL_BLENDMODE_BLEND)
         water = real_self.water; light = real_self.light
         elevation = real_self.elevation
-        q = len(water); assert len(water[0]) == q;
-        x_spacing = self.w / q; y_spacing = self.h / q
-        for y in range(q):
-            for x in range(q):
+        k = real_self.window_dimension
+        x_spacing = self.w / k; y_spacing = self.h / k
+        for y in range(k):
+            for x in range(k):
                 self._draw_elevation(elevation, light, x, y, x_spacing, y_spacing)
                 self._draw_water(water, light, x, y, x_spacing, y_spacing)
                 #self._draw_light(light, x, y, x_spacing, y_spacing)
@@ -72,7 +73,10 @@ class Place_Theme(pride.gui.themes.Minimal_Theme):
         self.draw("set_blendmode", pride.gui.sdllibrary.DRAW_BLENDMODE)
 
     def _draw_elevation(self, elevation, light, x, y, x_spacing, y_spacing):
-        value = elevation[y][x]; lighting = max(0, light[y][x])
+        n = self.dimension
+        xt = (x + self.window_x) % n
+        yt = (y - self.window_y) % n
+        value = elevation[yt][xt]; lighting = max(0, light[yt][xt])
         if lighting and value:
             alpha = min(255, (value + lighting) / 2)
         else:
@@ -85,13 +89,16 @@ class Place_Theme(pride.gui.themes.Minimal_Theme):
             g = min(255, magnitude * ((255 - 15) / 16))
             b = min(255, magnitude * ((255 - 190) / 16))
             color = (r, g, b, alpha)
-        self.draw("fill", (((x + self.window_x) * x_spacing) % self.w,
-                           ((y + self.window_y) * y_spacing) % self.h,
+        self.draw("fill", ((x * x_spacing) % self.w,
+                           (y * y_spacing) % self.h,
                             x_spacing, y_spacing),
                   color=color)
 
     def _draw_water(self, water, light, x, y, x_spacing, y_spacing):
-        value = water[y][x]; lighting = max(0, light[y][x])
+        n = self.dimension
+        xt = (x + self.window_x) % n
+        yt = (y - self.window_y) % n
+        value = water[yt][xt]; lighting = max(0, light[yt][xt])
         if lighting and value:
             alpha = min(255, (value + lighting) / 2)
         else:
@@ -103,8 +110,8 @@ class Place_Theme(pride.gui.themes.Minimal_Theme):
             r = min(255, magnitude * (255 / 16))
             g = min(255, magnitude * ((255 - 40) / 16))
             color = (r, g, 255, alpha)
-        self.draw("fill", (((x + self.window_x) * x_spacing) % self.w,
-                           ((y + self.window_y) * y_spacing) % self.h,
+        self.draw("fill", ((x * x_spacing) % self.w,
+                           (y * y_spacing) % self.h,
                             x_spacing, y_spacing),
                   color=color)
 
@@ -119,7 +126,8 @@ class Place(pride.gui.gui.Window):
                 "current_target" : "water", "center_text" : False,
                 "light_invalid" : True, "light_frame_count" : 5,
                 "_current_light_frame" : 0, "window_x" : 0, "window_y" : 0,
-                "topology" : "torus", "scroll_increment" : 1}
+                "topology" : "torus", "scroll_increment" : 1,
+                "window_dimension" : K}
     hotkeys = {('1', None) : "set_to_water",
                ('2', None) : "set_to_elevation",
                ('3', None) : "set_to_light",
@@ -143,14 +151,16 @@ class Place(pride.gui.gui.Window):
         #self.water = [[128] * n for x in range(n)]
         #self.light = [range(32) for x in range(n)]
         #self.elevation = [[128] * n for x in range(n)]
+        self.sdl_window.schedule_postdraw_operation(self._invalidate_texture, self)
+        self.setup_biome()
+
+    def setup_biome(self):
+        print("Setting up biome...")
+        n = self.dimension
         self.biome = [range(16, 16 + n) for x in range(n)]
         for count in range(n):
             self.biome[ord(urandom(1)) % n][ord(urandom(1)) % n] = ord(urandom(1))
-            self.update_state("biome")
-        self.setup_biome()
-        self.sdl_window.schedule_postdraw_operation(self._invalidate_texture, self)
-
-    def setup_biome(self):
+        self.update_state("biome")
         biome_mapping = self.biome_mapping
         matrix = self.biome; water = self.water
         light = self.light; elevation = self.elevation
@@ -182,31 +192,36 @@ class Place(pride.gui.gui.Window):
                 self.scroll_up()
             elif pride.gui.point_in_area(bottom, mouse_pos):
                 self.scroll_down()
-            elif pride.gui.point_in_area(left, mouse_pos):
+            if pride.gui.point_in_area(left, mouse_pos):
                 self.scroll_left()
             elif pride.gui.point_in_area(right, mouse_pos):
                 self.scroll_right()
 
     def scroll_right(self):
-        self.window_x -= self.scroll_increment
+        self.window_x += self.scroll_increment
+        self.window_x %= self.dimension
 
     def scroll_left(self):
-        self.window_x += self.scroll_increment
+        self.window_x -= self.scroll_increment
+        self.window_x %= self.dimension
 
     def scroll_down(self):
         self.window_y -= self.scroll_increment
+        self.window_y %= self.dimension
 
     def scroll_up(self):
         self.window_y += self.scroll_increment
+        self.window_y %= self.dimension
 
     def paint_cell(self, mouse_x, mouse_y, mouse):
         target = self.current_target
-        matrix = getattr(self, target); q = len(matrix)
+        matrix = getattr(self, target);
+        k = self.window_dimension; n = self.dimension
         x = mouse_x - self.x
         y = mouse_y - self.y
-        x_spacing = self.w / q; y_spacing = self.h / q
-        x_cell = ((x / x_spacing) - self.window_x) % q
-        y_cell = ((y / y_spacing) - self.window_y) % q
+        x_spacing = self.w / k; y_spacing = self.h / k
+        x_cell = ((x / x_spacing) + self.window_x) % n
+        y_cell = ((y / y_spacing) - self.window_y) % n
         if mouse.button == sdl2.SDL_BUTTON_LEFT:
             try:
                 matrix[y_cell][x_cell] = matrix[y_cell][x_cell] + 256
@@ -229,13 +244,13 @@ class Place(pride.gui.gui.Window):
         matrix1 = getattr(self, name)
         if matrix2 is None:
             matrix2 = tuple((0, ) * n for _ in range(n))
-        _before = sum(sum(row) for row in matrix1)    # for sanity check at end
+        #_before = sum(sum(row) for row in matrix1)    # for sanity check at end
         for y in range(n):
             for x in range(n):
                 self.convolve_neighborhood(matrix1, matrix2, output, x, y)
 
-        _after = sum(sum(row) for row in matrix1)
-        assert _before == _after, (_before, _after)
+        #_after = sum(sum(row) for row in matrix1)
+        #assert _before == _after, (_before, _after)
         setattr(self, name, output)
 
     def convolve_neighborhood(self, matrix, difference, output, x, y):
