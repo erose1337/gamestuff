@@ -3,6 +3,9 @@
 
 # large elevation changes lead to deep wells
 
+# only process an area larger than the window but smaller than the whole place
+
+
 import copy
 from math import log
 from os import urandom
@@ -21,8 +24,7 @@ VONNEUMANN = [         (0, 1),
                        (0, -1)       ]
 
 NEIGHBORHOOD = MOORE
-N = 48
-K = 32
+N = 27
 UP_ARROW = 1073741906
 DOWN_ARROW = 1073741905
 RIGHT_ARROW = 1073741903
@@ -35,10 +37,12 @@ class Biome_Data(object):
         self.light = light; self.elevation = elevation
 
 
-BIOME_MAPPING = dict((x, Biome_Data(x, 0, 255, 64)) for x in range(32))
-BIOME_MAPPING.update(dict((x, Biome_Data(x, 64 + x, 255, 64)) for x in range(32, 64)))
-BIOME_MAPPING.update(dict((x, Biome_Data(x, 0, 255, 64 + x)) for x in range(64, 96)))
-BIOME_MAPPING.update(dict((x, Biome_Data(x, 32, 255, 32 + x)) for x in range(96, 256)))
+BIOME_MAPPING = dict()
+
+BIOME_MAPPING.update(dict((x, Biome_Data(x, 0, 255, x)) for x in range(64)))
+BIOME_MAPPING.update(dict((x, Biome_Data(x, x, 255, x)) for x in range(64, 128)))
+BIOME_MAPPING.update(dict((x, Biome_Data(x, 0, 255, 64 + x)) for x in range(128, 192)))
+BIOME_MAPPING.update(dict((x, Biome_Data(x, x, 255, 64 + x)) for x in range(192, 256)))
 
 class Place_Theme(pride.gui.themes.Minimal_Theme):
 
@@ -47,7 +51,7 @@ class Place_Theme(pride.gui.themes.Minimal_Theme):
         self.draw("set_blendmode", sdl2.SDL_BLENDMODE_BLEND)
         water = real_self.water; light = real_self.light
         elevation = real_self.elevation
-        k = real_self.window_dimension
+        k = real_self.dimension
         x_spacing = self.w / k; y_spacing = self.h / k
         for y in range(k):
             for x in range(k):
@@ -76,6 +80,8 @@ class Place_Theme(pride.gui.themes.Minimal_Theme):
         n = self.dimension
         xt = (x + self.window_x) % n
         yt = (y - self.window_y) % n
+        assert len(elevation) == n, (len(elevation), n)
+        assert len(elevation[0]) == n, (len(elevation[0]), n)
         value = elevation[yt][xt]; lighting = max(0, light[yt][xt])
         if lighting and value:
             alpha = min(255, (value + lighting) / 2)
@@ -120,44 +126,73 @@ class Place(pride.gui.gui.Window):
 
     defaults = {"pack_mode" : "top", "theme_type" : Place_Theme,
                 "animation_enabled": False, "click_animation_enabled" : False,
-                "neighborhood" : NEIGHBORHOOD, "water" : None,
-                "elevation" : None, "light" : None, "dimension" : N,
-                "matrix_names" : ("water", "elevation", "light", "null"),
+                "neighborhood" : NEIGHBORHOOD, "dimension" : N,
+                "matrix_names" : ("biome", "water", "elevation",
+                                  "light", "null"),
                 "current_target" : "water", "center_text" : False,
                 "light_invalid" : True, "light_frame_count" : 5,
                 "_current_light_frame" : 0, "window_x" : 0, "window_y" : 0,
                 "topology" : "torus", "scroll_increment" : 1,
-                "window_dimension" : K}
+                "snapto_onclick" : True, "zoom_level" : 0}
     hotkeys = {('1', None) : "set_to_water",
                ('2', None) : "set_to_elevation",
                ('3', None) : "set_to_light",
+               ('4', None) : "set_to_zoom",
                (UP_ARROW, None) : "scroll_up",
                (DOWN_ARROW, None) : "scroll_down",
                (LEFT_ARROW, None) : "scroll_left",
                (RIGHT_ARROW, None) : "scroll_right"}
-    mutable_defaults = {"biome_mapping" : lambda: BIOME_MAPPING}
+    mutable_defaults = {"biome_mapping" : lambda: BIOME_MAPPING,
+                        "scale_data" : list}
+
+    def _get_elevation(self):
+        return self.scale_data[self.zoom_level]["elevation"]
+    def _set_elevation(self, value):
+        self.scale_data[self.zoom_level]["elevation"] = value
+    elevation = property(_get_elevation, _set_elevation)
+
+    def _get_water(self):
+        return self.scale_data[self.zoom_level]["water"]
+    def _set_water(self, value):
+        self.scale_data[self.zoom_level]["water"] = value
+    water = property(_get_water, _set_water)
+
+    def _get_light(self):
+        return self.scale_data[self.zoom_level]["light"]
+    def _set_light(self, value):
+        self.scale_data[self.zoom_level]["light"] = value
+    light = property(_get_light, _set_light)
+
+    def _get_biome(self):
+        return self.scale_data[self.zoom_level]["biome"]
+    def _set_biome(self, value):
+        self.scale_data[self.zoom_level]["biome"] = value
+    biome = property(_get_biome, _set_biome)
+
+    def _get_null(self):
+        return self.scale_data[self.zoom_level]["null"]
+    def _set_null(self, value):
+        self.scale_data[self.zoom_level]["null"] = value
+    null = property(_get_null)
 
     def __init__(self, **kwargs):
         super(Place, self).__init__(**kwargs)
         self.text = self.current_target
         n = self.dimension
+        if n not in (3 ** x for x in range(7)):
+            raise ValueError("dimension must be a small power of 3 (called with {})".format(n))
+
+        data = dict(); self.scale_data.append(data)
         for matrix_name in self.matrix_names:
-            matrix = getattr(self, matrix_name, None)
-            if matrix is None:
-                setattr(self, matrix_name, [[0] * n for x in range(n)])
-            else:
-                if not all(len(matrix) == len(row) for row in matrix):
-                    raise ValueError("'{}' matrix is not square".format(matrix_name))
-        #self.water = [[128] * n for x in range(n)]
-        #self.light = [range(32) for x in range(n)]
-        #self.elevation = [[128] * n for x in range(n)]
+            data[matrix_name] = [[0] * n for x in range(n)]
+
         self.sdl_window.schedule_postdraw_operation(self._invalidate_texture, self)
         self.setup_biome()
 
     def setup_biome(self):
         print("Setting up biome...")
         n = self.dimension
-        self.biome = [range(16, 16 + n) for x in range(n)]
+        self.biome = [range(n) for x in range(n)]
         for count in range(n):
             self.biome[ord(urandom(1)) % n][ord(urandom(1)) % n] = ord(urandom(1))
         self.update_state("biome")
@@ -166,6 +201,8 @@ class Place(pride.gui.gui.Window):
         light = self.light; elevation = self.elevation
         for y, row in enumerate(matrix):
             for x, value in enumerate(row):
+                submatrix = (row[x:x+3] for row in matrix[y:y+3])
+                value = sum(sum(row) for row in submatrix) / 9
                 biome_data = biome_mapping[value]
                 water[y][x] = biome_data.water
                 light[y][x] = biome_data.light
@@ -179,6 +216,9 @@ class Place(pride.gui.gui.Window):
 
     def set_to_light(self):
         self.text = self.current_target = "light"
+
+    def set_to_zoom(self):
+        self.text = self.current_target = "zoom"
 
     def mousemotion(self, mouse_x, mouse_y, x_change, y_change, mouse):
         super(Place, self).mousemotion(mouse_x, mouse_y, x_change, y_change, mouse)
@@ -197,6 +237,106 @@ class Place(pride.gui.gui.Window):
             elif pride.gui.point_in_area(right, mouse_pos):
                 self.scroll_right()
 
+    def zoom_in(self):
+        zoom = self.zoom_level
+        new_zoom = max(0, zoom - 1)
+        if zoom == new_zoom:
+            return
+        self.zoom_level = new_zoom
+
+        scale_data = self.scale_data
+        data = scale_data[zoom]
+        data2 = scale_data[new_zoom]
+        for name in self.matrix_names:
+            if name in ("elevation", "null", "biome"):
+                continue
+            matrix = data[name]
+            matrix2 = data2[name]
+            length = len(matrix) / 3
+            #assert length == len(matrix2)
+            for y in range(0, length, 3):
+                for x in range(0, length, 3):
+                    submatrix = (row[x:x+3] for row in matrix[y:y+3])
+                    submatrix2 = (row[x:x+9] for row in matrix2[y:y+9])
+
+                    adjustment = sum(sum(row) for row in submatrix)
+                    adjustment -= sum(sum(row) for row in submatrix2)
+                    if not adjustment:
+                        continue
+                    adjustment, remainder = divmod(adjustment, 81)
+                    if adjustment:
+                        for row in matrix2[y:y+9]:
+                            for i in range(9):
+                                row[x + i] += adjustment
+                    if remainder:
+                        xt, yt = divmod(remainder, 9)
+                        matrix[y + yt][x + xt] += remainder
+
+    def compress_matrix(self, matrix):
+        length = len(matrix)
+        output = []
+        for y in range(0, length, 3):
+            new_row = []
+            for x in range(0, length, 3):
+                submatrix = [row[x:x+3] for row in matrix[y:y+3]]
+                new_row.append(sum(sum(row) for row in submatrix))
+            output.append(new_row)
+        return output
+
+    def fill_out(self, matrix):
+        size = self.dimension
+        row_count = len(matrix); row_length = len(matrix[0])
+        extra = 0
+        while row_count != size: # fill with new rows
+            new = ([], [], [])
+            bottom_rows = matrix[-3:]
+            for x in range(0, row_length, 3):
+                submatrix = (row[x:x+3] for row in bottom_rows)
+                value = sum(sum(row) for row in submatrix)
+                sign = pow(-1, (value & 1) ^ ((value & 2) >> 1))
+                value = (value + extra, ) * 3
+                new[0].extend(value); new[1].extend(value); new[2].extend(value)
+                extra += sign * 1
+            matrix.extend(new)
+            row_count = len(matrix)
+
+        extra = 0
+        for y in range(0, size, 3): # start at the upper right-most 3x3 cell
+            for x in range(0, size - row_length, 3):
+                submatrix = (row[-3:] for row in matrix[y:y+3])
+                value = (sum(sum(row) for row in submatrix) / 9) + extra
+                sign = pow(-1, (value & 1) ^ ((value & 2) >> 1))
+                extra += sign * 1
+                for row in matrix[y:y+3]:
+                    row.extend((value, ) * 3)
+        assert len(matrix) == size, (len(matrix[0]), size)
+        assert len(matrix[0]) == size, (len(matrix[0]), size)
+        assert all(len(row) == len(matrix[0]) for row in matrix)
+
+    def zoom_out(self):
+        zoom = self.zoom_level
+        scale_data = self.scale_data
+
+        data = scale_data[zoom]
+        try:
+            data2 = scale_data[zoom + 1]
+        except IndexError:
+            data2 = dict()
+            scale_data.append(data2)
+
+        for name in self.matrix_names:
+            matrix = data[name]; assert matrix is not None
+            new_matrix = self.compress_matrix(matrix)
+            if name not in data2:
+                self.fill_out(new_matrix)
+                data2[name] = new_matrix
+            else:
+                length = len(new_matrix)
+                matrix2 = data2[name]
+                for i, row in enumerate(new_matrix):
+                    matrix2[i][:length] = row
+        self.zoom_level += 1
+
     def scroll_right(self):
         self.window_x += self.scroll_increment
         self.window_x %= self.dimension
@@ -213,15 +353,42 @@ class Place(pride.gui.gui.Window):
         self.window_y += self.scroll_increment
         self.window_y %= self.dimension
 
+    def left_click(self, mouse):
+        target = self.current_target
+        if target == "zoom":
+            self.zoom_in()
+        elif self.snapto_onclick:
+            n = self.dimension
+            x = mouse.x - self.x
+            y = mouse.y - self.y
+            x_spacing = self.w / n; y_spacing = self.h / n
+            x_cell = x / x_spacing
+            y_cell = y / y_spacing
+            self.center_on(x_cell, y_cell)
+
+    def center_on(self, x_cell, y_cell):
+        offset = self.dimension / 2
+        self.window_x += x_cell - offset
+        self.window_y -= y_cell + offset
+        self.window_x %= self.dimension; self.window_y %= self.dimension
+
+    def right_click(self, mouse):
+        target = self.current_target
+        if target == "zoom":
+            self.zoom_out()
+
     def paint_cell(self, mouse_x, mouse_y, mouse):
         target = self.current_target
-        matrix = getattr(self, target);
-        k = self.window_dimension; n = self.dimension
+        if target == "zoom":
+            return
+        n = self.dimension
         x = mouse_x - self.x
         y = mouse_y - self.y
-        x_spacing = self.w / k; y_spacing = self.h / k
+        x_spacing = self.w / n; y_spacing = self.h / n
         x_cell = ((x / x_spacing) + self.window_x) % n
         y_cell = ((y / y_spacing) - self.window_y) % n
+        matrix = getattr(self, target);
+
         if mouse.button == sdl2.SDL_BUTTON_LEFT:
             try:
                 matrix[y_cell][x_cell] = matrix[y_cell][x_cell] + 256
