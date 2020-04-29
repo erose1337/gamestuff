@@ -24,7 +24,7 @@ VONNEUMANN = [         (0, 1),
                        (0, -1)       ]
 
 NEIGHBORHOOD = MOORE
-N = 27
+N = 81
 UP_ARROW = 1073741906
 DOWN_ARROW = 1073741905
 RIGHT_ARROW = 1073741903
@@ -129,7 +129,7 @@ class Place(pride.gui.gui.Window):
                 "neighborhood" : NEIGHBORHOOD, "dimension" : N,
                 "matrix_names" : ("biome", "water", "elevation",
                                   "light", "null"),
-                "current_target" : "water", "center_text" : False,
+                "current_target" : "zoom", "center_text" : False,
                 "light_invalid" : True, "light_frame_count" : 5,
                 "_current_light_frame" : 0, "window_x" : 0, "window_y" : 0,
                 "topology" : "torus", "scroll_increment" : 1,
@@ -248,29 +248,29 @@ class Place(pride.gui.gui.Window):
         data = scale_data[zoom]
         data2 = scale_data[new_zoom]
         for name in self.matrix_names:
-            if name in ("elevation", "null", "biome"):
+            if name in ("null", "biome"):
                 continue
             matrix = data[name]
             matrix2 = data2[name]
             length = len(matrix) / 3
-            #assert length == len(matrix2)
-            for y in range(0, length, 3):
-                for x in range(0, length, 3):
-                    submatrix = (row[x:x+3] for row in matrix[y:y+3])
-                    submatrix2 = (row[x:x+9] for row in matrix2[y:y+9])
-
-                    adjustment = sum(sum(row) for row in submatrix)
-                    adjustment -= sum(sum(row) for row in submatrix2)
+            for y in range(length):
+                for x in range(length):
+                    adjustment = matrix[x][y]
+                    submatrix = [row[3*x:(3 * x) + 3] for row in
+                                 matrix2[3*y:(3*y)+3]]
+                    assert sum(len(row) for row in submatrix) == 9, len(submatrix)
+                    adjustment -= sum(sum(row) for row in submatrix) / 9
                     if not adjustment:
                         continue
-                    adjustment, remainder = divmod(adjustment, 81)
+                    adjustment, remainder = divmod(adjustment, 9)
                     if adjustment:
-                        for row in matrix2[y:y+9]:
-                            for i in range(9):
+                        for row in matrix2[3*y:(3*y)+3]:
+                            for i in range(3):
+                                #print(x + i, len(row))
                                 row[x + i] += adjustment
                     if remainder:
-                        xt, yt = divmod(remainder, 9)
-                        matrix[y + yt][x + xt] += remainder
+                        xt, yt = divmod(remainder, 3)
+                        matrix2[y + yt][x + xt] += remainder
 
     def compress_matrix(self, matrix):
         length = len(matrix)
@@ -278,21 +278,21 @@ class Place(pride.gui.gui.Window):
         for y in range(0, length, 3):
             new_row = []
             for x in range(0, length, 3):
-                submatrix = [row[x:x+3] for row in matrix[y:y+3]]
-                new_row.append(sum(sum(row) for row in submatrix))
+                submatrix = (row[x:x+3] for row in matrix[y:y+3])
+                new_row.append(sum(sum(row) for row in submatrix) / 9)
             output.append(new_row)
         return output
 
     def fill_out(self, matrix):
         size = self.dimension
         row_count = len(matrix); row_length = len(matrix[0])
-        extra = 0
+        extra = 0; sign = 1
         while row_count != size: # fill with new rows
             new = ([], [], [])
             bottom_rows = matrix[-3:]
             for x in range(0, row_length, 3):
                 submatrix = (row[x:x+3] for row in bottom_rows)
-                value = sum(sum(row) for row in submatrix)
+                value = sum(sum(row) for row in submatrix) / 9
                 sign = pow(-1, (value & 1) ^ ((value & 2) >> 1))
                 value = (value + extra, ) * 3
                 new[0].extend(value); new[1].extend(value); new[2].extend(value)
@@ -304,11 +304,11 @@ class Place(pride.gui.gui.Window):
         for y in range(0, size, 3): # start at the upper right-most 3x3 cell
             for x in range(0, size - row_length, 3):
                 submatrix = (row[-3:] for row in matrix[y:y+3])
-                value = (sum(sum(row) for row in submatrix) / 9) + extra
+                value = sum(sum(row) for row in submatrix) / 9
                 sign = pow(-1, (value & 1) ^ ((value & 2) >> 1))
                 extra += sign * 1
                 for row in matrix[y:y+3]:
-                    row.extend((value, ) * 3)
+                    row.extend((value + extra, ) * 3)
         assert len(matrix) == size, (len(matrix[0]), size)
         assert len(matrix[0]) == size, (len(matrix[0]), size)
         assert all(len(row) == len(matrix[0]) for row in matrix)
@@ -324,7 +324,7 @@ class Place(pride.gui.gui.Window):
             data2 = dict()
             scale_data.append(data2)
 
-        for name in self.matrix_names:
+        for name in ("elevation", "water", "light"):#self.matrix_names:
             matrix = data[name]; assert matrix is not None
             new_matrix = self.compress_matrix(matrix)
             if name not in data2:
