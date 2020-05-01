@@ -133,7 +133,7 @@ class Place(pride.gui.gui.Window):
                 "light_invalid" : True, "light_frame_count" : 5,
                 "_current_light_frame" : 0, "window_x" : 0, "window_y" : 0,
                 "topology" : "torus", "scroll_increment" : 1,
-                "snapto_onclick" : True, "zoom_level" : 0}
+                "snapto_onclick" : False, "zoom_level" : 0}
     hotkeys = {('1', None) : "set_to_water",
                ('2', None) : "set_to_elevation",
                ('3', None) : "set_to_light",
@@ -253,12 +253,11 @@ class Place(pride.gui.gui.Window):
             matrix = data[name]
             matrix2 = data2[name]
             length = len(matrix) / 3
-            for y in range(length):
-                for x in range(length):
-                    adjustment = matrix[x][y]
-                    submatrix = [row[3*x:(3 * x) + 3] for row in
-                                 matrix2[3*y:(3*y)+3]]
-                    assert sum(len(row) for row in submatrix) == 9, len(submatrix)
+            for y in range(0, length):
+                for x in range(0, length):
+                    adjustment = matrix[y][x]
+                    submatrix = (row[3*x:(3 * x) + 3] for row in
+                                 matrix2[3*y:(3*y)+3])
                     adjustment -= sum(sum(row) for row in submatrix) / 9
                     if not adjustment:
                         continue
@@ -266,11 +265,10 @@ class Place(pride.gui.gui.Window):
                     if adjustment:
                         for row in matrix2[3*y:(3*y)+3]:
                             for i in range(3):
-                                #print(x + i, len(row))
-                                row[x + i] += adjustment
+                                row[(3 * x) + i] += adjustment
                     if remainder:
-                        xt, yt = divmod(remainder, 3)
-                        matrix2[y + yt][x + xt] += remainder
+                        yt, xt = divmod(remainder, 3)
+                        matrix2[(3 * y) + yt][(3 * x) + xt] += remainder
 
     def compress_matrix(self, matrix):
         length = len(matrix)
@@ -315,8 +313,9 @@ class Place(pride.gui.gui.Window):
 
     def zoom_out(self):
         zoom = self.zoom_level
-        scale_data = self.scale_data
+        self.zoom_level += 1
 
+        scale_data = self.scale_data
         data = scale_data[zoom]
         try:
             data2 = scale_data[zoom + 1]
@@ -335,7 +334,6 @@ class Place(pride.gui.gui.Window):
                 matrix2 = data2[name]
                 for i, row in enumerate(new_matrix):
                     matrix2[i][:length] = row
-        self.zoom_level += 1
 
     def scroll_right(self):
         self.window_x += self.scroll_increment
