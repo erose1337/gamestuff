@@ -261,15 +261,10 @@ class Place(pride.gui.gui.Window):
                     adjustment -= sum(sum(row) for row in submatrix) / 9
                     if not adjustment:
                         continue
-                    remainder = adjustment % 9
-                    adjustment -= remainder
-                    if adjustment:
+                    else:
                         for row in matrix2[3*y:(3*y)+3]:
                             for i in range(3):
                                 row[(3 * x) + i] += adjustment
-                    if remainder:
-                        yt, xt = divmod(remainder, 3)
-                        matrix2[(3 * y) + yt][(3 * x) + xt] += remainder
 
     def compress_matrix(self, matrix):
         length = len(matrix)
