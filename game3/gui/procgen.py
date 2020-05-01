@@ -261,7 +261,8 @@ class Place(pride.gui.gui.Window):
                     adjustment -= sum(sum(row) for row in submatrix) / 9
                     if not adjustment:
                         continue
-                    adjustment, remainder = divmod(adjustment, 9)
+                    remainder = adjustment % 9
+                    adjustment -= remainder
                     if adjustment:
                         for row in matrix2[3*y:(3*y)+3]:
                             for i in range(3):
