@@ -23,16 +23,22 @@ def parent_sheet(self):
 
 class _Effect(pride.components.base.Base):
 
-    defaults = {"name" : '', "effect_type" : '', "influence" : '',
-                "element" : '', "magnitude" : 0, "duration" : 0,
-                "reaction" : False}
+    #defaults = {"name" : '', "effect_type" : '', "influence" : '',
+    #            "element" : '', "magnitude" : 0, "duration" : 0,
+    #            "reaction" : False}
 
+    defaults = {"influence" : "health", "element" : "blunt", "magnitude" : 1,
+                "duration" : 0, "positive" : True, "do_process_reactions" : True,
+                "queue_number" : 0,#STANDARD_QUEUE,
+                "name" : "Unnamed Effect", "effect_type" : '',
+                "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
+                "trigger" : '', "target" : '', "reaction" : False}
 
 class _Ability(pride.components.base.Base):
 
     defaults = {"name" : '', "homing" : False, "active_or_passive" : "active",
                 "range" : 0, "target_count" : 1, "aoe" : 0, "_effects" : tuple(),
-                "no_cost" : False}
+                "no_cost" : False, "effects" : tuple()}
 
     def _get_xp_cost(self):
         return game3.rules.calculate_ability_acquisition_cost(self)
@@ -45,7 +51,7 @@ class _Ability(pride.components.base.Base):
 
 
 
-class _Effects_Window(pride.gui.widgets.form.Form):
+class _Effect_Window(pride.gui.widgets.form.Form):
 
     fields = [\
      [field_info("name", display_name="Name", orientation="stacked"),
@@ -65,30 +71,40 @@ class _Effects_Window(pride.gui.widgets.form.Form):
     ]
 
     defaults = {"pack_mode" : "top", "fields" : fields, "row_h_range" : (0, .1)}
-    mutable_defaults = {"target_object" : _Effect}
 
     def create_subcomponents(self):
+        ability = self.parent.parent.target_ability
+        self.target_object = effect = _Effect()
+        ability.effects += (effect, )
         self.balancer = parent_sheet(self).character.xp_pools.pools[1]
         self.include_balance_display = False
-        super(_Effects_Window, self).create_subcomponents()
+        super(_Effect_Window, self).create_subcomponents()
 
     def handle_value_changed(self, field, old, new):
         displayer = parent_sheet(self).abilities_pane.children[0].displayer
         displayer.entry.texture_invalid = True
-        super(_Effects_Window, self).handle_value_changed(field, old, new)
+        super(_Effect_Window, self).handle_value_changed(field, old, new)
+
+    def delete(self):
+        ability = self.parent.parent.target_ability
+        effects = ability.effects
+        effect_index = effects.index(self.target_object)
+        ability.effects = effects[:effect_index] + effects[effect_index + 1:]
+        super(_Effect_Window, self).delete()
 
 
 class Effects_Window(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"include_label" : True, "tab_bar_label" : "Effects",
-                "new_window_type" : _Effects_Window}
+                "new_window_type" : _Effect_Window}
 
 
 class _Ability_Window(pride.gui.widgets.form.Form):
 
     fields = \
     [
-     [field_info("name", display_name="Name", orientation="side by side"),
+     [field_info("name", display_name="Name", orientation="side by side",
+                 compute_cost=lambda *args: 0),
       field_info("xp_cost", display_name="XP cost", orientation="stacked",
                  editable=False, w_range=(0, .1)),
       field_info("energy_cost", display_name="Energy Cost", w_range=(0, .1),
@@ -108,15 +124,25 @@ class _Ability_Window(pride.gui.widgets.form.Form):
     mutable_defaults = {"target_object" : _Ability}
 
     def create_subcomponents(self):
-        self.balancer = parent_sheet(self).character.xp_pools.pools[1]
+        sheet = parent_sheet(self)
+        self.balancer = sheet.character.xp_pools.pools[1]
         self.include_balance_display = False
         super(_Ability_Window, self).create_subcomponents()
-        self.main_window.create(Effects_Window)
+        flag = not sheet.read_only
+        self.main_window.create(Effects_Window,
+                                target_ability=self.target_object,
+                                include_new_tab_button=flag)
 
     def handle_value_changed(self, field, old, new):
-        displayer = parent_sheet(self).abilities_pane.children[0].displayer
+        abilities_pane = parent_sheet(self).abilities_pane
+        displayer = abilities_pane.children[0].displayer
         displayer.entry.texture_invalid = True
         super(_Ability_Window, self).handle_value_changed(field, old, new)
+
+        if field.name == "name":
+            tab = pride.objects[self.tab_reference]
+            tab.entry.text = tab.button_text = new
+            tab.pack()
 
 
 class Ability_Window(pride.gui.widgets.tabs.Tabbed_Window):
@@ -128,7 +154,25 @@ class Ability_Window(pride.gui.widgets.tabs.Tabbed_Window):
 class Ability_Tree_Window(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"include_label" : True, "tab_bar_label" : "Ability Trees",
-                "new_window_type" : Ability_Window, "pack_mode" : "top"}
+                "new_window_type" : Ability_Window, "pack_mode" : "top",
+                "include_new_tab_button" : False, "read_only" : False}
+
+    def create_subcomponents(self):
+        targets = self.tab_targets = []
+        window_type = self.new_window_type
+        flag = self.read_only
+        for count in range(4):
+            def callable(*args):
+                window = self.main_window.create(window_type,
+                                                 read_only=flag,
+                                                 include_new_tab_button=not flag)
+                return window
+            targets.append(callable)
+        targets[0].tab_text = "Offense"
+        targets[1].tab_text = "Defense"
+        targets[2].tab_text = "Support"
+        targets[3].tab_text = "Misc."
+        super(Ability_Tree_Window, self).create_subcomponents()
 
 
 class Stats_Window(pride.gui.widgets.form.Form):
@@ -143,11 +187,14 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
 
     defaults = {"character" : None, "_attributes" : "Attributes",
                 "_affinities" : "Affinities", "include_new_tab_button" : False,
-                "stat_tab_text" : "View Stats"}
-    autoreferences = ("abilities_pane", "basic_info_form")
+                "stat_tab_text" : "View Stats", "read_only" : False}
+    autoreferences = ("abilities_pane", "basic_info_form", "theme_editor",
+                      "options")
 
     def create_subcomponents(self):
+        assert hasattr(self, "mode")
         self._create_basic_info_fields()
+        read_only = self.read_only
 
         character = self.character
         fields = []
@@ -160,7 +207,8 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
                                        max_rows=12, row_h_range=(0, .1),
                                        balancer=character.xp_pools.pools[0],
                                        balance_display_kwargs=_kwargs,
-                                       include_balance_display=True)
+                                       include_balance_display=True,
+                                       read_only=read_only)
         callable = lambda: form
         callable.tab_text = self.stat_tab_text
 
@@ -171,14 +219,37 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
                                   balancer=self.character.xp_pools.pools[1],
                                   include_balance_display=True,
                                   balance_display_kwargs={"h_range" : (0, 1.0)},
-                                  pack_mode="top", h_range=(0, .075))
+                                  pack_mode="top", h_range=(0, .075),
+                                  read_only=read_only)
             assert abilities_pane.children[0].displayer
-            abilities_pane.create(Ability_Tree_Window)
-            abilities_pane.hide() # select_tab is called after, which toggles visibility
+            abilities_pane.create(Ability_Tree_Window, read_only=read_only)
             return abilities_pane
         callable2.tab_text = "View Abilities"
 
-        self.tab_targets = [callable, callable2] # should these be removed later?
+        def callable3():
+            if self.mode == "creator":
+                fields = [(field_info("save_and_exit",
+                                    button_text="Save character and exit editor"),
+                        field_info("exit_without_saving",
+                                    button_text="Exit editor without saving character")
+                          )]
+            else:
+                assert self.mode == "arcade"
+                fields = [(field_info("select_character",
+                                      button_text="Select this character"),
+                          field_info("exit_without_saving",
+                                     button_text="Exit to main menu"))]
+            options = self.main_window.create("pride.gui.widgets.form.Form",
+                                              fields=fields,
+                                              target_object=self,
+                                              row_h_range=(0, .1),
+                                              read_only=read_only)
+            self.options = options
+            return options
+        callable3.tab_text = "Finished"
+
+        # should these be removed later?
+        self.tab_targets = [callable, callable2, callable3]
         super(Character_Sheet, self).create_subcomponents()
 
     def _create_basic_info_fields(self):
@@ -197,7 +268,7 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
          ]
         form = self.create("pride.gui.widgets.form.Form", pack_mode="top",
                            fields=fields, target_object=self.character,
-                           h_range=(0, .15))
+                           h_range=(0, .15), read_only=self.read_only)
         self.basic_info_form = form
 
     def _create_xp_pool_fields(self):
@@ -242,6 +313,15 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
                    element in triplet]
             fields.append(row)
         return fields
+
+    def save_and_exit(self):
+        self.parent_application.save_character()
+
+    def exit_without_saving(self):
+        self.parent_application.exit_without_saving()
+
+    def select_character(self):
+        self.parent_application.select_character(self.character)
 
 
 def test_Character_Sheet():

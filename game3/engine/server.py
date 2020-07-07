@@ -3,7 +3,11 @@ try:
 except ImportError:
     import StringIO
 
+import game3.character
+
 import pride.components.authentication3
+import cefparser
+
 
 class Game_Server(pride.components.authentication3.Authenticated_Service):
 
@@ -27,14 +31,17 @@ class Game_Server(pride.components.authentication3.Authenticated_Service):
     def select_character(self, name):
         user = self.current_user
         data = self.database.query("Character", retrieve_fields=("info", ),
-                                   where={"userid" : current_user, "name" : name})
+                                   where={"userid" : user, "name" : name})
         character_info = cefparser.parse(StringIO.StringIO(data))
-        _character = character.Character(**character_info)
+        _character = game3.character.Character(**character_info)
         self.active_character[user] = _character
 
     def save_character(self, name, character_sheet):
         user = self.current_user
+        print("Saving")
+        print user, name
         result = self.database.insert_or_replace("Character", (user, name, character_sheet))
+        print result
         return "Success"
 
     def get_map_info(self):

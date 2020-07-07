@@ -1,6 +1,8 @@
 import pride.gui.gui
 import pride.gui.widgetlibrary
 import pride.components.user
+import pride.gui.widgets.form
+field_info = pride.gui.widgets.form.field_info
 
 import game3.gui.character
 
@@ -70,13 +72,11 @@ class Options_Button(pride.gui.widgetlibrary.Method_Button):
 class Game_Window(pride.gui.gui.Application):
 
     defaults = {"character_screen_type" : game3.gui.character.Character_Selection_Screen,
-                "startup_components" : tuple(), "_splash_screen_items" : tuple()}
+                "startup_components" : tuple(), "_splash_screen_items" : tuple(),
+                "mode" : None}
 
-    autoreferences = ("character_selection_screen", "game_client")
-
-    #def create(self, _type, *args, **kwargs):
-    #    kwargs.setdefault("game_client", self.game_client)
-    #    return super(Game_Window, self).create(_type, *args, **kwargs)
+    autoreferences = ("title_screen", "title_form",
+                      "character_selection_screen", "game_client")
 
     def __init__(self, **kwargs):
         super(Game_Window, self).__init__(**kwargs)
@@ -84,6 +84,51 @@ class Game_Window(pride.gui.gui.Application):
                                                                  pack_mode="main", star_count=1024,
                                                                  animate=True)
 
+    def load_initial_window(self):
+        window = self.application_window
+        self.title_screen = window.create("pride.gui.gui.Container",
+                                          pack_mode="top", text="Superzero")
+
+        fields = [[field_info("load_character_selector", button_text="Select Character",
+                              entry_kwargs={"tip_bar_text" :
+                                            "Select which character to play"}),
+                   field_info("load_character_editor",
+                              button_text="Character Editor",
+                              entry_kwargs={"tip_bar_text" :
+                                            "Design and customize characters"}),
+                   field_info("handle_close", button_text="Exit",
+                              entry_kwargs={"tip_bar_text" : "Exit the game"})
+                 ]]
+        form = window.create("pride.gui.widgets.form.Form", fields=fields,
+                             pack_mode="bottom", h_range=(0, .1),
+                             target_object=self)
+        self.title_form = form
+
+    def load_character_selector(self):
+        self.title_screen.hide()
+        self.title_form.hide()
+        self.show_status("Acquiring character list...")
+        self.game_client.get_character_info()
+        self.mode = "arcade"
+
+    def load_character_editor(self):
+        self.title_screen.hide()
+        self.title_form.hide()
+        self.show_status("Acquiring character list...")
+        self.game_client.get_character_info()
+        self.mode = "creator"
+
     def load_character_selection_screen(self, characters):
-        self.character_selection_screen = self.application_window.create(self.character_screen_type,
-                                                                         characters=characters)
+        assert self.mode is not None
+        _type = self.character_screen_type
+        window = self.application_window
+        self.character_selection_screen = window.create(_type, mode=self.mode,
+                                                        characters=characters)
+
+    def handle_close(self):
+        raise SystemExit()
+
+    def select_character(self, character):
+        self.game_client.select_character(character.name)
+        self.character_selection_screen.delete()
+        self.load_initial_window()

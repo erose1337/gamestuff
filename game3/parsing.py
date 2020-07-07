@@ -35,16 +35,31 @@ def parse_bytes(_file_bytes, ability_disallow=ABILITY_DISALLOW,
 
 def parse_info(info, ability_disallow=ABILITY_DISALLOW,
                effect_disallow=EFFECT_DISALLOW):
+    import xppools
+    new_xp = xppools.XP_Pool._starting_xp
     character_info = info["Character Info"]
     _attributes = parse_attributes(character_info)
     _affinities = parse_affinities(character_info)
     if "Abilities" in info:
         _abilities = parse_abilities(info, ability_disallow=ability_disallow,
-                                    effect_disallow=effect_disallow)
+                                     effect_disallow=effect_disallow)
     else:
         _abilities = abilities.Abilities()
+        info["Abilities"] = {"xp" : new_xp}
+    stat_xp = character_info["Basic Info"].get("xp", new_xp)
+    ab_xp = info["Abilities"].get("xp", new_xp)
+    eq_xp = new_xp
+    pools = xppools.XP_Pools(pools=(xppools.Stat_XP_Pool("stats",
+                                                         int(stat_xp),
+                                                         int(stat_xp)),
+                                    xppools.Abilities_XP_Pool("abilities",
+                                                              int(ab_xp),
+                                                              int(ab_xp)),
+                                    xppools.Equipment_XP_Pool("equipment",
+                                                              int(eq_xp),
+                                                              int(eq_xp))))
     return {"name" : character_info["Basic Info"]["name"],
-            "xp" : int(character_info["Basic Info"].get("xp", 0)),
+            "xp_pools" : pools,
             "attributes" : _attributes, "affinities" : _affinities,
             "abilities" : _abilities}
 
@@ -64,7 +79,6 @@ def parse_abilities(info, ability_disallow=ABILITY_DISALLOW,
                     effect_disallow=EFFECT_DISALLOW):
     trees = dict()
     for tree_name, ability_listing in info["Abilities"].items():
-        #tree_name = tree_name.replace(' ', '_')
         ability_objects = dict()
         for ability_name, ability_info in ability_listing.items():
             #ability_name = ability_name.replace(' ', '_')

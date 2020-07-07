@@ -50,7 +50,17 @@ class Stat_XP_Pool(XP_Pool):
 class Abilities_XP_Pool(XP_Pool):
 
     def compute_cost(self, field, old, new):
-        return super(Abilities_XP_Pool, self).compute_cost(field, old, new)
+        _output = super(Abilities_XP_Pool, self).compute_cost(field, old, new)
+        costf = game3.rules.calculate_ability_acquisition_cost
+        form = field.parent_form
+        ability = form.target_object
+        try:
+            output = costf(ability)
+        except AttributeError:
+            form = form.parent.parent.parent.parent
+            ability = form.target_object
+            output = costf(ability)
+        return output
 
 
 class Equipment_XP_Pool(XP_Pool):

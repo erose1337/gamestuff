@@ -173,12 +173,14 @@ class Character(pride.components.base.Base):
         return stringio.read()
 
     def to_file(self, _file):
+        xp_pools = self.xp_pools.pools
         _file.write("Character Info\n")
         _file.write('=' * len("Character Info") + "\n\n")
         _file.write("Basic Info\n")
         _file.write('-' * len("Basic Info") + '\n')
         _file.write("- name: {}\n".format(self.name))
-        _file.write("- xp: {}\n\n".format(self.xp))
+        pool = xp_pools[0]
+        _file.write("- xp: {}\n\n".format(pool.balance))
         _file.write("Attributes\n")
         _file.write('-' * len("Attributes") + '\n')
         for attribute in ("toughness", "regeneration", "soak",
@@ -197,6 +199,8 @@ class Character(pride.components.base.Base):
             return # don't write abilities category if there are no abilities
         _file.write("Abilities\n")
         _file.write('=' * len("Abilities") + "\n\n")
+        pool = xp_pools[1]
+        _file.write("- xp: 0\n\n")#\n\n".format(pool.balance))
         for ability_tree, _abilities in self.abilities.to_info().items():
             _file.write("   {}\n".format(ability_tree))
             _file.write("   {}".format('=' * len(ability_tree) + "\n\n"))

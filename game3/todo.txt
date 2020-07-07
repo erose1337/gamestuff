@@ -1,6 +1,18 @@
 to do:
 ----
 
+- need a finalize button for abilities
+    - once finalized, the points are officially spent
+    - can increase values with more points
+    - cannot otherwise modify finalized points
+- xp cost is not refunded when deleting an ability
+- effect/ability names should not need xp to change
+
+
+
+
+
+
 How to encourage a community and creativity
 ===========================================
 - "contribution" points

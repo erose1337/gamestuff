@@ -281,7 +281,7 @@ X, Y should be defined in the rules file.
 
 "Auspex"
 --------
-Ability to see "auras", even through obstacles.
+Ability to see "auras", even through obstacles and even when blind.
 An "aura" indicates the presence of someone or something.
 Detailed information may/may not be available.
 
@@ -291,12 +291,14 @@ Detailed information may/may not be available.
 Ability to see through objects through one obstacle
 
 
-"Blindfold training"
---------------------
-Ability to see immediate surroundings even when blinded (when vision = 0)
-
-
 Ability option to share senses between characters
+
+
+Invisibility
+------------
+Subtracted from the perceiving characters Vision score.
+
+Easier to remain invisible while further away.
 
 
 Hearing
@@ -334,3 +336,110 @@ Hearing allows a character to have a sense of what is going on behind it.
 A character can place a sound that occurs within X squares
 A character can hear a sound that occurs within XY squares, but cannot determine the origin of the sound
 A character cannot hear actions that occur further than XY squares away.
+
+
+Prediction (e.g. Mind Reading)
+============
+See glimpses of what menu and/or selection a character is looking at using
+Effective value: max(0, readers skill - distance - targets skill)
+
+Effective value determines:
+
+- How frequently the information becomes available
+- Transparency level of the displayed information
+
+
+
+Smell
+=====
+Smell is used to detect elements and affinities to them.
+The location of effects (e.g. a fire burning on one square)
+
+
+
+
+
+
+
+Backgrounds (aka Classes)
+=======
+- At certain total XP milestones, gain a level in a background
+- Backgrounds provide attribute/affinity/perception bonuses and abilities
+- Multiclassing provides versatility
+- Specialization provides potency
+- A background adds character
+- Preset and user created options
+
+Point values
+------------
+- some arrangement of 3 large increases, 3 moderate increases, and 3 small increases
+- split between stats (attributes/affinities/perception)
+- allow repeats or not?
+    - But being able to dump them all into one attribute would be unbalanced
+    - each attribute may have up to 1 large, 1 moderate, and 1 small increase
+
+
+
+
+
+
+
+
+
+
+"Metamagic" Abilities
+=====================
+- Targets effects that are currently in play
+    - increase or reduce the cooldown/magnitude/etc of existing effects
+
+
+
+
+
+
+Power level icon
+================
+A symbolic "power level" icon appended to the characters name.
+
+    R: sum(Health stats) / 3
+    G: sum(Movement stats) / 3
+    B: sum(Energy stats) / 3
+
+Each stat is capped at 255. max(sum(Health stats) / 3) == 255.
+
+Low attribute scores will make the color less visible.
+High attribute scores will make the color more visible.
+Approximately equal attribute scores will appear as grey.
+Unbalanced attribute scores will appear colored.
+
+Make it a colored 9-gon. Associate each vertex with attribute.
+Color the vertex according to its magnitude.
+Gives finer-grained detail
+
+
+
+
+
+Super points pool
+-----------------
+Used to:
+
+- temporarily increase a stat, affinity, perception
+- temporarily enhance and ability or effect
+- instantly recover health, energy, or movement points
+- activate some powers
+
+
+- provides a "critical hit"-like feature to gameplay
+    - normally, the traditional mechanic for critical hits involves randomness
+    - here, critical hits are used strategically instead of randomly
+
+
+
+
+Use energy pool for movement points
+-----------------------------------
+Simplifies by reducing the number of pools.
+Can only reasonably expect a player to be able to keep track of and understand 3-5 pools at most.
+More than that would likely overwhelm new players.
+If the super points pool is used, then this should really be considered
