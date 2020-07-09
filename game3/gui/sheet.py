@@ -104,7 +104,9 @@ class _Ability_Window(pride.gui.widgets.form.Form):
     fields = \
     [
      [field_info("name", display_name="Name", orientation="side by side",
-                 compute_cost=lambda *args: 0),
+                 compute_cost=lambda *args: 0,
+                 id_kwargs={"scale_to_text" : True},
+                 entry_kwargs={"scale_to_text" : False}),
       field_info("xp_cost", display_name="XP cost", orientation="stacked",
                  editable=False, w_range=(0, .1)),
       field_info("energy_cost", display_name="Energy Cost", w_range=(0, .1),
@@ -141,7 +143,8 @@ class _Ability_Window(pride.gui.widgets.form.Form):
 
         if field.name == "name":
             tab = pride.objects[self.tab_reference]
-            tab.entry.text = tab.button_text = new
+            tab.button_text = new
+            tab.entry.text = new
             tab.pack()
 
 
@@ -200,7 +203,8 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
         fields = []
         fields += self._create_attribute_fields()
         fields += self._create_affinity_fields()
-        _kwargs = {"display_name" : "Stats XP"}
+        _kwargs = {"display_name" : "Stats XP",
+                   "id_kwargs" : {"scale_to_text" : True}}
         form = self.main_window.create(Stats_Window,
                                        pack_mode="top", fields=fields,
                                        target_object=character,
@@ -215,10 +219,12 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
         def callable2():
             abilities_pane = self.main_window.create("pride.gui.gui.Container")
             self.abilities_pane = abilities_pane
+            _kwargs = {"h_range" : (0, 1.0), "display_name" : "Abilities XP",
+                       "id_kwargs" : {"scale_to_text" : True}}
             abilities_pane.create("pride.gui.widgets.form.Form",
                                   balancer=self.character.xp_pools.pools[1],
                                   include_balance_display=True,
-                                  balance_display_kwargs={"h_range" : (0, 1.0)},
+                                  balance_display_kwargs=_kwargs,
                                   pack_mode="top", h_range=(0, .075),
                                   read_only=read_only)
             assert abilities_pane.children[0].displayer
@@ -260,7 +266,8 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
 
         fields = [\
          [field_info("name", orientation="side by side",
-                     display_name="Name")],
+                     display_name="Name",
+                     id_kwargs={"scale_to_text" : True})],
          [field_info(stat, editable=False,
                      display_name=stat[1:].title().replace('_', ' '),
                      tip_bar_text=text) for stat, text in
@@ -274,6 +281,7 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
     def _create_xp_pool_fields(self):
         fields = [\
          [field_info("formatted", display_name=pool.name, editable=False,
+                     id_kwargs={"scale_to_text" : True},
                      target_object=pool) for pool in
           self.character.xp_pools.pools]
          ]
