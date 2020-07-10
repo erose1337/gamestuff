@@ -10,6 +10,9 @@ def set_rules(rules_filename=RULES_FILE):
     RULES.update(parsing.parse_rules(rules_filename))
 
 def calculate_ability_cost(character, ability):
+    # calculates the energy cost of the ability
+    # not to be confused with calculate_ability_acquisition_cost,
+    # which calculates the XP cost of the ability
     if ability.no_cost:
         return 0
     abilities_cost = RULES["abilities"]
@@ -21,15 +24,13 @@ def calculate_ability_cost(character, ability):
                                     affinity_discount=affinity_f(level=0 if effect.element == "null" else
                                                                        getattr(character.affinities, effect.element)))
                       for effect in ability._effects)
-
     range = ability.range if isinstance(ability.range, int) else 1
     grace_value = RULES["attributes"]["grace_value"](level=character.attributes.grace)
     homing_cost = RULES["abilities"]["homing_cost"](value=int(ability.homing))
-    return abilities_cost["abilities_energy_cost"](range=range, aoe=ability.aoe,
-                                                   target_count=ability.target_count,
-                                                   effect_cost=effect_cost,
-                                                   grace=grace_value,
-                                                   homing_cost=homing_cost)
+    kwargs = {"range" : range, "aoe" : ability.aoe,
+              "target_count" : ability.target_count, "homing_cost" : homing_cost,
+              "effect_cost" : effect_cost, "grace" : grace_value}
+    return abilities_cost["abilities_energy_cost"](**kwargs)
 
 def calculate_effect_potency(effect):
     return RULES["effects"]["{}_potency".format(effect)]
@@ -70,16 +71,20 @@ def calculate_ability_acquisition_cost(ability):
     abilities_cost = RULES["abilities"]
     effect_cost_f = abilities_cost["effects_acquire_cost"]
     affinity_f = RULES["attributes"]["affinity_resistance"]
-    effect_cost = sum(effect_cost_f(magnitude=effect.magnitude,
-                                    influence=abilities_cost["influence_{}_cost".format(effect.influence.replace("attributes.", ''))](level=0),
-                                    duration=effect.duration)
-                                #    affinity_discount=affinity_f(level=0 if effect.element == "null" else
-                                #                                       getattr(character.affinities, effect.element)))
-                      for effect in ability._effects)
+    effect_cost = 0
+    for _effect in ability.effects:
+        kwargs = {"magnitude" : _effect.magnitude,
+                  "influence" : abilities_cost["influence_{}_cost".format(
+                        _effect.influence.replace("attributes.", ''))](level=0),
+                  "duration" : _effect.duration}
+        discount = 0#affinity_f(level=0 if _effect.element == "null" else
+                    #          getattr(character.affinities, _effect.element))
+        kwargs["affinity_discount"] = discount
+        effect_cost += effect_cost_f(**kwargs)
 
     range = ability.range if isinstance(ability.range, int) else 1
     homing_cost = RULES["abilities"]["homing_cost"](value=int(ability.homing))
-    return abilities_cost["abilities_acquire_cost"](range=range, aoe=ability.aoe,
-                                                    target_count=ability.target_count,
-                                                    effect_cost=effect_cost,
-                                                    homing_cost=homing_cost)
+    kwargs = {"range" : range, "aoe" : ability.aoe,
+              "target_count" : ability.target_count, "effect_cost" : effect_cost,
+              "homing_cost" : homing_cost}
+    return abilities_cost["abilities_acquire_cost"](**kwargs)
