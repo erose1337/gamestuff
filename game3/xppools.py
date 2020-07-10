@@ -1,3 +1,5 @@
+import copy
+
 import pride.components.base
 import pride.gui.widgets.form
 
@@ -50,17 +52,29 @@ class Stat_XP_Pool(XP_Pool):
 class Abilities_XP_Pool(XP_Pool):
 
     def compute_cost(self, field, old, new):
+        fieldname = field.name
+        if fieldname == "name":
+            return 0
         _output = super(Abilities_XP_Pool, self).compute_cost(field, old, new)
-        costf = game3.rules.calculate_ability_acquisition_cost
         form = field.parent_form
         ability = form.target_object
+        # value is not assigned until after cost is evaluated
+        # temporarily change the value so the cost can be evaluated
+        # then change it back
+        setattr(ability, fieldname, new)
+        new_cost = self._compute_costf(ability, form)
+        setattr(ability, fieldname, old)
+        old_cost = self._compute_costf(ability, form)
+        return new_cost - old_cost
+
+    @staticmethod
+    def _compute_costf(ability, form):
         try:
-            output = costf(ability)
+            return ability.xp_cost
         except AttributeError:
             form = form.parent.parent.parent.parent
             ability = form.target_object
-            output = costf(ability)
-        return output
+            return ability.xp_cost
 
 
 class Equipment_XP_Pool(XP_Pool):
