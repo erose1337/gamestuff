@@ -28,7 +28,7 @@ class _Effect(pride.components.base.Base):
     #            "reaction" : False}
 
     defaults = {"influence" : "health", "element" : "blunt", "magnitude" : 1,
-                "duration" : 0, "positive" : True, "do_process_reactions" : True,
+                "duration" : 1, "positive" : True, "do_process_reactions" : True,
                 "queue_number" : 0,#STANDARD_QUEUE,
                 "name" : "Unnamed Effect", "effect_type" : '',
                 "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
@@ -37,7 +37,7 @@ class _Effect(pride.components.base.Base):
 class _Ability(pride.components.base.Base):
 
     defaults = {"name" : '', "homing" : False, "active_or_passive" : "active",
-                "range" : 0, "target_count" : 1, "aoe" : 0, "_effects" : tuple(),
+                "range" : 0, "target_count" : 1, "aoe" : 1, "_effects" : tuple(),
                 "no_cost" : False, "effects" : tuple()}
 
     def _get_xp_cost(self):
@@ -49,6 +49,8 @@ class _Ability(pride.components.base.Base):
         return game3.rules.calculate_ability_cost(null_character, self)
     energy_cost = property(_get_energy_cost)
 
+    def handle_finalize(self):
+        self.parent.handle_finalize()
 
 
 class _Effect_Window(pride.gui.widgets.form.Form):
@@ -83,6 +85,19 @@ class _Effect_Window(pride.gui.widgets.form.Form):
     def handle_value_changed(self, field, old, new):
         displayer = parent_sheet(self).abilities_pane.children[0].displayer
         displayer.entry.texture_invalid = True
+
+        try:
+            effects_window = pride.objects[self.tab_reference].parent_form
+        except AttributeError:
+            if hasattr(self, "tab_reference"):
+                raise
+        else:
+            try:
+                _ability_window = effects_window.parent_form
+            except AttributeError:
+                pass
+            else:
+                _ability_window.fields_list[1].entry.texture_invalid = True
         super(_Effect_Window, self).handle_value_changed(field, old, new)
 
     def delete(self):
@@ -104,7 +119,6 @@ class _Ability_Window(pride.gui.widgets.form.Form):
     fields = \
     [
      [field_info("name", display_name="Name", orientation="side by side",
-                 compute_cost=lambda *args: 0,
                  id_kwargs={"scale_to_text" : True},
                  entry_kwargs={"scale_to_text" : False}),
       field_info("xp_cost", display_name="XP cost", orientation="stacked",
@@ -112,6 +126,8 @@ class _Ability_Window(pride.gui.widgets.form.Form):
       field_info("energy_cost", display_name="Energy Cost", w_range=(0, .1),
                  orientation="stacked", editable=False),
       field_info("homing", display_name="Homing", orientation="stacked",
+                 w_range=(0, .1)),
+      field_info("handle_finalize", display_name="Finalize",
                  w_range=(0, .1))],
 
      [field_info("active_or_passive", display_name="Active or Passive",
@@ -123,9 +139,13 @@ class _Ability_Window(pride.gui.widgets.form.Form):
     ]
 
     defaults = {"pack_mode" : "top", "fields" : fields, "row_h_range" : (0, .1)}
-    mutable_defaults = {"target_object" : _Ability}
+    autoreferences = ("target_object", )
 
     def create_subcomponents(self):
+        target_object = self.target_object
+        if target_object is None:
+            target_object = self.target_object = self.create(_Ability)
+            self.remove(target_object)
         sheet = parent_sheet(self)
         self.balancer = sheet.character.xp_pools.pools[1]
         self.include_balance_display = False
@@ -133,19 +153,24 @@ class _Ability_Window(pride.gui.widgets.form.Form):
         flag = not sheet.read_only
         self.main_window.create(Effects_Window,
                                 target_ability=self.target_object,
-                                include_new_tab_button=flag)
+                                include_new_tab_button=flag,
+                                parent_form=self)
 
     def handle_value_changed(self, field, old, new):
         abilities_pane = parent_sheet(self).abilities_pane
         displayer = abilities_pane.children[0].displayer
         displayer.entry.texture_invalid = True
-        super(_Ability_Window, self).handle_value_changed(field, old, new)
 
         if field.name == "name":
             tab = pride.objects[self.tab_reference]
             tab.button_text = new
             tab.entry.text = new
             tab.pack()
+        else:
+            super(_Ability_Window, self).handle_value_changed(field, old, new)
+
+    def handle_finalize(self):
+        self.alert("Finalizing")
 
 
 class Ability_Window(pride.gui.widgets.tabs.Tabbed_Window):
@@ -317,7 +342,8 @@ class Character_Sheet(pride.gui.widgets.tabs.Tabbed_Window):
         affinities = self.character.affinities
         for triplet in slide(game3.elements.ELEMENTS, 3):
             row = [field_info(element, target_object=affinities,
-                              minimum=0, maximum=255) for
+                              minimum=0, maximum=255,
+                              entry_kwargs={"include_minmax_buttons" : False}) for
                    element in triplet]
             fields.append(row)
         return fields
