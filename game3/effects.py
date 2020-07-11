@@ -14,6 +14,7 @@ class Effect(pride.components.base.Base):
     defaults = {"influence" : "health", "element" : "blunt", "magnitude" : 1,
                 "duration" : 0, "positive" : True, "do_process_reactions" : True,
                 "queue_number" : STANDARD_QUEUE, "name" : "Unnamed Effect",
+                "effect_type" : '',
                 "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
                 "trigger" : '', "target" : '', "reaction" : False}
 

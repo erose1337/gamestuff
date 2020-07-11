@@ -1,7 +1,11 @@
+import collections
+
 import pride.components.base
 
 import game3.rules
 import effects
+
+DEFAULT_TREES = ("Offense", "Defense", "Support", "Misc.")
 
 # Abilities composed out of target(s) and effect(s), and a name
 # Abilities have a range, area of effect, and/or a number of targets. Abilities can be actively used or passive
@@ -13,11 +17,29 @@ class PassiveActivationError(Exception): pass
 
 class Ability(pride.components.base.Base):
 
-    defaults = {"range" : "self", "name" : '', "effects" : tuple(), # effects holds effect types
-                "no_cost" : False, "energy_source" : "energy", "homing" : False,
-                "target_count" : 1, "aoe" : 0, "_effects" : tuple()} # _effects holds instances of effects
+    # effects holds effect types
+    # _effects holds instances of effects
+    defaults = {"name" : '', "homing" : False, "active_or_passive" : "active",
+                "range" : 0, "target_count" : 1, "aoe" : 1, "_effects" : tuple(),
+                "no_cost" : False, "effects" : tuple(),
+                "energy_source" : "energy"}
     predefaults = {"_name" : ''}
-    required_attributes = ("effects", "name", )
+
+    def _get_xp_cost(self):
+        return game3.rules.calculate_ability_acquisition_cost(self)
+    xp_cost = property(_get_xp_cost)
+
+    def _get_energy_cost(self):
+        try:
+            null_character = game3.character.Character() # 0 affinities/grace
+        except NameError:
+            import game3.character
+            null_character = game3.character.Character()
+        return game3.rules.calculate_ability_cost(null_character, self)
+    energy_cost = property(_get_energy_cost)
+
+    def handle_finalize(self):
+        self.parent.handle_finalize()
 
     def to_info(self):
         if not isinstance(self, Passive_Ability):
@@ -31,11 +53,11 @@ class Ability(pride.components.base.Base):
             info = {"passive" : "True"}
             passive = True
         if len(self.effects) > 1:
-            for index, effect_type in enumerate(self.effects):
-                info["effect{}".format(index + 1)] = {effect_type.__name__ : effect_type.to_info(passive)}
+            for index, effect in enumerate(self.effects):
+                info["effect{}".format(index + 1)] = {effect.name : effect.to_info(passive)}
         else:
-            effect_type = self.effects[0]
-            info["effect"] = {effect_type.__name__ : effect_type.to_info(passive)}
+            effect = self.effects[0]
+            info["effect"] = {effect.name : effect.to_info(passive)}
         return info
 
     @classmethod
@@ -140,7 +162,7 @@ class Passive_Ability(Ability):
 
     defaults = {"no_cost" : True, "aoe" : 0, "target_count" : 1}
     mutable_defaults = {"_active_effects" : list}
-    allowed_values = {"range" : ("self", ), "target_count" : (1, )}
+    allowed_values = {"range" : (0, ), "target_count" : (1, )}
 
     def activate(self, source, target):
         if self._active_effects:
@@ -241,7 +263,8 @@ class Misc_Tree(Ability_Tree):
 
 class Abilities(pride.components.base.Base):
 
-    mutable_defaults = {"ability_trees" : list}
+    mutable_defaults = {"ability_trees" : lambda: collections.OrderedDict((name, Ability_Tree(name=name))
+                                                     for name in DEFAULT_TREES)}
 
     description = "Abilities are things your character can do.\n"\
                   "Abilities can be active or passive.\n"\
@@ -266,6 +289,14 @@ class Abilities(pride.components.base.Base):
                   "   - element (damage effects only) can cause extra (or less) damage to the target\n"\
                   "More potent abilities and effects cost more to acquire and more energy to use."
 
+    def __init__(self, **kwargs):
+        super(Abilities, self).__init__(**kwargs)
+        trees = self.ability_trees
+        assert isinstance(trees, dict), trees
+        self.tree_names = trees.keys()
+        for name, tree in trees.items():
+            setattr(self, name, tree)
+
     def __iter__(self):
         return iter(self.ability_trees)
 
@@ -274,7 +305,7 @@ class Abilities(pride.components.base.Base):
 
     def active_abilities(self):
         output = dict()
-        for tree_name in self.ability_trees:
+        for tree_name in self.ability_trees.keys():
             tree = getattr(self, tree_name)
             for ability_name in tree:
                 ability = getattr(tree, ability_name)
@@ -284,7 +315,7 @@ class Abilities(pride.components.base.Base):
 
     def passive_abilities(self):
         output = []
-        for tree_name in self.ability_trees:
+        for tree_name in self.tree_names:
             tree = getattr(self, tree_name)
             for ability_name in tree:
                 ability = getattr(tree, ability_name)
@@ -293,15 +324,18 @@ class Abilities(pride.components.base.Base):
         return output
 
     def delete_tree(self, tree):
+        raise NotImplementedError()
         self.remove_tree(tree)
         tree.delete()
 
     def remove_tree(self, tree):
+        raise NotImplementedError()
         tree_name = tree.name
         self.ability_trees.remove(tree_name)
         delattr(self, tree_name)
 
     def add_tree(self, tree):
+        raise NotImplementedError()
         tree_name = tree.name
         if tree_name in self.ability_trees:
             raise ValueError("'{}' Tree already in ability trees".format(tree_name))
@@ -309,23 +343,17 @@ class Abilities(pride.components.base.Base):
         setattr(self, tree_name, tree)
 
     def delete(self):
-        for tree_name in self.ability_trees:
-            self.delete_tree(getattr(self, tree_name))
+        del self.ability_trees
+        for name in self.tree_names:
+            setattr(self, name, None)
         super(Abilities, self).delete()
 
     @classmethod
     def from_info(cls, **trees):
-        trees["Misc"] = Misc_Tree()
-        ability_trees = trees.keys()
-        #for key in trees:
-        #    assert ' ' not in key
-        return cls(ability_trees=ability_trees, **trees)
+        return cls(ability_trees=trees)
 
     def to_info(self):
         info = dict()
-        for tree_name in self.ability_trees:
-            tree = getattr(self, tree_name)
-            info[tree_name] = tree.to_info()
-        if "Misc" in info:
-            del info["Misc"]
+        for tree in self.ability_trees.values():
+            info[tree.name] = tree.to_info()
         return info
