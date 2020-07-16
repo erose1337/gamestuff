@@ -1,5 +1,6 @@
 import pride.components.base
 import pride.gui.widgets.tabs
+import pride.gui.widgets.formext
 from pride.gui.widgets.form import field_info
 from pride.functions.utilities import slide
 
@@ -18,21 +19,56 @@ DEFAULT_STATUSES = ("health", "energy", "movement")
 STAT_MINIMUM = 0
 STAT_MAXIMUM = 256
 
-class Data(pride.components.base.Base):
 
-    listing = tuple()
-    inherited_attributes = {"listing" : tuple}
+class Effect(pride.gui.widgets.formext.Data):
+
+    defaults = {"influence" : "health", "element" : "blunt", "magnitude" : 1,
+                "duration" : 0, "positive" : True, "name" : '',
+                "effect_type" : '',
+                "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
+                "trigger" : '', "target" : '', "reaction" : False}
+    fields = [
+     [field_info("name", display_name="Name", orientation="stacked"),
+      field_info("effect_type", display_name="Effect type",
+                 orientation="stacked",
+                 values=("damage", "heal", "buff", "debuff", "movement")),
+      field_info("influence", display_name="Influence", orientation="stacked",
+                 values=("health", "energy", "movement", "position") +\
+                         game3.attributes.Attributes.attributes)],
+
+     [field_info("element", display_name="Element", orientation="stacked",
+                 values=game3.affinities.Affinities.affinities),
+      field_info("magnitude", display_name="Magnitude"),
+      field_info("duration", display_name="Duration"),
+      field_info("reaction", display_name="Reaction", values=(False, True),
+                 orientation="stacked")]
+    ]
+
+    def _get_identifier(self):
+        return tuple((name, getattr(self, name)) for name in
+                     ("influence", "element", "magnitude", "duration",
+                      "positive", "name", "effect_type", "trigger", "target",
+                      "reaction"))
+    identifier = property(_get_identifier)
 
 
-class Ability(Data):
+class Effects(pride.gui.widgets.formext.Data):
+
+    defaults = {"effects" : tuple()}
+    row_kwargs = {0: {"h_range" : (0, .1)}}
+
+    def __init__(self, **kwargs):
+        super(Effects, self).__init__(**kwargs)
+        self.tab_names = self.effects[:]
+
+
+class Ability(pride.gui.widgets.formext.Data):
 
     defaults = {"name" : '', "homing" : False, "active_or_passive" : "active",
                 "range" : 0, "target_count" : 1, "aoe" : 1,
-                "no_cost" : False, "effects" : tuple(), "tree" : '',
-                "energy_source" : "energy"}
-
-    listing = ("name", "homing", "active_or_passive", "range", "target_count",
-               "aoe", "no_cost", "effects", "tree", "energy_source")
+                "no_cost" : False, "tree" : '', "energy_source" : "energy"}
+    mutable_defaults = {"effects" : Effects}
+    #tab_names = ("effects", )
     fields = [
          [field_info("name", display_name="Name", orientation="side by side",
                      id_kwargs={"scale_to_text" : True},
@@ -43,8 +79,6 @@ class Ability(Data):
                      orientation="stacked", editable=False),
           field_info("homing", display_name="Homing", orientation="stacked",
                      w_range=(0, .1)),],
-        #  field_info("handle_finalize", button_text="Finalize",
-        #             w_range=(0, .1))],
 
          [field_info("active_or_passive", display_name="Active or Passive",
                     values=("active", "passive"), orientation="stacked"),
@@ -52,7 +86,7 @@ class Ability(Data):
           field_info("target_count", display_name="Target Count",
                      orientation="stacked"),
           field_info("aoe", display_name="AoE", orientation="stacked")],
-        ]
+      ]
 
     def _get_identifier(self):
         return tuple((name, getattr(self, name)) for name in
@@ -74,30 +108,20 @@ class Ability(Data):
         return game3.rules.calculate_ability_cost(null_character, self)
     energy_cost = property(_get_energy_cost)
 
-
-class Effect(Data):
-
-    defaults = {"influence" : "health", "element" : "blunt", "magnitude" : 1,
-                "duration" : 0, "positive" : True, "name" : '',
-                "effect_type" : '',
-                "formula_reagants" : lambda e, t, s: {"magnitude" : e.magnitude},
-                "trigger" : '', "target" : '', "reaction" : False}
-    listing = ("influence", "element", "magnitude", "duration", "positive",
-               "name", "effect_type", "trigger", "target", "reaction")
-
-    def _get_identifier(self):
-        return tuple((name, getattr(self, name)) for name in
-                     ("influence", "element", "magnitude", "duration",
-                      "positive", "name", "effect_type", "trigger", "target",
-                      "reaction"))
-    identifier = property(_get_identifier)
+    def __init__(self, **kwargs):
+        super(Ability, self).__init__(**kwargs)
+        tab_names = self.tab_names = []
+        for effect in self.effects.effects:
+            name = effect.name
+            setattr(self, name, effect)
+            tab_names.append(name)
 
 
-class Abilities(Data):
+class Abilities(pride.gui.widgets.formext.Data):
 
     defaults = {"abilities" : tuple(), "selected_ability" : None}
-    listing = ("abilities", )
-    row_kwargs = {0: {"h_range" : (0, .1)}}
+    #form_type = pride.gui.widgets.formext.Tabbed_Form
+    #row_kwargs = {0: {"h_range" : (0, .25)}, 1: {"h_range" : (0, .5)}}
 
     def _get_selected_ability(self):
         return self._selected_ability
@@ -114,64 +138,18 @@ class Abilities(Data):
 
     def __init__(self, **kwargs):
         super(Abilities, self).__init__(**kwargs)
-        self.fields = [[field_info("selected_ability", target_object=self,
-                                   auto_create_id=False,
-                                   values=self.abilities)]]
-
-    class _Form_Type(pride.gui.widgets.tabs.Tabbed_Window):
-
-        defaults = {"default_form_type" : "pride.gui.widgets.form.Form"}
-
-        #@classmethod
-        #def _get_form_type(cls):
-        #    return cls
-        #form_type = property(_get_form_type)
-
-        def create_subcomponents(self):
-            tab_targets = self.tab_targets = []
-            abilities = self.target_object
-            for name in abilities.abilities:
-
-                def callable(self=self, name=name):
-                    values = getattr(self.target_object, name)
-                    try:
-                        fields = values.fields
-                    except AttributeError:
-                        fields = [[field_info(_name) for _name in chunk]
-                                for chunk in slide(values.listing, 3)]
-                    try:
-                        row_kwargs = values.row_kwargs
-                    except AttributeError:
-                        row_kwargs = dict()
-
-                    try:
-                        form_type = values.form_type
-                    except AttributeError:
-                        form_type = self.default_form_type
-
-                    form = self.main_window.create(form_type, fields=fields,
-                                                   target_object=values,
-                                                   row_kwargs=row_kwargs)
-                    values.form_reference = form.reference
-                    return form
-
-                callable.tab_text = name
-                tab_targets.append(callable)
-            # `form_type` raises NameError;
-            super(type(self), self).create_subcomponents()
-
-        def view_ability(self, ability):
-            self.target_object = ability
-            self.synchronize_fields()
-    form_type = _Form_Type
+        tab_names = self.tab_names = []
+        for ability in self.abilities:
+            name = ability.name
+            setattr(self, name, ability)
+            tab_names.append(name)
 
 
-class Stats(Data):
+
+class Stats(pride.gui.widgets.formext.Data):
 
     defaults = dict((name, 0) for name in DEFAULT_STATS)
     defaults.update(dict((name, 0) for name in DEFAULT_STATUSES))
-
-    listing = DEFAULT_STATS
 
     description = {"toughness" : "Increases maximum health and helps to survive high damage",
                    "regeneration" : "Increases rate that health regenerates and provides longevity",
@@ -194,9 +172,7 @@ class Stats(Data):
                                      minimum=STAT_MINIMUM, maximum=STAT_MAXIMUM,
                                 entry_kwargs={"include_minmax_buttons" : False})
                            for name in chunk])
-                    for chunk in slide(listing, 3)])
-
-    listing += ("health_info", "energy_info", "movement_info")
+                    for chunk in slide(DEFAULT_STATS, 3)])
 
     def _get__health_info(self):
         return self.format_health_stats()
@@ -244,29 +220,27 @@ class Stats(Data):
                                         recup_value, conditioning_value)
 
 
-class Affinities(Data):
+class Affinities(pride.gui.widgets.formext.Data):
 
     defaults = dict((name, 0) for name in ELEMENTS)
-    listing = ELEMENTS
     fields = tuple([tuple([field_info(name,
                                      minimum=STAT_MINIMUM, maximum=STAT_MAXIMUM,
                                 entry_kwargs={"include_minmax_buttons" : False})
                          for name in chunk])
-                    for chunk in slide(listing, 3)])
+                    for chunk in slide(ELEMENTS, 3)])
 
 
-class Bio_Info(Data):
+class Bio_Info(pride.gui.widgets.formext.Data):
 
     defaults = {"name" : '', "background" : ''}
-    listing = ("name", "background")
     fields = [[field_info("name", orientation="side by side",
                           id_kwargs={"scale_to_text" : True})],
               [field_info("background")]]
     row_kwargs = {0 : {"h_range" : (0, .1)}}
 
 
-class Character(Data):
+class Character(pride.gui.widgets.formext.Data):
 
     mutable_defaults = {"stats" : Stats, "affinities" : Affinities,
                         "abilities" : Abilities, "bio" : Bio_Info}
-    listing = ("bio", "stats", "affinities", "abilities")
+    tab_names = ("bio", "stats", "affinities", "abilities")
