@@ -23,7 +23,7 @@ def calculate_ability_cost(character, ability):
                                     duration=effect.duration,
                                     affinity_discount=affinity_f(level=0 if effect.element == "null" else
                                                                        getattr(character.affinities, effect.element)))
-                      for effect in ability._effects)
+                      for effect in ability.effects.effects)
     range = ability.range if isinstance(ability.range, int) else 1
     grace_value = RULES["attributes"]["grace_value"](level=character.attributes.grace)
     homing_cost = RULES["abilities"]["homing_cost"](value=int(ability.homing))
@@ -72,7 +72,7 @@ def calculate_ability_acquisition_cost(ability):
     effect_cost_f = abilities_cost["effects_acquire_cost"]
     affinity_f = RULES["attributes"]["affinity_resistance"]
     effect_cost = 0
-    for _effect in ability.effects:
+    for _effect in ability.effects.effects:
         kwargs = {"magnitude" : _effect.magnitude,
                   "influence" : abilities_cost["influence_{}_cost".format(
                         _effect.influence.replace("attributes.", ''))](level=0),
