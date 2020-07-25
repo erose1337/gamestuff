@@ -141,9 +141,9 @@ class Star_Theme(pride.gui.themes.Theme):
 
 class Star_Background(pride.gui.gui.Window):
 
-    defaults = {"star_count" : 0, "background_color" : (0, 0, 0, 255), "theme_type" : Star_Theme,
-                "color" : (255, 255, 255, 240), "points" : tuple(), "_counter" : 4,
-                "animate" : False}
+    defaults = {"star_count" : 768, "background_color" : (0, 0, 0, 255),
+                "theme_type" : Star_Theme, "color" : (255, 255, 255, 240),
+                "points" : tuple(), "_counter" : 4, "animate" : True}
     predefaults = {"_stars_drawn" : False, "_counter" : 0, "_pack_scheduled_value" : False}
     mutable_defaults = {"shooting_stars" : list}
 
@@ -176,7 +176,7 @@ class Star_Background(pride.gui.gui.Window):
 def test():
     import pride.gui
     window = pride.objects[pride.gui.enable()]
-    window.create(Star_Background, star_count=256)
+    window.create(Star_Background, star_count=1024, animate=True)
 
 
 
