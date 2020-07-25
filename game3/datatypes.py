@@ -3,6 +3,7 @@ import pride.gui.widgets.tabs
 import pride.gui.widgets.formext
 from pride.gui.widgets.form import field_info
 from pride.functions.utilities import slide
+tab_info = pride.gui.widgets.formext.tab_info
 
 import game3.rules
 
@@ -93,7 +94,7 @@ class Effect(pride.gui.widgets.formext.Data):
 class Effects(pride.gui.widgets.formext.Data):
 
     defaults = {"effects" : tuple()}
-    row_kwargs = {0: {"h_range" : (0, .1)}}
+    #row_kwargs = {0: {"h_range" : (0, .1)}}
 
     def __init__(self, **kwargs):
         super(Effects, self).__init__(**kwargs)
@@ -103,10 +104,19 @@ class Effects(pride.gui.widgets.formext.Data):
 class Ability(pride.gui.widgets.formext.Data):
 
     defaults = {"name" : '', "homing" : False, "passive" : False,
-                "range" : 0, "target_count" : 1, "aoe" : 1,
-                "no_cost" : False, "tree" : '', "energy_source" : "energy"}
+                "range" : 1, "target_count" : 1, "aoe" : 1,
+                "no_cost" : False, "tree" : '', "energy_source" : "energy",
+                "_effect_divider" : "Effect Information",
+
+                "influence" : "health", "element" : "blunt", "magnitude" : 1,
+                "duration" : 1, "effect_type" : '',
+                "trigger" : '', "target" : '', "reaction" : False}
+
     mutable_defaults = {"effects" : Effects}
-    row_kwargs = {0 : {"h_range" : (0, .1)}, 1 : {"h_range" : (0, .1)}}
+    form_kwargs = {"max_rows" : 8}
+    row_kwargs = {0 : {"h_range" : (0, .1)}, 1 : {"h_range" : (0, .1)},
+                  2 : {"h_range" : (0, .05)}}
+
     fields = [
          [field_info("name", display_name="Name", orientation="side by side",
                      id_kwargs={"scale_to_text" : True},
@@ -123,12 +133,29 @@ class Ability(pride.gui.widgets.formext.Data):
          [field_info("passive", display_name="Passive", w_range=(0, .1),
                      orientation="stacked"),
           field_info("range", display_name="Range", orientation="stacked",
-                     minimum=0),
+                     minimum=1),
           field_info("target_count", display_name="Target Count",
                      orientation="stacked", minimum=1),
           field_info("aoe", display_name="AoE", orientation="stacked",
                      minimum=1)],
+
+         [field_info("_effect_divider", auto_create_id=False, editable=False,
+                     entry_kwargs={"hoverable" : False})],
+
+         [field_info("effect_type", display_name="Effect type",
+                     orientation="stacked",
+                     values=("damage", "heal", "buff", "debuff", "movement")),
+          field_info("influence", display_name="Influence", orientation="stacked",
+                     values=DEFAULT_STATUSES + DEFAULT_STATS)],
+
+         [field_info("element", display_name="Element", orientation="stacked",
+                     values=ELEMENTS),
+          field_info("magnitude", display_name="Magnitude", minimum=1),
+          field_info("duration", display_name="Duration", minimum=1),
+          field_info("reaction", display_name="Reaction", values=(False, True),
+                     orientation="stacked")]
       ]
+
     class form_type(pride.gui.widgets.form.Form):
 
         def update_cost_fields(self):
@@ -142,10 +169,12 @@ class Ability(pride.gui.widgets.formext.Data):
             super(type(self), self).handle_value_changed(field, old, new)
 
     def _get_identifier(self):
-        return tuple((name, getattr(self, name)) for name in
-                     ("name", "homing", "active_or_passive", "range", "aoe",
-                      "target_count", "no_cost", "tree", "energy_source")) +\
-               tuple(effect.identifier for effect in self.effects)
+        data = tuple((name, getattr(self, name)) for name in
+                     ("name", "homing", "passive", "range", "aoe",
+                      "target_count", "no_cost", "tree", "energy_source",
+                      "influence", "element", "magnitude", "duration",
+                      "effect_type", "trigger", "target", "reaction"))
+        return bytes(data)
     identifier = property(_get_identifier)
 
     def _get_xp_cost(self):
@@ -167,24 +196,27 @@ class Ability(pride.gui.widgets.formext.Data):
         self._name = value
         try:
             form = pride.objects[self.form_reference]
-        except AttributeError:
-            if hasattr(self, "form_reference"):
-                raise
-        else:
             tab = pride.objects[form.tab_reference]
+        except AttributeError:
+            pass
+        else:
             tab.button_text = value
             tab.entry.text = value # triggers scale_to_text
     name = property(_get_name, _set_name)
 
-    def __init__(self, **kwargs):
-        super(Ability, self).__init__(**kwargs)
-        tabs = self.tabs = []
-        reference = self.reference
-        for effect in self.effects.effects:
-            name = effect.name
-            setattr(self, name, effect)
-            tabs.append(name)
-            effect.ability_reference = reference
+    #def __init__(self, **kwargs):
+    #    super(Ability, self).__init__(**kwargs)
+    #    tabs = self.tabs = tab_info()
+    #    reference = self.reference
+    #    effect_type = self.effect_type
+    #    for effect in self.effects.effects:
+    #        effect.ability_reference = reference
+    #        name = effect.name
+    #        tabs[name] = effect_type
+    #        setattr(self, name, effect)
+
+    #def load_new_effect(self):
+    #    self.alert("load_new_effect")
 
 
 class Abilities(pride.gui.widgets.formext.Data):
@@ -206,14 +238,13 @@ class Abilities(pride.gui.widgets.formext.Data):
             form.view_ability(value)
     selected_ability = property(_get_selected_ability, _set_selected_ability)
 
-    def __init__(self, **kwargs):
-        super(Abilities, self).__init__(**kwargs)
-        tabs = self.tabs = []
+    def setup_tabs(self):
+        tabs = self.tabs = dict()
         for ability in self.abilities:
             name = ability.name
             setattr(self, name, ability)
-            tabs.append(name)
-
+            tabs[name] = None
+        super(Abilities, self).setup_tabs()
 
 
 class Stats(pride.gui.widgets.formext.Data):
@@ -322,6 +353,6 @@ class Bio_Info(pride.gui.widgets.formext.Data):
 
 class Character(pride.gui.widgets.formext.Data):
 
-    mutable_defaults = {"stats" : Stats, "affinities" : Affinities,
-                        "abilities" : Abilities, "bio" : Bio_Info}
-    tabs = ("bio", "stats", "affinities", "abilities")
+    tabs = tab_info(bio=Bio_Info, stats=Stats, affinities=Affinities,
+                    abilities=Abilities)
+    ordering = ("bio", "stats", "affinities", "abilities")
